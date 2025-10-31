@@ -101,7 +101,7 @@
  * - **CLI Tools**: Command-line interface for development and deployment
  *
  * @module smig
- * @version 0.0.1
+ * @version 0.0.2
  * @author Kathy Sledge
  * @license MIT
  */
@@ -113,10 +113,7 @@
 /** Low-level database client for direct SurrealDB operations */
 export { SurrealClient } from "./database/surreal-client";
 /** Main migration management and schema loading functionality */
-export {
-  loadSchemaFromFile,
-  MigrationManager,
-} from "./migrator/migration-manager";
+export { loadSchemaFromFile, MigrationManager } from "./migrator/migration-manager";
 
 // ============================================================================
 // TYPE DEFINITIONS

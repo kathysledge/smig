@@ -1,6 +1,6 @@
 {
   "name": "smig",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Automatic SurrealDB migrations with a concise DSL",
   "type": "module",
   "main": "dist/index.js",
