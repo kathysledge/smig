@@ -1,0 +1,12 @@
+tests
+examples
+media
+scripts
+src
+.cursor
+schema.js
+vitest.*
+vite.config.ts
+tsconfig.json
+biome.json
+bun.lock
