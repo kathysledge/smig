@@ -264,6 +264,60 @@ describe("MigrationManager", () => {
       expect(diff.up).toContain("DEFINE FIELD out ON TABLE like TYPE record<post2>");
       expect(diff.up).toContain("DEFINE FIELD rating ON TABLE like TYPE int DEFAULT 5");
     });
+
+    it("should generate rollback statements for sub-fields with dots in names", async () => {
+      // This test verifies the fix for sub-field name changes (e.g., "emails.address")
+      const schema = composeSchema({
+        models: {
+          user: defineSchema({
+            table: "user",
+            schemafull: true,
+            fields: {
+              name: string().required(),
+              "emails.address": string(), // New sub-field name
+            },
+          }),
+        },
+        relations: {},
+      });
+
+      // Mock the database INFO commands that getCurrentDatabaseSchema uses
+      mockClient.executeQuery.mockImplementation((query: string) => {
+        if (query.includes("INFO FOR DB")) {
+          // Return database info with user table
+          return Promise.resolve([
+            {
+              tables: {
+                user: "DEFINE TABLE user SCHEMAFULL",
+              },
+            },
+          ]);
+        } else if (query.includes("INFO FOR TABLE user")) {
+          // Return table info with the old sub-field
+          return Promise.resolve([
+            {
+              fields: {
+                name: "DEFINE FIELD name ON TABLE user TYPE string ASSERT $value != NONE",
+                "emails.oldaddress": "DEFINE FIELD emails.oldaddress ON TABLE user TYPE string",
+              },
+              indexes: {},
+              events: {},
+            },
+          ]);
+        }
+        return Promise.resolve([]);
+      });
+
+      const diff = await migrationManager.generateDiff(schema);
+
+      // Verify forward migration includes both new field and removal of old field
+      expect(diff.up).toContain("DEFINE FIELD emails.address ON TABLE user TYPE string");
+      expect(diff.up).toContain("REMOVE FIELD emails.oldaddress ON TABLE user");
+
+      // Verify rollback migration includes both removal of new field and restoration of old field
+      expect(diff.down).toContain("REMOVE FIELD emails.address ON TABLE user");
+      expect(diff.down).toContain("DEFINE FIELD emails.oldaddress ON TABLE user TYPE string");
+    });
   });
 
   describe("Checksum Operations", () => {

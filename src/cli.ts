@@ -157,7 +157,9 @@ async function getConfigFromOptions(
   try {
     validateConfig(config);
   } catch (error) {
-    console.error(chalk.red(`Configuration error: ${error instanceof Error ? error.message : error}`));
+    console.error(
+      chalk.red(`Configuration error: ${error instanceof Error ? error.message : error}`),
+    );
     process.exit(1);
   }
 
@@ -177,7 +179,7 @@ const program = new Command();
 program
   .name("smig")
   .description("Automatic SurrealDB migrations with a concise DSL")
-  .version("0.0.2")
+  .version("0.0.3")
   .configureHelp({
     showGlobalOptions: true,
   });
@@ -743,7 +745,9 @@ program
       console.log("  3. .env file");
       console.log("  4. Built-in defaults");
     } catch (error) {
-      spinner.fail(chalk.red(`Configuration error: ${error instanceof Error ? error.message : error}`));
+      spinner.fail(
+        chalk.red(`Configuration error: ${error instanceof Error ? error.message : error}`),
+      );
       process.exit(1);
     }
   });

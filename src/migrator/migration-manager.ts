@@ -833,7 +833,8 @@ export class MigrationManager {
             for (const changeLine of change.details.fieldChanges) {
               if (changeLine.includes("DEFINE FIELD OVERWRITE")) {
                 // Extract field name and restore original definition
-                const fieldMatch = changeLine.match(/DEFINE FIELD OVERWRITE (\w+) ON TABLE/);
+                // Updated regex to support field names with dots (e.g., "emails.address")
+                const fieldMatch = changeLine.match(/DEFINE FIELD OVERWRITE ([^\s]+) ON TABLE/);
                 if (fieldMatch) {
                   const fieldName = fieldMatch[1];
                   const originalField = currentTable.fields?.find(
@@ -846,7 +847,8 @@ export class MigrationManager {
                 }
               } else if (changeLine.includes("DEFINE FIELD")) {
                 // New field added - remove it
-                const fieldMatch = changeLine.match(/DEFINE FIELD (\w+) ON TABLE/);
+                // Updated regex to support field names with dots (e.g., "emails.address")
+                const fieldMatch = changeLine.match(/DEFINE FIELD ([^\s]+) ON TABLE/);
                 if (fieldMatch) {
                   const fieldName = fieldMatch[1];
                   downChanges.push(`-- Remove field ${fieldName}`);
@@ -854,7 +856,8 @@ export class MigrationManager {
                 }
               } else if (changeLine.includes("REMOVE FIELD")) {
                 // Field removed - restore it
-                const fieldMatch = changeLine.match(/REMOVE FIELD (\w+) ON TABLE/);
+                // Updated regex to support field names with dots (e.g., "emails.address")
+                const fieldMatch = changeLine.match(/REMOVE FIELD ([^\s]+) ON TABLE/);
                 if (fieldMatch) {
                   const fieldName = fieldMatch[1];
                   const originalField = currentTable.fields?.find(
