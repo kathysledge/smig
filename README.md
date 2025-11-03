@@ -5,7 +5,7 @@
 
 ### SurrealDB schema management with automatic migrations
 
-[![npm version](https://badge.fury.io/js/smig.svg)](https://badge.fury.io/js/smig)
+[![npm version](https://badge.fury.io/js/smig.svg?version=0.0.3)](https://badge.fury.io/js/smig)
 [![License: MIT](https://img.shields.io/badge/License-MIT-violet.svg)](https://opensource.org/licenses/MIT)
 
 ---
@@ -233,6 +233,10 @@ const schema = defineSchema({
     tags: array('string').default([]),
     metadata: object(),
     location: geometry(),
+
+    // Nested fields (use quotation marks to define them)
+    'emails.address': string(),
+    'emails.primary': bool(),
 
     // Optional fields (can be null/NONE)
     bio: option('string'),

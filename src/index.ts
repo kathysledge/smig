@@ -102,7 +102,7 @@
  *
  * @module smig
  * @version 0.0.3
- * @author Kathy Sledge
+ * @author Chris Harris
  * @license MIT
  */
 
