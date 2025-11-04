@@ -5,7 +5,7 @@
 
 ### SurrealDB schema management with automatic migrations
 
-[![npm version](https://badge.fury.io/js/smig.svg?version=0.0.3)](https://badge.fury.io/js/smig)
+[![npm version](https://badge.fury.io/js/smig.svg?version=0.0.4)](https://badge.fury.io/js/smig)
 [![License: MIT](https://img.shields.io/badge/License-MIT-violet.svg)](https://opensource.org/licenses/MIT)
 
 ---
@@ -1019,4 +1019,4 @@ MIT © [Chris Harris](https://github.com/kathysledge)
 
 ---
 
-Built with ❤️ for the SurrealDB community. [**Sponsor this project, even $5 helps 🙏**](https://github.com/sponsors/kathysledge)
+Built with ❤️ for the SurrealDB community. [**Sponsor me** 🙏](https://github.com/sponsors/kathysledge)

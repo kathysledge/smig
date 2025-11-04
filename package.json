@@ -1,6 +1,6 @@
 {
   "name": "smig",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Automatic SurrealDB migrations with a concise DSL",
   "type": "module",
   "main": "dist/index.js",
@@ -48,12 +48,12 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.2",
+    "@biomejs/biome": "^2.3.3",
     "@types/fs-extra": "^11.0.4",
-    "@types/node": "^24.9.2",
+    "@types/node": "^24.10.0",
     "typescript": "^5.9.3",
     "vite": "^7.1.12",
-    "vitest": "^4.0.5"
+    "vitest": "^4.0.7"
   },
   "engines": {
     "node": ">=18.0.0"
