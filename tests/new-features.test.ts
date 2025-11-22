@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  fn,
-  scope,
   analyzer,
-  record,
-  string,
-  int,
   composeSchema,
   defineSchema,
+  fn,
+  int,
+  record,
+  scope,
+  string,
 } from "../src/schema/concise-schema";
 
 describe("New Schema Features", () => {
@@ -61,9 +61,7 @@ describe("New Schema Features", () => {
     });
 
     it("should add comments to functions", () => {
-      const func = fn("my_function")
-        .body("RETURN 42;")
-        .comment("Calculates the meaning of life");
+      const func = fn("my_function").body("RETURN 42;").comment("Calculates the meaning of life");
 
       const built = func.build();
       expect(built.comments).toContain("Calculates the meaning of life");
@@ -385,9 +383,7 @@ describe("New Schema Features", () => {
     });
 
     it("should handle multiple assertions with computed fields", () => {
-      const field = int()
-        .computed("array::len(items)")
-        .assert("$value >= 0");
+      const field = int().computed("array::len(items)").assert("$value >= 0");
 
       const built = field.build();
       expect(built.value).toContain("<future>");
@@ -420,7 +416,9 @@ describe("New Schema Features", () => {
       const accountScope = scope("account")
         .session("7d")
         .signup("CREATE user SET email = $email, password = crypto::argon2::generate($password);")
-        .signin("SELECT * FROM user WHERE email = $email AND crypto::argon2::compare(password, $password);");
+        .signin(
+          "SELECT * FROM user WHERE email = $email AND crypto::argon2::compare(password, $password);",
+        );
 
       // User table with computed score
       const userSchema = defineSchema({
@@ -430,9 +428,7 @@ describe("New Schema Features", () => {
           name: string().required(),
           "votes.positive": string().default([]),
           "votes.negative": string().default([]),
-          "votes.score": int().computed(
-            "array::len(votes.positive) - array::len(votes.negative)"
-          ),
+          "votes.score": int().computed("array::len(votes.positive) - array::len(votes.negative)"),
         },
       });
 
@@ -479,4 +475,3 @@ describe("New Schema Features", () => {
     });
   });
 });
-

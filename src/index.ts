@@ -101,7 +101,7 @@
  * - **CLI Tools**: Command-line interface for development and deployment
  *
  * @module smig
- * @version 0.0.5
+ * @version 0.1.0
  * @author Chris Harris
  * @license MIT
  */
@@ -141,6 +141,7 @@ export type {
  * This is the primary API for defining database schemas.
  */
 export {
+  analyzer,
   any,
   array,
   bool,
@@ -157,6 +158,8 @@ export {
   duration,
   event,
   float,
+  // New builders
+  fn,
   geometry,
   // Schema element builders
   index,
@@ -164,11 +167,8 @@ export {
   object,
   option,
   record,
+  scope,
   // Field type builders
   string,
   uuid,
-  // New builders
-  fn,
-  scope,
-  analyzer,
 } from "./schema/concise-schema";

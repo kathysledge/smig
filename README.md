@@ -5,7 +5,7 @@
 
 ### SurrealDB schema management with automatic migrations
 
-[![npm version](https://badge.fury.io/js/smig.svg?version=0.0.5)](https://badge.fury.io/js/smig)
+[![npm version](https://badge.fury.io/js/smig.svg?version=0.1.0)](https://badge.fury.io/js/smig)
 [![License: MIT](https://img.shields.io/badge/License-MIT-violet.svg)](https://opensource.org/licenses/MIT)
 
 ---
@@ -41,338 +41,6 @@ Inspired by [Alembic](https://alembic.sqlalchemy.org/en/latest/) (Python) and ma
 - 🔐 **Authentication scopes** - Define custom auth with SIGNUP/SIGNIN logic
 - 🔍 **Full-text search** - Analyzer configuration for advanced search
 - ⚙️ **Custom functions** - Reusable database functions with type safety
-
----
-
-## For Technical Leaders
-
-### Executive Summary
-
-**smig** eliminates schema management as a source of technical debt and production risk. By automating migration generation and providing comprehensive rollback capabilities, it reduces database change cycles from hours to minutes while maintaining audit trails and integrity guarantees.
-
-**Key Business Value:**
-- **80% reduction** in time spent on database schema changes
-- **Zero-downtime deployments** with automatic rollback support
-- **Eliminates schema drift** across development, staging, and production
-- **Type-safe APIs** reduce runtime errors and improve developer velocity
-- **Production-ready** with checksum verification and migration integrity
-
-### Architecture & Design Philosophy
-
-**smig** follows the declarative schema management pattern pioneered by Alembic (Python) and Prisma (Node.js), adapted specifically for SurrealDB's unique capabilities:
-
-```
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  TypeScript     │────▶│  Migration       │────▶│   SurrealDB     │
-│  Schema         │     │  Engine          │     │   Instance      │
-│  Definition     │     │  (Diff + Apply)  │     │                 │
-└─────────────────┘     └──────────────────┘     └─────────────────┘
-       │                         │                        │
-       │                         │                        │
-       ▼                         ▼                        ▼
-  Type Safety          SHA-256 Checksums          Schema Introspection
-  Validation           Rollback Generation        Version Tracking
-```
-
-#### Core Architectural Decisions
-
-1. **Schema-as-Code Approach**
-   - Database schema defined in version-controlled TypeScript/JavaScript
-   - Single source of truth eliminates configuration drift
-   - Enables code review workflows for database changes
-   - **Why**: Treating infrastructure as code is industry best practice. This approach has proven successful in tools like Terraform, Kubernetes, and Prisma.
-
-2. **Automatic Diff Generation**
-   - Compares current database state with desired schema
-   - Generates minimal, precise SQL changes
-   - Bidirectional migrations (up/down) generated automatically
-   - **Why**: Manual diff generation is error-prone and time-consuming. Automation eliminates a major source of production incidents.
-
-3. **Checksum-Based Integrity**
-   - Every migration tracked with SHA-256 checksums
-   - Detects unauthorized changes to migration history
-   - Ensures migration reproducibility across environments
-   - **Why**: Similar to how Git uses checksums, this provides cryptographic verification of migration integrity.
-
-4. **Smart Recovery from Failures**
-   - Compares actual database state (not just migration history)
-   - Automatically resumes from last successful change
-   - No manual intervention required for partial migration failures
-   - **Why**: Traditional migration tools require manual cleanup after failures. **smig** treats the database state as authoritative.
-
-### Advanced Features for Enterprise
-
-#### 1. Custom Functions (Reusable Database Logic)
-
-Define type-safe, reusable database functions for complex calculations:
-
-```javascript
-import { fn } from 'smig';
-
-const daysSince = fn('fn::days_since')
-  .param('time', 'datetime')
-  .returns('float')
-  .body('RETURN <float> (time::now() - $time) / 60 / 60 / 24;');
-
-// Use in queries: fn::days_since(user.lastLogin)
-```
-
-**Business Value:**
-- Centralize business logic in the database layer
-- Reduce network round-trips for complex calculations
-- Ensure consistent logic across application services
-- Versionable and testable alongside schema
-
-#### 2. Authentication Scopes (Built-in Auth)
-
-Define custom authentication with session management:
-
-```javascript
-import { scope } from 'smig';
-
-const accountScope = scope('account')
-  .session('7d')
-  .signup(`
-    CREATE user SET
-      email = $email,
-      password = crypto::argon2::generate($password),
-      dateJoined = time::now()
-  `)
-  .signin(`
-    SELECT * FROM user
-    WHERE email = $email
-    AND crypto::argon2::compare(password, $password)
-  `);
-```
-
-**Business Value:**
-- Database-native authentication reduces attack surface
-- Session management without external services
-- Argon2 password hashing (OWASP recommended)
-- Multi-tenant support through namespaces
-
-#### 3. Full-Text Search Analyzers
-
-Configure advanced text search with tokenizers and filters:
-
-```javascript
-import { analyzer } from 'smig';
-
-const englishSearch = analyzer('relevanceSearch')
-  .tokenizers(['camel', 'class', 'blank'])
-  .filters(['ascii', 'snowball(english)']);
-
-// Use with SEARCH indexes for advanced querying
-```
-
-**Business Value:**
-- Elasticsearch-level search without external dependencies
-- Language-specific stemming and normalization
-- Autocomplete and fuzzy matching support
-- Reduces infrastructure complexity
-
-#### 4. Union Type Records (Polymorphic References)
-
-Support for polymorphic relationships across multiple tables:
-
-```javascript
-import { record } from 'smig';
-
-fields: {
-  // Can reference post OR comment OR user
-  context: record(['post', 'comment', 'user']),
-  
-  // Generic record (any table)
-  subject: record(),
-  
-  // Single table (traditional FK)
-  author: record('user')
-}
-```
-
-**Business Value:**
-- Model complex relationships without junction tables
-- Polymorphic associations common in notification systems
-- Reduced schema complexity for generic workflows
-- True to graph database paradigm
-
-#### 5. Computed Fields (Derived Data)
-
-Define fields that calculate values on-the-fly:
-
-```javascript
-fields: {
-  'votes.positive': array(record('user')).default([]),
-  'votes.negative': array(record('user')).default([]),
-  
-  // Computed field (always up-to-date)
-  'votes.score': int().computed(`
-    array::len(votes.positive) - array::len(votes.negative)
-  `)
-}
-```
-
-**Business Value:**
-- Eliminate stale derived data
-- Reduce storage overhead
-- Automatic recalculation on access
-- No background job maintenance
-
-### Production Considerations
-
-#### Security
-
-- **Credential Management**: Environment variables and config files support
-- **Checksum Verification**: SHA-256 checksums prevent unauthorized changes
-- **Audit Trail**: Complete migration history with timestamps
-- **Rollback Safety**: Automatic down migrations for incident recovery
-- **Least Privilege**: Supports database-level permission configuration
-
-#### Scalability
-
-- **Zero-Downtime Migrations**: Schema changes don't require downtime
-- **Incremental Changes**: Only modified elements are migrated
-- **Efficient Introspection**: Uses SurrealDB's native INFO commands
-- **Parallel Safe**: Multiple services can read schema simultaneously
-- **Multi-Environment**: Separate configs for dev/staging/prod
-
-#### Operational Excellence
-
-- **Migration Tracking**: Built-in `_migrations` table with full history
-- **Dry Run Mode**: Preview changes before applying (`smig generate`)
-- **Status Command**: View applied migrations and pending changes
-- **Rollback Support**: Automatic rollback script generation
-- **Smart Recovery**: Resumes from last successful state after failures
-
-#### Monitoring & Observability
-
-```bash
-# View migration status
-smig status
-
-# Generate migration preview
-smig generate
-
-# Rollback last migration
-smig rollback
-
-# View configuration
-smig config --env production
-```
-
-### Migration Best Practices
-
-#### Development Workflow
-
-```bash
-# 1. Developer workflow
-git checkout -b feature/add-user-table
-# Edit schema.js
-smig generate  # Preview changes
-smig migrate   # Apply to local dev database
-git commit -m "Add user table with authentication"
-
-# 2. Code review
-# Reviewer examines generated migration SQL
-# Checks for breaking changes, indexes, performance impact
-
-# 3. Staging deployment
-git checkout staging
-git merge feature/add-user-table
-smig migrate --env staging
-
-# 4. Production deployment (after QA approval)
-git checkout main
-git merge staging
-smig migrate --env production
-```
-
-#### Zero-Downtime Strategy
-
-**smig** supports progressive schema evolution:
-
-1. **Additive Changes First**: New fields, indexes, tables
-2. **Backward Compatible**: Old code works with new schema
-3. **Deploy Application**: Roll out code that uses new schema
-4. **Cleanup**: Remove deprecated fields/tables in future migration
-
-Example:
-```javascript
-// Migration 1: Add new field (backward compatible)
-email_new: string().assert('$value ~ /^[^@]+@[^@]+\\.[^@]+$/')
-
-// Deploy application code using email_new
-
-// Migration 2: Remove old field
-// REMOVE FIELD email ON TABLE user;
-```
-
-### Performance Considerations
-
-#### Index Strategy
-
-```javascript
-indexes: {
-  // Primary lookup (HASH for exact matches)
-  email: index(['email']).unique().hash(),
-  
-  // Range queries (BTREE for sorting)
-  createdAt: index(['createdAt']).btree(),
-  
-  // Full-text search (SEARCH with analyzer)
-  content: index(['title', 'body'])
-    .search()
-    .analyzer('relevanceSearch')
-    .highlights(),
-  
-  // Geospatial queries (MTREE for coordinates)
-  location: index(['coordinates']).mtree()
-}
-```
-
-#### Computed Field vs Stored Value
-
-**Computed fields** (always current, no storage overhead):
-```javascript
-'votes.score': int().computed('array::len(votes.positive) - array::len(votes.negative)')
-```
-
-**Stored fields** (faster queries, requires updates):
-```javascript
-'votes.score': int().default(0)
-// Update via event or application code
-```
-
-**Decision criteria:**
-- Computed: Infrequently accessed, critical accuracy
-- Stored: Frequently queried, acceptable slight staleness
-
-### Compliance & Governance
-
-- **Audit Trail**: Full migration history with timestamps and checksums
-- **Rollback Capability**: All migrations are reversible
-- **Version Control**: Schema changes tracked in Git
-- **Code Review**: Schema changes go through PR process
-- **Environment Isolation**: Separate configs prevent cross-contamination
-- **Reproducibility**: Checksums ensure identical schema across environments
-
-### Cost Optimization
-
-**smig** reduces costs through:
-
-1. **Developer Time**: 80% reduction in migration authoring time
-2. **Incident Recovery**: Automatic rollback eliminates emergency debugging
-3. **Infrastructure**: Built-in features reduce need for external services:
-   - Authentication (no Auth0/Firebase)
-   - Full-text search (no Elasticsearch)
-   - Job functions (no Lambda/Cloud Functions)
-4. **Operational Overhead**: Self-managing schema eliminates manual tracking
-
-### Technical Support
-
-- **Community**: GitHub issues and discussions
-- **Documentation**: Comprehensive guides and examples
-- **Enterprise**: Custom support available for production deployments
 
 ---
 
@@ -1088,6 +756,125 @@ bun smig migrate --debug
 
 This creates a debug log file with detailed information about the migration process.
 
+## Advanced features
+
+### Custom functions
+
+Define reusable database functions with type-safe parameters:
+
+```javascript
+import { fn } from 'smig';
+
+const daysSince = fn('fn::days_since')
+  .param('time', 'datetime')
+  .returns('float')
+  .body('RETURN <float> (time::now() - $time) / 60 / 60 / 24;');
+
+// Include in schema
+export default composeSchema({
+  models: { /* ... */ },
+  functions: { daysSince }
+});
+```
+
+**Use case**: Centralize calculations, reduce network round-trips, ensure consistent logic.
+
+### Authentication scopes
+
+Define custom authentication with SIGNUP/SIGNIN logic:
+
+```javascript
+import { scope } from 'smig';
+
+const accountScope = scope('account')
+  .session('7d')
+  .signup(`
+    CREATE user SET
+      email = $email,
+      password = crypto::argon2::generate($password),
+      dateJoined = time::now()
+  `)
+  .signin(`
+    SELECT * FROM user
+    WHERE email = $email
+    AND crypto::argon2::compare(password, $password)
+  `);
+
+// Include in schema
+export default composeSchema({
+  models: { /* ... */ },
+  scopes: { account: accountScope }
+});
+```
+
+**Use case**: Database-native auth, session management, Argon2 hashing, multi-tenant support.
+
+### Full-text search analyzers
+
+Configure text analysis for SEARCH indexes:
+
+```javascript
+import { analyzer } from 'smig';
+
+const searchAnalyzer = analyzer('relevanceSearch')
+  .tokenizers(['camel', 'class', 'blank'])
+  .filters(['ascii', 'snowball(english)']);
+
+// Include in schema
+export default composeSchema({
+  models: { /* ... */ },
+  analyzers: { search: searchAnalyzer }
+});
+
+// Use in index
+indexes: {
+  content: index(['title', 'body'])
+    .search()
+    .analyzer('relevanceSearch')
+}
+```
+
+**Use case**: Advanced search without Elasticsearch, language-specific stemming, autocomplete.
+
+### Union type records
+
+Reference multiple table types polymorphically:
+
+```javascript
+import { record } from 'smig';
+
+fields: {
+  // Can reference post OR comment OR user
+  context: record(['post', 'comment', 'user']),
+  
+  // Generic record (any table)
+  subject: record(),
+  
+  // Traditional single table
+  author: record('user')
+}
+```
+
+**Use case**: Notifications, activity feeds, polymorphic associations, flexible workflows.
+
+### Computed fields
+
+Define fields that calculate values dynamically:
+
+```javascript
+fields: {
+  'votes.positive': array(record('user')).default([]),
+  'votes.negative': array(record('user')).default([]),
+  
+  // Automatically calculated on read
+  'votes.score': int().computed(`
+    array::len(votes.positive) - array::len(votes.negative)
+  `)
+}
+```
+
+**Use case**: Eliminate stale data, reduce storage, automatic recalculation, no background jobs.
+
 ## API reference
 
 ### Field types
@@ -1105,7 +892,9 @@ This creates a debug log file with detailed information about the migration proc
 | `object()` | JSON object | `metadata: object()` |
 | `geometry()` | Geometric data | `location: geometry()` |
 | `array(type)` | Array of type | `tags: array('string')` |
-| `record(table)` | Foreign key | `author: record('user')` |
+| `record(table)` | Single table reference | `author: record('user')` |
+| `record([tables])` | Union type (multiple tables) | `context: record(['post', 'comment'])` |
+| `record()` | Generic record (any table) | `subject: record()` |
 | `option(type)` | Optional field | `bio: option('string')` |
 
 ### Field methods
@@ -1114,7 +903,19 @@ This creates a debug log file with detailed information about the migration proc
 |--------|-------------|---------|
 | `.default(value)` | Set default value | `bool().default(true)` |
 | `.value(expression)` | Set SurrealQL value | `datetime().value('time::now()')` |
+| `.computed(expression)` | Set computed field with `<future>` | `int().computed('array::len(items)')` |
 | `.assert(condition)` | Add validation | `string().assert('$value != ""')` |
+| `.required()` | Require non-null value | `string().required()` |
+
+### Schema element builders
+
+| Builder | Description | Example |
+|---------|-------------|---------|
+| `fn(name)` | Custom function | `fn('fn::calc').param('x', 'int').body('...')` |
+| `scope(name)` | Authentication scope | `scope('account').session('7d').signin('...')` |
+| `analyzer(name)` | Text search analyzer | `analyzer('search').tokenizers([...]).filters([...])` |
+| `event(name)` | Database event/trigger | `event('update').onUpdate().thenDo('...')` |
+| `index(columns)` | Database index | `index(['email']).unique()` |
 
 ### Index methods
 
@@ -1124,6 +925,7 @@ This creates a debug log file with detailed information about the migration proc
 | `.search()` | Full-text search | `index(['content']).search()` |
 | `.btree()` | B-tree index (default) | `index(['createdAt']).btree()` |
 | `.hash()` | Hash index | `index(['userId']).hash()` |
+| `.mtree()` | Multi-dimensional index | `index(['location']).mtree()` |
 | `.analyzer(name)` | Set search analyzer | `index(['content']).search().analyzer('english')` |
 | `.highlights()` | Enable search highlights | `index(['content']).search().highlights()` |
 
@@ -1171,7 +973,9 @@ npx smig migrate --schema examples/simple-blog-schema.js
 
 ### Does **smig** work with SurrealDB 3?
 
-Absolutely! **smig** fully supports SurrealDB 3 using the `DEFINE OVERWRITE` method for field modifications. We're also working on adding support for the new `ALTER FIELD` syntax that SurrealDB 3 introduces, which will provide even more flexibility for schema changes.
+Not yet, but we're actively working on it! SurrealDB 3 requires a new JavaScript library for connectivity, and we're currently implementing support for it. Once that's complete, we'll also add support for the new `ALTER FIELD` syntax that SurrealDB 3 introduces, which will provide even more flexibility for schema changes.
+
+For now, **smig** works with SurrealDB 2.x using the `DEFINE OVERWRITE` method for field modifications.
 
 ### Why don't my tables need an ID field?
 
@@ -1349,6 +1153,54 @@ Found a bug? Have a feature request? Please open an issue on GitHub with:
 - **Environment isolation** - Separate configs prevent accidental production changes
 
 For security concerns or vulnerabilities, please email chris@chwd.ca (or open a private security advisory on GitHub).
+
+## Changelog
+
+### [0.1.0] - 2025-01-15
+
+**Major Features**
+
+- ✨ **Custom Functions** - Define reusable database functions with `fn()` builder
+  - Type-safe parameters with `.param(name, type)`
+  - Optional return type specification with `.returns(type)`
+  - Full SurrealQL body support
+  - Automatic migration generation
+
+- 🔐 **Authentication Scopes** - Built-in auth configuration with `scope()` builder
+  - Session duration management with `.session(duration)`
+  - Custom SIGNUP logic with `.signup(query)`
+  - Custom SIGNIN logic with `.signin(query)`
+  - Argon2 password hashing support
+
+- 🔍 **Full-Text Search Analyzers** - Configure text analysis with `analyzer()` builder
+  - Tokenizer configuration (camel, class, blank, punct)
+  - Filter configuration (ascii, lowercase, snowball, edgengram, ngram)
+  - Language-specific stemming
+  - Integration with SEARCH indexes
+
+- 🔗 **Union Type Records** - Polymorphic table references
+  - Single table: `record('user')`
+  - Multiple tables: `record(['post', 'comment', 'user'])`
+  - Generic record: `record()` (any table)
+  - Useful for notifications, activity feeds
+
+- ⚡ **Computed Fields** - Dynamic field calculations with `.computed()` method
+  - Automatic wrapping in SurrealDB's `<future>` syntax
+  - Always up-to-date derived values
+  - Reduces storage overhead
+  - No background job maintenance required
+
+**Enhancements**
+
+- 📊 Extended `SurrealDBSchema` interface to include functions, scopes, and analyzers
+- 🔄 Enhanced `MigrationManager` to generate migrations for all new schema elements
+- ↩️ Added rollback support for functions, scopes, and analyzers
+- 🧪 Comprehensive test suite with 38 new tests
+- 📚 Updated API reference documentation
+
+**Breaking Changes**
+
+- None - all changes are backward compatible
 
 ## License
 

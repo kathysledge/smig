@@ -760,7 +760,7 @@ export class MigrationManager {
       const func = newFunction as any;
       const currentFunction = (currentSchema.functions || []).find(
         // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
-        (f: any) => f.name === func.name
+        (f: any) => f.name === func.name,
       );
 
       if (!currentFunction) {
@@ -786,7 +786,7 @@ export class MigrationManager {
       const func = currentFunction as any;
       const stillExists = (schema.functions || []).find(
         // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
-        (f: any) => f.name === func.name
+        (f: any) => f.name === func.name,
       );
       if (!stillExists) {
         upChanges.push(`-- Removed function: ${func.name}`);
@@ -809,7 +809,7 @@ export class MigrationManager {
       const scope = newScope as any;
       const currentScope = (currentSchema.scopes || []).find(
         // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
-        (s: any) => s.name === scope.name
+        (s: any) => s.name === scope.name,
       );
 
       if (!currentScope) {
@@ -835,7 +835,7 @@ export class MigrationManager {
       const scope = currentScope as any;
       const stillExists = (schema.scopes || []).find(
         // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
-        (s: any) => s.name === scope.name
+        (s: any) => s.name === scope.name,
       );
       if (!stillExists) {
         upChanges.push(`-- Removed scope: ${scope.name}`);
@@ -858,7 +858,7 @@ export class MigrationManager {
       const analyzer = newAnalyzer as any;
       const currentAnalyzer = (currentSchema.analyzers || []).find(
         // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
-        (a: any) => a.name === analyzer.name
+        (a: any) => a.name === analyzer.name,
       );
 
       if (!currentAnalyzer) {
@@ -884,7 +884,7 @@ export class MigrationManager {
       const analyzer = currentAnalyzer as any;
       const stillExists = (schema.analyzers || []).find(
         // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
-        (a: any) => a.name === analyzer.name
+        (a: any) => a.name === analyzer.name,
       );
       if (!stillExists) {
         upChanges.push(`-- Removed analyzer: ${analyzer.name}`);
@@ -1750,10 +1750,10 @@ export class MigrationManager {
     if (func.parameters && func.parameters.length > 0) {
       const params = func.parameters
         .map((p: { name: string; type: string }) => `$${p.name}: ${p.type}`)
-        .join(', ');
+        .join(", ");
       definition += `(${params})`;
     } else {
-      definition += '()';
+      definition += "()";
     }
 
     // Add return type if specified
@@ -1764,7 +1764,7 @@ export class MigrationManager {
     // Add body (wrapped in code block)
     definition += ` { ${func.body} }`;
 
-    return definition + ';';
+    return `${definition};`;
   }
 
   /**
@@ -1797,7 +1797,7 @@ export class MigrationManager {
       definition += ` SIGNIN (${scope.signin})`;
     }
 
-    return definition + ';';
+    return `${definition};`;
   }
 
   /**
@@ -1817,15 +1817,15 @@ export class MigrationManager {
 
     // Add tokenizers
     if (analyzer.tokenizers && analyzer.tokenizers.length > 0) {
-      definition += ` TOKENIZERS ${analyzer.tokenizers.join(', ')}`;
+      definition += ` TOKENIZERS ${analyzer.tokenizers.join(", ")}`;
     }
 
     // Add filters
     if (analyzer.filters && analyzer.filters.length > 0) {
-      definition += ` FILTERS ${analyzer.filters.join(', ')}`;
+      definition += ` FILTERS ${analyzer.filters.join(", ")}`;
     }
 
-    return definition + ';';
+    return `${definition};`;
   }
 
   /**

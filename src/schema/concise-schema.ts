@@ -186,8 +186,8 @@ class SurrealQLFieldBase {
    * ```typescript
    * // Computed vote score
    * const score = number().computed(`
-   *   array::len(votes.positive) - 
-   *   (<float> array::len(votes.misleading) / 2) - 
+   *   array::len(votes.positive) -
+   *   (<float> array::len(votes.misleading) / 2) -
    *   array::len(votes.negative)
    * `);
    *
@@ -804,10 +804,10 @@ export class SurrealQLRecord extends SurrealQLFieldBase {
     super();
     if (!tableName) {
       // Generic record type (no specific table)
-      this.field.type = 'record';
+      this.field.type = "record";
     } else if (Array.isArray(tableName)) {
       // Union type (multiple tables)
-      const tables = tableName.map(t => t.toLowerCase()).join(' | ');
+      const tables = tableName.map((t) => t.toLowerCase()).join(" | ");
       this.field.type = `record<${tables}>`;
     } else {
       // Single table reference
@@ -1071,10 +1071,10 @@ export class SurrealQLEvent {
  */
 export class SurrealQLFunction {
   private func: Record<string, unknown> = {
-    name: '',
+    name: "",
     parameters: [],
     returnType: null,
-    body: '',
+    body: "",
     comments: [],
   };
 
@@ -1084,23 +1084,23 @@ export class SurrealQLFunction {
   }
 
   private validateName(name: string): void {
-    if (!name || name.trim() === '') {
-      throw new Error('Function name is required and cannot be empty');
+    if (!name || name.trim() === "") {
+      throw new Error("Function name is required and cannot be empty");
     }
 
     const trimmed = name.trim();
-    
+
     // Allow 'fn::' prefix format
-    if (trimmed.startsWith('fn::')) {
+    if (trimmed.startsWith("fn::")) {
       const localName = trimmed.substring(4);
       if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(localName)) {
         throw new Error(
-          `Invalid function name '${trimmed}'. After 'fn::', must be a valid identifier (letters, numbers, underscores only, cannot start with number).`
+          `Invalid function name '${trimmed}'. After 'fn::', must be a valid identifier (letters, numbers, underscores only, cannot start with number).`,
         );
       }
     } else if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmed)) {
       throw new Error(
-        `Invalid function name '${trimmed}'. Must be a valid identifier or start with 'fn::' (letters, numbers, underscores only, cannot start with number).`
+        `Invalid function name '${trimmed}'. Must be a valid identifier or start with 'fn::' (letters, numbers, underscores only, cannot start with number).`,
       );
     }
   }
@@ -1136,8 +1136,8 @@ export class SurrealQLFunction {
    * @returns The function instance for method chaining
    */
   body(code: string) {
-    if (!code || code.trim() === '') {
-      throw new Error('Function body is required and cannot be empty');
+    if (!code || code.trim() === "") {
+      throw new Error("Function body is required and cannot be empty");
     }
     this.func.body = processSurrealQL(code);
     return this;
@@ -1145,7 +1145,7 @@ export class SurrealQLFunction {
 
   /** Adds a documentation comment for the function */
   comment(text: string) {
-    if (text && text.trim() !== '') {
+    if (text && text.trim() !== "") {
       // biome-ignore lint/suspicious/noExplicitAny: Dynamic comment array
       (this.func.comments as any[]).push(text.trim());
     }
@@ -1154,8 +1154,10 @@ export class SurrealQLFunction {
 
   /** Builds and validates the complete function definition */
   build() {
-    if (!this.func.body || (this.func.body as string).trim() === '') {
-      throw new Error(`Function ${this.func.name} requires a body. Use .body("your SurrealQL here").`);
+    if (!this.func.body || (this.func.body as string).trim() === "") {
+      throw new Error(
+        `Function ${this.func.name} requires a body. Use .body("your SurrealQL here").`,
+      );
     }
 
     return {
@@ -1213,7 +1215,7 @@ export class SurrealQLFunction {
  */
 export class SurrealQLScope {
   private scope: Record<string, unknown> = {
-    name: '',
+    name: "",
     session: null,
     signup: null,
     signin: null,
@@ -1226,14 +1228,14 @@ export class SurrealQLScope {
   }
 
   private validateName(name: string): void {
-    if (!name || name.trim() === '') {
-      throw new Error('Scope name is required and cannot be empty');
+    if (!name || name.trim() === "") {
+      throw new Error("Scope name is required and cannot be empty");
     }
 
     const trimmed = name.trim();
     if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmed)) {
       throw new Error(
-        `Invalid scope name '${trimmed}'. Must be a valid identifier (letters, numbers, underscores only, cannot start with number).`
+        `Invalid scope name '${trimmed}'. Must be a valid identifier (letters, numbers, underscores only, cannot start with number).`,
       );
     }
   }
@@ -1258,8 +1260,8 @@ export class SurrealQLScope {
    * @returns The scope instance for method chaining
    */
   signup(query: string) {
-    if (!query || query.trim() === '') {
-      throw new Error('SIGNUP clause is required and cannot be empty');
+    if (!query || query.trim() === "") {
+      throw new Error("SIGNUP clause is required and cannot be empty");
     }
     this.scope.signup = processSurrealQL(query);
     return this;
@@ -1274,8 +1276,8 @@ export class SurrealQLScope {
    * @returns The scope instance for method chaining
    */
   signin(query: string) {
-    if (!query || query.trim() === '') {
-      throw new Error('SIGNIN clause is required and cannot be empty');
+    if (!query || query.trim() === "") {
+      throw new Error("SIGNIN clause is required and cannot be empty");
     }
     this.scope.signin = processSurrealQL(query);
     return this;
@@ -1283,7 +1285,7 @@ export class SurrealQLScope {
 
   /** Adds a documentation comment for the scope */
   comment(text: string) {
-    if (text && text.trim() !== '') {
+    if (text && text.trim() !== "") {
       // biome-ignore lint/suspicious/noExplicitAny: Dynamic comment array
       (this.scope.comments as any[]).push(text.trim());
     }
@@ -1295,7 +1297,7 @@ export class SurrealQLScope {
     // At least one of signup or signin must be provided
     if (!this.scope.signup && !this.scope.signin) {
       throw new Error(
-        `Scope ${this.scope.name} requires at least SIGNUP or SIGNIN logic. Use .signup() or .signin().`
+        `Scope ${this.scope.name} requires at least SIGNUP or SIGNIN logic. Use .signup() or .signin().`,
       );
     }
 
@@ -1352,7 +1354,7 @@ export class SurrealQLScope {
  */
 export class SurrealQLAnalyzer {
   private analyzer: Record<string, unknown> = {
-    name: '',
+    name: "",
     tokenizers: [],
     filters: [],
     comments: [],
@@ -1364,14 +1366,14 @@ export class SurrealQLAnalyzer {
   }
 
   private validateName(name: string): void {
-    if (!name || name.trim() === '') {
-      throw new Error('Analyzer name is required and cannot be empty');
+    if (!name || name.trim() === "") {
+      throw new Error("Analyzer name is required and cannot be empty");
     }
 
     const trimmed = name.trim();
     if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmed)) {
       throw new Error(
-        `Invalid analyzer name '${trimmed}'. Must be a valid identifier (letters, numbers, underscores only, cannot start with number).`
+        `Invalid analyzer name '${trimmed}'. Must be a valid identifier (letters, numbers, underscores only, cannot start with number).`,
       );
     }
   }
@@ -1384,7 +1386,7 @@ export class SurrealQLAnalyzer {
    */
   tokenizers(tokenizers: string[]) {
     if (!tokenizers || tokenizers.length === 0) {
-      throw new Error('At least one tokenizer is required');
+      throw new Error("At least one tokenizer is required");
     }
     this.analyzer.tokenizers = tokenizers;
     return this;
@@ -1398,7 +1400,7 @@ export class SurrealQLAnalyzer {
    */
   filters(filters: string[]) {
     if (!filters || filters.length === 0) {
-      throw new Error('At least one filter is required');
+      throw new Error("At least one filter is required");
     }
     this.analyzer.filters = filters;
     return this;
@@ -1406,7 +1408,7 @@ export class SurrealQLAnalyzer {
 
   /** Adds a documentation comment for the analyzer */
   comment(text: string) {
-    if (text && text.trim() !== '') {
+    if (text && text.trim() !== "") {
       // biome-ignore lint/suspicious/noExplicitAny: Dynamic comment array
       (this.analyzer.comments as any[]).push(text.trim());
     }
@@ -1417,13 +1419,13 @@ export class SurrealQLAnalyzer {
   build() {
     if (!this.analyzer.tokenizers || (this.analyzer.tokenizers as string[]).length === 0) {
       throw new Error(
-        `Analyzer ${this.analyzer.name} requires at least one tokenizer. Use .tokenizers(['blank']).`
+        `Analyzer ${this.analyzer.name} requires at least one tokenizer. Use .tokenizers(['blank']).`,
       );
     }
 
     if (!this.analyzer.filters || (this.analyzer.filters as string[]).length === 0) {
       throw new Error(
-        `Analyzer ${this.analyzer.name} requires at least one filter. Use .filters(['lowercase']).`
+        `Analyzer ${this.analyzer.name} requires at least one filter. Use .filters(['lowercase']).`,
       );
     }
 
