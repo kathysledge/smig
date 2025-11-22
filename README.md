@@ -5,7 +5,7 @@
 
 ### SurrealDB schema management with automatic migrations
 
-[![npm version](https://badge.fury.io/js/smig.svg?version=0.1.1)](https://badge.fury.io/js/smig)
+[![npm version](https://badge.fury.io/js/smig.svg?version=0.1.2)](https://badge.fury.io/js/smig)
 [![License: MIT](https://img.shields.io/badge/License-MIT-violet.svg)](https://opensource.org/licenses/MIT)
 
 ---
@@ -1155,6 +1155,16 @@ Found a bug? Have a feature request? Please open an issue on GitHub with:
 For security concerns or vulnerabilities, please email chris@chwd.ca (or open a private security advisory on GitHub).
 
 ## Changelog
+
+### [0.1.2] - 2025-11-22
+
+**Enhancements**
+
+- ✅ **Full Introspection Support** - Complete schema introspection for functions, scopes, and analyzers
+  - Automatically detects existing functions, scopes, and analyzers in the database
+  - Enables modification detection for all schema elements
+  - Supports proper rollback for function/scope/analyzer changes
+  - Parses SurrealDB `INFO FOR DB` output to extract complete schema state
 
 ### [0.1.1] - 2025-11-22
 

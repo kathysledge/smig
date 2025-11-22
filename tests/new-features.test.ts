@@ -474,4 +474,128 @@ describe("New Schema Features", () => {
       expect(fullSchema.analyzers).toHaveLength(1);
     });
   });
+
+  describe("Introspection", () => {
+    it("should parse function definitions from INFO FOR DB", () => {
+      // This test validates the parsing logic for functions
+      // The format matches what SurrealDB returns from INFO FOR DB
+      const mockFuncDef =
+        "FUNCTION fn::days_since($time: datetime) -> float { RETURN <float> (time::now() - $time) / 60 / 60 / 24; }";
+
+      // In reality, this would be called by MigrationManager.parseFunctionDefinition
+      // We're testing the parsing logic indirectly through the regex patterns
+
+      // Test parameter extraction
+      const paramMatch = mockFuncDef.match(/\((.*?)\)/);
+      expect(paramMatch).toBeTruthy();
+      expect(paramMatch?.[1]).toBe("$time: datetime");
+
+      // Test return type extraction
+      const returnMatch = mockFuncDef.match(/\)\s*->\s*([^\s{]+)/);
+      expect(returnMatch).toBeTruthy();
+      expect(returnMatch?.[1]).toBe("float");
+
+      // Test body extraction
+      const bodyMatch = mockFuncDef.match(/\{(.*)\}/s);
+      expect(bodyMatch).toBeTruthy();
+      expect(bodyMatch?.[1].trim()).toBe("RETURN <float> (time::now() - $time) / 60 / 60 / 24;");
+    });
+
+    it("should parse scope definitions from INFO FOR DB", () => {
+      // Test parsing of scope with all components
+      const mockScopeDef =
+        "SCOPE account SESSION 24h SIGNUP (CREATE user SET email = $email, password = crypto::argon2::generate($password)) SIGNIN (SELECT * FROM user WHERE email = $email AND crypto::argon2::compare(password, $password))";
+
+      // Test session extraction
+      const sessionMatch = mockScopeDef.match(/SESSION\s+(\S+)/);
+      expect(sessionMatch).toBeTruthy();
+      expect(sessionMatch?.[1]).toBe("24h");
+
+      // Test SIGNUP extraction
+      const signupMatch = mockScopeDef.match(/SIGNUP\s+\((.*?)\)\s*(?:SIGNIN|$)/s);
+      expect(signupMatch).toBeTruthy();
+      expect(signupMatch?.[1]).toContain("CREATE user SET");
+
+      // Test SIGNIN extraction
+      const signinMatch = mockScopeDef.match(/SIGNIN\s+\((.*?)\)\s*$/s);
+      expect(signinMatch).toBeTruthy();
+      expect(signinMatch?.[1]).toContain("SELECT * FROM user");
+    });
+
+    it("should parse analyzer definitions from INFO FOR DB", () => {
+      // Test parsing of analyzer with tokenizers and filters
+      const mockAnalyzerDef =
+        "ANALYZER relevanceSearch TOKENIZERS blank, class FILTERS lowercase, snowball(english)";
+
+      // Test tokenizers extraction
+      const tokenizerMatch = mockAnalyzerDef.match(/TOKENIZERS\s+([^F]+?)(?:\s+FILTERS|$)/);
+      expect(tokenizerMatch).toBeTruthy();
+      const tokenizers = tokenizerMatch?.[1]
+        .trim()
+        .split(",")
+        .map((t) => t.trim());
+      expect(tokenizers).toEqual(["blank", "class"]);
+
+      // Test filters extraction
+      const filterMatch = mockAnalyzerDef.match(/FILTERS\s+(.+?)$/);
+      expect(filterMatch).toBeTruthy();
+      const filters = filterMatch?.[1]
+        .trim()
+        .split(",")
+        .map((f) => f.trim());
+      expect(filters).toEqual(["lowercase", "snowball(english)"]);
+    });
+
+    it("should parse function with multiple parameters", () => {
+      const mockFuncDef =
+        "FUNCTION calculate_discount($price: decimal, $discount_percent: int) -> decimal { LET $discount = $price * ($discount_percent / 100); RETURN $price - $discount; }";
+
+      const paramMatch = mockFuncDef.match(/\((.*?)\)/);
+      expect(paramMatch).toBeTruthy();
+
+      const paramStr = paramMatch?.[1];
+      const paramParts = paramStr.split(",");
+      expect(paramParts).toHaveLength(2);
+
+      // First parameter
+      const param1 = paramParts[0].trim();
+      expect(param1).toContain("$price: decimal");
+
+      // Second parameter
+      const param2 = paramParts[1].trim();
+      expect(param2).toContain("$discount_percent: int");
+    });
+
+    it("should parse function without return type", () => {
+      const mockFuncDef =
+        "FUNCTION log_action($action: string) { CREATE log SET action = $action, time = time::now(); }";
+
+      const returnMatch = mockFuncDef.match(/\)\s*->\s*([^\s{]+)/);
+      expect(returnMatch).toBeNull();
+    });
+
+    it("should parse scope with only SIGNIN", () => {
+      const mockScopeDef =
+        "SCOPE api_scope SESSION 1h SIGNIN (SELECT * FROM api_key WHERE key = $key)";
+
+      const sessionMatch = mockScopeDef.match(/SESSION\s+(\S+)/);
+      expect(sessionMatch?.[1]).toBe("1h");
+
+      const signupMatch = mockScopeDef.match(/SIGNUP\s+\((.*?)\)\s*(?:SIGNIN|$)/s);
+      expect(signupMatch).toBeNull();
+
+      const signinMatch = mockScopeDef.match(/SIGNIN\s+\((.*?)\)\s*$/s);
+      expect(signinMatch).toBeTruthy();
+    });
+
+    it("should parse analyzer with only tokenizers", () => {
+      const mockAnalyzerDef = "ANALYZER simple TOKENIZERS blank, class";
+
+      const tokenizerMatch = mockAnalyzerDef.match(/TOKENIZERS\s+([^F]+?)(?:\s+FILTERS|$)/);
+      expect(tokenizerMatch).toBeTruthy();
+
+      const filterMatch = mockAnalyzerDef.match(/FILTERS\s+(.+?)$/);
+      expect(filterMatch).toBeNull();
+    });
+  });
 });

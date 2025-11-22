@@ -776,8 +776,23 @@ export class MigrationManager {
           operation: "create",
           details: { func },
         });
+      } else {
+        // Check if function has been modified
+        const funcModified = this.isFunctionModified(currentFunction, func);
+        if (funcModified) {
+          upChanges.push(`-- Modified function: ${func.name}`);
+          upChanges.push(this.generateFunctionDefinition(func));
+          upChanges.push("");
+
+          // Track for rollback
+          changeLog.push({
+            type: "function",
+            table: func.name,
+            operation: "modify",
+            details: { currentFunction, newFunction: func },
+          });
+        }
       }
-      // TODO: Implement function modification detection
     }
 
     // Check for removed functions
@@ -825,8 +840,23 @@ export class MigrationManager {
           operation: "create",
           details: { scope },
         });
+      } else {
+        // Check if scope has been modified
+        const scopeModified = this.isScopeModified(currentScope, scope);
+        if (scopeModified) {
+          upChanges.push(`-- Modified scope: ${scope.name}`);
+          upChanges.push(this.generateScopeDefinition(scope));
+          upChanges.push("");
+
+          // Track for rollback
+          changeLog.push({
+            type: "scope",
+            table: scope.name,
+            operation: "modify",
+            details: { currentScope, newScope: scope },
+          });
+        }
       }
-      // TODO: Implement scope modification detection
     }
 
     // Check for removed scopes
@@ -874,8 +904,23 @@ export class MigrationManager {
           operation: "create",
           details: { analyzer },
         });
+      } else {
+        // Check if analyzer has been modified
+        const analyzerModified = this.isAnalyzerModified(currentAnalyzer, analyzer);
+        if (analyzerModified) {
+          upChanges.push(`-- Modified analyzer: ${analyzer.name}`);
+          upChanges.push(this.generateAnalyzerDefinition(analyzer));
+          upChanges.push("");
+
+          // Track for rollback
+          changeLog.push({
+            type: "analyzer",
+            table: analyzer.name,
+            operation: "modify",
+            details: { currentAnalyzer, newAnalyzer: analyzer },
+          });
+        }
       }
-      // TODO: Implement analyzer modification detection
     }
 
     // Check for removed analyzers
@@ -1103,6 +1148,30 @@ export class MigrationManager {
               }
             }
             downChanges.push("");
+          } else if (change.type === "function") {
+            // Rollback function modification - restore original function
+            const currentFunction = change.details.currentFunction;
+            if (currentFunction) {
+              downChanges.push(`-- Rollback: Restore function ${change.table} to original state`);
+              downChanges.push(this.generateFunctionDefinition(currentFunction));
+              downChanges.push("");
+            }
+          } else if (change.type === "scope") {
+            // Rollback scope modification - restore original scope
+            const currentScope = change.details.currentScope;
+            if (currentScope) {
+              downChanges.push(`-- Rollback: Restore scope ${change.table} to original state`);
+              downChanges.push(this.generateScopeDefinition(currentScope));
+              downChanges.push("");
+            }
+          } else if (change.type === "analyzer") {
+            // Rollback analyzer modification - restore original analyzer
+            const currentAnalyzer = change.details.currentAnalyzer;
+            if (currentAnalyzer) {
+              downChanges.push(`-- Rollback: Restore analyzer ${change.table} to original state`);
+              downChanges.push(this.generateAnalyzerDefinition(currentAnalyzer));
+              downChanges.push("");
+            }
           }
           break;
 
@@ -1317,12 +1386,61 @@ export class MigrationManager {
       virtualizedRelations.map((r) => (r as Record<string, unknown>).name),
     );
 
+    // Parse functions from database info
+    const virtualizedFunctions = [];
+    if (infoResult && infoResult.length > 0 && infoResult[0].functions) {
+      const functionsObj = infoResult[0].functions as Record<string, unknown>;
+      for (const [funcName, funcDef] of Object.entries(functionsObj)) {
+        try {
+          const parsedFunction = this.parseFunctionDefinition(funcName, funcDef as string);
+          virtualizedFunctions.push(parsedFunction);
+          debugLog(`Parsed function ${funcName}:`, parsedFunction);
+        } catch (error) {
+          debugLog(`Could not parse function ${funcName}:`, error);
+        }
+      }
+    }
+
+    // Parse scopes from database info
+    const virtualizedScopes = [];
+    if (infoResult && infoResult.length > 0 && infoResult[0].scopes) {
+      const scopesObj = infoResult[0].scopes as Record<string, unknown>;
+      for (const [scopeName, scopeDef] of Object.entries(scopesObj)) {
+        try {
+          const parsedScope = this.parseScopeDefinition(scopeName, scopeDef as string);
+          virtualizedScopes.push(parsedScope);
+          debugLog(`Parsed scope ${scopeName}:`, parsedScope);
+        } catch (error) {
+          debugLog(`Could not parse scope ${scopeName}:`, error);
+        }
+      }
+    }
+
+    // Parse analyzers from database info
+    const virtualizedAnalyzers = [];
+    if (infoResult && infoResult.length > 0 && infoResult[0].analyzers) {
+      const analyzersObj = infoResult[0].analyzers as Record<string, unknown>;
+      for (const [analyzerName, analyzerDef] of Object.entries(analyzersObj)) {
+        try {
+          const parsedAnalyzer = this.parseAnalyzerDefinition(analyzerName, analyzerDef as string);
+          virtualizedAnalyzers.push(parsedAnalyzer);
+          debugLog(`Parsed analyzer ${analyzerName}:`, parsedAnalyzer);
+        } catch (error) {
+          debugLog(`Could not parse analyzer ${analyzerName}:`, error);
+        }
+      }
+    }
+
+    debugLog(`Parsed ${virtualizedFunctions.length} functions`);
+    debugLog(`Parsed ${virtualizedScopes.length} scopes`);
+    debugLog(`Parsed ${virtualizedAnalyzers.length} analyzers`);
+
     return {
       tables: virtualizedTables,
       relations: virtualizedRelations,
-      functions: [], // TODO: Implement function introspection
-      scopes: [], // TODO: Implement scope introspection
-      analyzers: [], // TODO: Implement analyzer introspection
+      functions: virtualizedFunctions,
+      scopes: virtualizedScopes,
+      analyzers: virtualizedAnalyzers,
       comments: [],
     } as unknown as SurrealDBSchema;
   }
@@ -1541,6 +1659,237 @@ export class MigrationManager {
   private extractEventThen(eventDef: string): string {
     const thenMatch = eventDef.match(/THEN\s+([^;]+)/);
     return thenMatch ? thenMatch[1].trim() : "";
+  }
+
+  /**
+   * Parses a function definition from INFO FOR DB result.
+   *
+   * Extracts function parameters, return type, and body from the definition string.
+   *
+   * @param funcName - The name of the function
+   * @param funcDef - The function definition string from INFO FOR DB
+   * @returns Parsed function object
+   */
+  private parseFunctionDefinition(funcName: string, funcDef: string): Record<string, unknown> {
+    debugLog(`Parsing function definition for ${funcName}:`, funcDef);
+
+    // Parse parameters from function signature
+    // Format: FUNCTION fn::name($param1: type1, $param2: type2) -> returnType { body }
+    const parameters: Array<{ name: string; type: string }> = [];
+    const paramMatch = funcDef.match(/\((.*?)\)/);
+    if (paramMatch?.[1].trim()) {
+      const paramStr = paramMatch[1];
+      const paramParts = paramStr.split(",");
+      for (const part of paramParts) {
+        const trimmed = part.trim();
+        if (trimmed) {
+          // Format: $name: type
+          const colonIndex = trimmed.indexOf(":");
+          if (colonIndex > 0) {
+            const paramName = trimmed.substring(0, colonIndex).trim().replace("$", "");
+            const paramType = trimmed.substring(colonIndex + 1).trim();
+            parameters.push({ name: paramName, type: paramType });
+          }
+        }
+      }
+    }
+
+    // Parse return type
+    let returnType: string | null = null;
+    const returnMatch = funcDef.match(/\)\s*->\s*([^\s{]+)/);
+    if (returnMatch) {
+      returnType = returnMatch[1].trim();
+    }
+
+    // Parse body - everything between { and }
+    let body = "";
+    const bodyMatch = funcDef.match(/\{(.*)\}/s);
+    if (bodyMatch) {
+      body = bodyMatch[1].trim();
+    }
+
+    return {
+      name: funcName,
+      parameters,
+      returnType,
+      body,
+      comments: [],
+    };
+  }
+
+  /**
+   * Parses a scope definition from INFO FOR DB result.
+   *
+   * Extracts session duration, SIGNUP query, and SIGNIN query from the definition string.
+   *
+   * @param scopeName - The name of the scope
+   * @param scopeDef - The scope definition string from INFO FOR DB
+   * @returns Parsed scope object
+   */
+  private parseScopeDefinition(scopeName: string, scopeDef: string): Record<string, unknown> {
+    debugLog(`Parsing scope definition for ${scopeName}:`, scopeDef);
+
+    // Parse session duration
+    let session: string | null = null;
+    const sessionMatch = scopeDef.match(/SESSION\s+(\S+)/);
+    if (sessionMatch) {
+      session = sessionMatch[1];
+    }
+
+    // Parse SIGNUP query - everything between SIGNUP ( and ) before SIGNIN
+    let signup: string | null = null;
+    const signupMatch = scopeDef.match(/SIGNUP\s+\((.*?)\)\s*(?:SIGNIN|$)/s);
+    if (signupMatch) {
+      signup = signupMatch[1].trim();
+    }
+
+    // Parse SIGNIN query - everything between SIGNIN ( and )
+    let signin: string | null = null;
+    const signinMatch = scopeDef.match(/SIGNIN\s+\((.*?)\)\s*$/s);
+    if (signinMatch) {
+      signin = signinMatch[1].trim();
+    }
+
+    return {
+      name: scopeName,
+      session,
+      signup,
+      signin,
+      comments: [],
+    };
+  }
+
+  /**
+   * Parses an analyzer definition from INFO FOR DB result.
+   *
+   * Extracts tokenizers and filters from the definition string.
+   *
+   * @param analyzerName - The name of the analyzer
+   * @param analyzerDef - The analyzer definition string from INFO FOR DB
+   * @returns Parsed analyzer object
+   */
+  private parseAnalyzerDefinition(
+    analyzerName: string,
+    analyzerDef: string,
+  ): Record<string, unknown> {
+    debugLog(`Parsing analyzer definition for ${analyzerName}:`, analyzerDef);
+
+    // Parse tokenizers
+    const tokenizers: string[] = [];
+    const tokenizerMatch = analyzerDef.match(/TOKENIZERS\s+([^F]+?)(?:\s+FILTERS|$)/);
+    if (tokenizerMatch) {
+      const tokenizerStr = tokenizerMatch[1].trim();
+      tokenizers.push(...tokenizerStr.split(",").map((t) => t.trim()));
+    }
+
+    // Parse filters
+    const filters: string[] = [];
+    const filterMatch = analyzerDef.match(/FILTERS\s+(.+?)$/);
+    if (filterMatch) {
+      const filterStr = filterMatch[1].trim();
+      filters.push(...filterStr.split(",").map((f) => f.trim()));
+    }
+
+    return {
+      name: analyzerName,
+      tokenizers,
+      filters,
+      comments: [],
+    };
+  }
+
+  /**
+   * Compares two functions to detect modifications.
+   *
+   * @param currentFunc - The current function in the database
+   * @param newFunc - The new function from the schema
+   * @returns True if the function has been modified
+   */
+  private isFunctionModified(
+    // biome-ignore lint/suspicious/noExplicitAny: Dynamic function introspection
+    currentFunc: any,
+    // biome-ignore lint/suspicious/noExplicitAny: Dynamic function introspection
+    newFunc: any,
+  ): boolean {
+    // Compare parameters
+    if (JSON.stringify(currentFunc.parameters) !== JSON.stringify(newFunc.parameters)) {
+      return true;
+    }
+
+    // Compare return type
+    if (currentFunc.returnType !== newFunc.returnType) {
+      return true;
+    }
+
+    // Compare body (normalize whitespace for comparison)
+    const normalizeBody = (body: string) => body?.replace(/\s+/g, " ").trim() || "";
+    if (normalizeBody(currentFunc.body) !== normalizeBody(newFunc.body)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Compares two scopes to detect modifications.
+   *
+   * @param currentScope - The current scope in the database
+   * @param newScope - The new scope from the schema
+   * @returns True if the scope has been modified
+   */
+  private isScopeModified(
+    // biome-ignore lint/suspicious/noExplicitAny: Dynamic scope introspection
+    currentScope: any,
+    // biome-ignore lint/suspicious/noExplicitAny: Dynamic scope introspection
+    newScope: any,
+  ): boolean {
+    // Compare session duration
+    if (currentScope.session !== newScope.session) {
+      return true;
+    }
+
+    // Compare SIGNUP query (normalize whitespace for comparison)
+    const normalizeQuery = (query: string | null) => query?.replace(/\s+/g, " ").trim() || null;
+    if (normalizeQuery(currentScope.signup) !== normalizeQuery(newScope.signup)) {
+      return true;
+    }
+
+    // Compare SIGNIN query
+    if (normalizeQuery(currentScope.signin) !== normalizeQuery(newScope.signin)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Compares two analyzers to detect modifications.
+   *
+   * @param currentAnalyzer - The current analyzer in the database
+   * @param newAnalyzer - The new analyzer from the schema
+   * @returns True if the analyzer has been modified
+   */
+  private isAnalyzerModified(
+    // biome-ignore lint/suspicious/noExplicitAny: Dynamic analyzer introspection
+    currentAnalyzer: any,
+    // biome-ignore lint/suspicious/noExplicitAny: Dynamic analyzer introspection
+    newAnalyzer: any,
+  ): boolean {
+    // Compare tokenizers
+    const sortedCurrentTokenizers = [...(currentAnalyzer.tokenizers || [])].sort();
+    const sortedNewTokenizers = [...(newAnalyzer.tokenizers || [])].sort();
+    if (JSON.stringify(sortedCurrentTokenizers) !== JSON.stringify(sortedNewTokenizers)) {
+      return true;
+    }
+
+    // Compare filters
+    const sortedCurrentFilters = [...(currentAnalyzer.filters || [])].sort();
+    const sortedNewFilters = [...(newAnalyzer.filters || [])].sort();
+    if (JSON.stringify(sortedCurrentFilters) !== JSON.stringify(sortedNewFilters)) {
+      return true;
+    }
+
+    return false;
   }
 
   /**
