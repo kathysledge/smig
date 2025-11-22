@@ -82,34 +82,20 @@ const user = defineSchema({
   },
   fields: {
     email: string().assert("string::is::email($value)"),
-
     name: string().assert("$value = /^[\\w]{3,32}$/"),
-
     link: option("string"),
-
     description: option("string"),
-
     topics: array(record("topic")).default([]),
-
     followers: array(record("user")).default([]),
-
     following: array(record("user")).default([]),
-
     dateJoined: datetime().default("time::now()"),
-
     tokens: int().default(0).assert("$value >= 0").assert("$value <= 65536"),
-
     roles: array(string()).default([]),
-
     traits: array(string()).default([]),
-
     // Nested vote fields
     "votes.positive": array(record("user")).default([]),
-
     "votes.misleading": array(record("user")).default([]),
-
     "votes.negative": array(record("user")).default([]),
-
     // Computed vote score using new computed() method
     "votes.score": int().computed(`
         array::len(votes.positive) -
@@ -131,22 +117,16 @@ const topic = defineSchema({
   schemafull: false, // SCHEMALESS
   fields: {
     posts: array(record("post")).default([]),
-
     threads: array(record("thread")).default([]),
-
     "votes.positive": array(record("user")).default([]),
-
     "votes.misleading": array(record("user")).default([]),
-
     "votes.negative": array(record("user")).default([]),
-
     // Computed vote score
     "votes.score": int().computed(`
         array::len(votes.positive) -
         (<float> array::len(votes.misleading) / 2) -
         array::len(votes.negative)
       `),
-
     // Computed followers list
     followers: any().computed(`
         LET $id = id;
@@ -154,7 +134,6 @@ const topic = defineSchema({
         FROM user
         WHERE topics CONTAINS $id;
       `),
-
     // Computed first used timestamp
     firstUsed: datetime().computed("time::min(array::union(posts.time, threads.time))"),
   },
@@ -178,37 +157,21 @@ const post = defineSchema({
   schemafull: false, // SCHEMALESS
   fields: {
     user: record("user"),
-
     title: string().assert("$value = /.{4,128}/"),
-
     content: string(),
-
     time: datetime().default("time::now()"),
-
     replyTo: option(record("post")),
-
     topics: array(record("topic")).default([]),
-
     comments: array(record("comment")).default([]),
-
     images: array(record("image")).default([]),
-
     archived: bool().default(false),
-
     edited: bool().default(false),
-
     timeEdited: option("datetime"),
-
     visits: int().default(0),
-
     "votes.positive": array(record("user")).default([]),
-
     "votes.misleading": array(record("user")).default([]),
-
     "votes.negative": array(record("user")).default([]),
-
     "votes.awards": array(record("user")).default([]),
-
     // Computed vote score
     "votes.score": int().computed(`
         array::len(votes.positive) -
@@ -236,17 +199,11 @@ const draft = defineSchema({
   schemafull: false, // SCHEMALESS
   fields: {
     user: record("user"),
-
     title: string().assert("$value = /.{4,128}/"),
-
     content: string(),
-
     time: datetime().default("time::now()"),
-
     replyTo: option(record("post")),
-
     topics: array(record("topic")).default([]),
-
     images: array(record("image")).default([]),
   },
 });
@@ -259,11 +216,8 @@ const pin = defineSchema({
   schemafull: false, // SCHEMALESS
   fields: {
     post: record("post"),
-
     user: record("user"),
-
     active: bool().default(false),
-
     time: datetime().default("time::now()"),
   },
 });
@@ -276,31 +230,18 @@ const thread = defineSchema({
   schemafull: false, // SCHEMALESS
   fields: {
     user: record("user"),
-
     content: string().assert("$value = /.{4,512}/"),
-
     time: datetime().default("time::now()"),
-
     replyTo: option(record("thread")),
-
     topics: array(record("topic")).default([]),
-
     images: array(record("image")).default([]),
-
     edited: bool().default(false),
-
     timeEdited: option("datetime"),
-
     visits: int().default(0),
-
     "votes.positive": array(record("user")).default([]),
-
     "votes.misleading": array(record("user")).default([]),
-
     "votes.negative": array(record("user")).default([]),
-
     "votes.awards": array(record("user")).default([]),
-
     // Computed vote score
     "votes.score": int().computed(`
         array::len(votes.positive) -
@@ -328,26 +269,16 @@ const comment = defineSchema({
   schemafull: false, // SCHEMALESS
   fields: {
     user: record("user"),
-
     post: record("post"),
-
     content: string(),
-
     time: datetime().default("time::now()"),
-
     // Union type - can reference post OR comment
     replyTo: record(["post", "comment"]),
-
     edited: bool().default(false),
-
     timeEdited: option("datetime"),
-
     "votes.positive": array(record("user")).default([]),
-
     "votes.misleading": array(record("user")).default([]),
-
     "votes.negative": array(record("user")).default([]),
-
     // Computed vote score
     "votes.score": int().computed(`
         array::len(votes.positive) -
@@ -374,21 +305,13 @@ const image = defineSchema({
   schemafull: false, // SCHEMALESS
   fields: {
     user: record("user"),
-
     type: string(),
-
     tokens: int(),
-
     time: datetime().default("time::now()"),
-
     url: any(),
-
     "votes.positive": array(record("user")).default([]),
-
     "votes.misleading": array(record("user")).default([]),
-
     "votes.negative": array(record("user")).default([]),
-
     // Computed vote score
     "votes.score": int().computed(`
         array::len(votes.positive) -
@@ -406,14 +329,10 @@ const notification = defineSchema({
   schemafull: false, // SCHEMALESS
   fields: {
     recipient: record("user"),
-
     // Union type - context can be post, comment, or user
     context: record(["post", "comment", "user"]),
-
     message: string(),
-
     time: datetime().default("time::now()"),
-
     viewed: bool().default(false),
   },
 });
@@ -426,11 +345,8 @@ const feedback = defineSchema({
   schemafull: false, // SCHEMALESS
   fields: {
     user: record("user"),
-
     time: datetime().default("time::now()"),
-
     content: string(),
-
     dismissed: bool().default(false),
   },
 });
@@ -443,10 +359,8 @@ const report = defineSchema({
   schemafull: false, // SCHEMALESS
   fields: {
     reporter: record("user"),
-
     // Generic record - can reference any table
     subject: record(),
-
     time: datetime().default("time::now()"),
   },
 });
