@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   analyzer,
+  any,
   composeSchema,
   defineSchema,
   fn,
@@ -280,6 +281,18 @@ describe("New Schema Features", () => {
       // computed() wraps in <future> { }
       const score = int().computed("array::len(votes)");
       expect(score.build().value).toContain("<future>");
+    });
+
+    it("should work with any() type for dynamic computed fields", () => {
+      const followers = any().computed(`
+        LET $id = id;
+        RETURN SELECT VALUE id FROM user WHERE topics CONTAINS $id;
+      `);
+
+      const built = followers.build();
+      expect(built.type).toBe("any");
+      expect(built.value).toContain("<future>");
+      expect(built.value).toContain("SELECT VALUE id FROM user");
     });
   });
 

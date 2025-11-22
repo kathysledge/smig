@@ -202,6 +202,8 @@ export interface SurrealRelation {
   from: string;
   /** Target table for the relation */
   to: string;
+  /** Whether the relation uses SCHEMAFULL (true) or SCHEMALESS (false) mode */
+  schemafull?: boolean;
   /** Array of field definitions for this relation */
   fields: SurrealField[];
   /** Array of index definitions for this relation */

@@ -672,6 +672,11 @@ export class SurrealQLAny {
     this.field.value = processSurrealQL(expression);
     return this;
   }
+  computed(expression: string) {
+    const processed = processSurrealQL(expression);
+    this.field.value = `<future> { ${processed} }`;
+    return this;
+  }
   assert(condition: string) {
     const processedCondition = processSurrealQL(condition);
     // biome-ignore lint/suspicious/noExplicitAny: Dynamic field builder requires flexible typing
@@ -735,8 +740,15 @@ export class SurrealQLArray<T extends string> {
     comments: [],
   };
 
-  constructor(type: T) {
-    this.field.type = `array<${type}>`;
+  // biome-ignore lint/suspicious/noExplicitAny: Dynamic type parameter can be string or builder object
+  constructor(type: T | any) {
+    // If type is an object with a build() method, call it to get the type string
+    if (typeof type === "object" && type !== null && typeof type.build === "function") {
+      const built = type.build();
+      this.field.type = `array<${built.type}>`;
+    } else {
+      this.field.type = `array<${type}>`;
+    }
   }
 
   default(value: unknown[]) {
@@ -2001,9 +2013,18 @@ export function composeSchema(config: {
   return {
     tables: Object.values(config.models),
     relations: config.relations ? Object.values(config.relations) : [],
-    functions: config.functions ? Object.values(config.functions) : [],
-    scopes: config.scopes ? Object.values(config.scopes) : [],
-    analyzers: config.analyzers ? Object.values(config.analyzers) : [],
+    functions: config.functions
+      ? // biome-ignore lint/suspicious/noExplicitAny: Dynamic builder objects
+        Object.values(config.functions).map((f: any) => f.build())
+      : [],
+    scopes: config.scopes
+      ? // biome-ignore lint/suspicious/noExplicitAny: Dynamic builder objects
+        Object.values(config.scopes).map((s: any) => s.build())
+      : [],
+    analyzers: config.analyzers
+      ? // biome-ignore lint/suspicious/noExplicitAny: Dynamic builder objects
+        Object.values(config.analyzers).map((a: any) => a.build())
+      : [],
     comments: config.comments || [],
   };
 }

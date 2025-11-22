@@ -555,7 +555,8 @@ export class MigrationManager {
       if (!currentTable) {
         // New table
         upChanges.push(`-- New table: ${newTable.name}`);
-        upChanges.push(`DEFINE TABLE ${newTable.name} SCHEMAFULL;`);
+        const schemaMode = newTable.schemafull === false ? "SCHEMALESS" : "SCHEMAFULL";
+        upChanges.push(`DEFINE TABLE ${newTable.name} ${schemaMode};`);
 
         // Add fields
         for (const field of newTable.fields) {
@@ -637,7 +638,8 @@ export class MigrationManager {
       if (!currentRelation) {
         // New relation
         upChanges.push(`-- New relation: ${newRelation.name}`);
-        upChanges.push(`DEFINE TABLE ${newRelation.name} SCHEMAFULL;`);
+        const schemaMode = newRelation.schemafull === false ? "SCHEMALESS" : "SCHEMAFULL";
+        upChanges.push(`DEFINE TABLE ${newRelation.name} ${schemaMode};`);
 
         // Add fields
         for (const field of newRelation.fields) {
@@ -679,7 +681,8 @@ export class MigrationManager {
           // If from/to changed, we need to recreate the relation entirely
           upChanges.push(`-- Recreating relation: ${newRelation.name} (from/to changed)`);
           upChanges.push(`REMOVE TABLE ${newRelation.name};`);
-          upChanges.push(`DEFINE TABLE ${newRelation.name} SCHEMAFULL;`);
+          const schemaMode = newRelation.schemafull === false ? "SCHEMALESS" : "SCHEMAFULL";
+          upChanges.push(`DEFINE TABLE ${newRelation.name} ${schemaMode};`);
 
           // Add all fields
           for (const field of newRelation.fields) {
@@ -990,7 +993,8 @@ export class MigrationManager {
             }
 
             downChanges.push(`-- Rollback: Recreate ${change.type} ${change.table}`);
-            downChanges.push(`DEFINE TABLE ${change.table} SCHEMAFULL;`);
+            const schemaMode = currentTable.schemafull === false ? "SCHEMALESS" : "SCHEMAFULL";
+            downChanges.push(`DEFINE TABLE ${change.table} ${schemaMode};`);
 
             // Recreate fields
             if (currentTable.fields) {
@@ -1181,7 +1185,8 @@ export class MigrationManager {
             const oldRelation = change.details.oldRelation;
             downChanges.push(`-- Rollback: Restore original ${change.type} ${change.table}`);
             downChanges.push(`REMOVE TABLE ${change.table};`);
-            downChanges.push(`DEFINE TABLE ${change.table} SCHEMAFULL;`);
+            const schemaMode = oldRelation.schemafull === false ? "SCHEMALESS" : "SCHEMAFULL";
+            downChanges.push(`DEFINE TABLE ${change.table} ${schemaMode};`);
 
             // Restore original fields
             for (const field of oldRelation.fields) {
