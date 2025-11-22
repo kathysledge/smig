@@ -173,6 +173,38 @@ class SurrealQLFieldBase {
   }
 
   /**
+   * Sets a computed field using SurrealDB's <future> {  } syntax.
+   *
+   * Computed fields are evaluated on read and can reference other fields,
+   * perform calculations, or execute queries. This is ideal for derived
+   * data that changes based on other field values.
+   *
+   * @param expression - SurrealQL expression for the computed value
+   * @returns The field instance for method chaining
+   *
+   * @example
+   * ```typescript
+   * // Computed vote score
+   * const score = number().computed(`
+   *   array::len(votes.positive) - 
+   *   (<float> array::len(votes.misleading) / 2) - 
+   *   array::len(votes.negative)
+   * `);
+   *
+   * // Computed followers list
+   * const followers = array(record('user')).computed(`
+   *   LET $id = id;
+   *   RETURN SELECT VALUE id FROM user WHERE topics CONTAINS $id;
+   * `);
+   * ```
+   */
+  computed(expression: string) {
+    const processed = processSurrealQL(expression);
+    this.field.value = `<future> { ${processed} }`;
+    return this;
+  }
+
+  /**
    * Adds a validation assertion condition (SurrealQL).
    *
    * Multiple assertions can be chained and will be combined with AND operators.
@@ -751,18 +783,36 @@ export class SurrealQLArray<T extends string> {
  * Record field type builder for SurrealDB table relationships.
  *
  * Creates a reference to records in another table, establishing relationships
- * between tables in the database schema.
+ * between tables in the database schema. Supports single tables, union types,
+ * and generic record types.
  *
  * @example
  * ```typescript
+ * // Single table reference
  * const author = record('user').required();
  * const category = option('record<category>');
+ *
+ * // Union type (multiple possible tables)
+ * const context = record(['post', 'comment', 'user']);
+ *
+ * // Generic record (any table)
+ * const subject = record();
  * ```
  */
 export class SurrealQLRecord extends SurrealQLFieldBase {
-  constructor(tableName: string) {
+  constructor(tableName?: string | string[]) {
     super();
-    this.field.type = `record<${tableName.toLowerCase()}>`;
+    if (!tableName) {
+      // Generic record type (no specific table)
+      this.field.type = 'record';
+    } else if (Array.isArray(tableName)) {
+      // Union type (multiple tables)
+      const tables = tableName.map(t => t.toLowerCase()).join(' | ');
+      this.field.type = `record<${tables}>`;
+    } else {
+      // Single table reference
+      this.field.type = `record<${tableName.toLowerCase()}>`;
+    }
   }
 }
 
@@ -982,6 +1032,406 @@ export class SurrealQLEvent {
       when: this.event.when,
       thenStatement: this.event.thenStatement,
       comments: [...event.comments],
+    };
+  }
+}
+
+/**
+ * Function definition builder for SurrealDB custom functions.
+ *
+ * Functions allow you to define reusable logic that can be called throughout
+ * your database queries. They support parameters, return types, and complex
+ * SurrealQL expressions.
+ *
+ * ## Features
+ *
+ * - **Named parameters**: Define typed parameters for your function
+ * - **Return type**: Optionally specify what type the function returns
+ * - **Complex logic**: Write full SurrealQL with loops, conditionals, queries
+ * - **Reusability**: Call functions anywhere in your queries
+ *
+ * @example
+ * ```typescript
+ * // Simple calculation function
+ * const daysSince = fn('days_since')
+ *   .param('time', 'datetime')
+ *   .returns('float')
+ *   .body('RETURN <float> (time::now() - $time) / 60 / 60 / 24;');
+ *
+ * // Complex function with multiple parameters
+ * const calculateDiscount = fn('calculate_discount')
+ *   .param('price', 'decimal')
+ *   .param('discount_percent', 'int')
+ *   .returns('decimal')
+ *   .body(`
+ *     LET $discount = $price * ($discount_percent / 100);
+ *     RETURN $price - $discount;
+ *   `);
+ * ```
+ */
+export class SurrealQLFunction {
+  private func: Record<string, unknown> = {
+    name: '',
+    parameters: [],
+    returnType: null,
+    body: '',
+    comments: [],
+  };
+
+  constructor(name: string) {
+    this.validateName(name);
+    this.func.name = name.trim();
+  }
+
+  private validateName(name: string): void {
+    if (!name || name.trim() === '') {
+      throw new Error('Function name is required and cannot be empty');
+    }
+
+    const trimmed = name.trim();
+    
+    // Allow 'fn::' prefix format
+    if (trimmed.startsWith('fn::')) {
+      const localName = trimmed.substring(4);
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(localName)) {
+        throw new Error(
+          `Invalid function name '${trimmed}'. After 'fn::', must be a valid identifier (letters, numbers, underscores only, cannot start with number).`
+        );
+      }
+    } else if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmed)) {
+      throw new Error(
+        `Invalid function name '${trimmed}'. Must be a valid identifier or start with 'fn::' (letters, numbers, underscores only, cannot start with number).`
+      );
+    }
+  }
+
+  /**
+   * Adds a parameter to the function.
+   *
+   * @param name - Parameter name (will be prefixed with $ in SurrealQL)
+   * @param type - Parameter type (e.g., 'string', 'int', 'datetime')
+   * @returns The function instance for method chaining
+   */
+  param(name: string, type: string) {
+    // biome-ignore lint/suspicious/noExplicitAny: Dynamic parameter building
+    (this.func.parameters as any[]).push({ name, type });
+    return this;
+  }
+
+  /**
+   * Sets the return type of the function.
+   *
+   * @param type - Return type (e.g., 'string', 'int', 'array<string>')
+   * @returns The function instance for method chaining
+   */
+  returns(type: string) {
+    this.func.returnType = type;
+    return this;
+  }
+
+  /**
+   * Sets the function body (SurrealQL code).
+   *
+   * @param body - SurrealQL code to execute
+   * @returns The function instance for method chaining
+   */
+  body(code: string) {
+    if (!code || code.trim() === '') {
+      throw new Error('Function body is required and cannot be empty');
+    }
+    this.func.body = processSurrealQL(code);
+    return this;
+  }
+
+  /** Adds a documentation comment for the function */
+  comment(text: string) {
+    if (text && text.trim() !== '') {
+      // biome-ignore lint/suspicious/noExplicitAny: Dynamic comment array
+      (this.func.comments as any[]).push(text.trim());
+    }
+    return this;
+  }
+
+  /** Builds and validates the complete function definition */
+  build() {
+    if (!this.func.body || (this.func.body as string).trim() === '') {
+      throw new Error(`Function ${this.func.name} requires a body. Use .body("your SurrealQL here").`);
+    }
+
+    return {
+      name: this.func.name,
+      parameters: this.func.parameters,
+      returnType: this.func.returnType,
+      body: this.func.body,
+      comments: [...(this.func.comments as string[])],
+    };
+  }
+}
+
+/**
+ * Scope definition builder for SurrealDB authentication.
+ *
+ * Scopes provide session-based authentication with custom SIGNUP and SIGNIN logic.
+ * They define how users authenticate, session duration, and what data is available
+ * during the session.
+ *
+ * ## Use Cases
+ *
+ * - **User authentication**: Email/password, OAuth, custom auth
+ * - **Session management**: Define session duration and refresh logic
+ * - **Access control**: Integrate with permissions system
+ * - **Multi-tenant apps**: Different scopes for different user types
+ *
+ * @example
+ * ```typescript
+ * // Email/password authentication
+ * const accountScope = scope('account')
+ *   .session('7d')
+ *   .signup(`
+ *     CREATE user SET
+ *       email = $email,
+ *       name = $username,
+ *       password = crypto::argon2::generate($password),
+ *       dateJoined = time::now()
+ *   `)
+ *   .signin(`
+ *     SELECT * FROM user
+ *     WHERE (email = $id OR name = $id)
+ *     AND crypto::argon2::compare(password, $password)
+ *   `);
+ *
+ * // API key authentication
+ * const apiScope = scope('api')
+ *   .session('30d')
+ *   .signin(`
+ *     SELECT * FROM api_key
+ *     WHERE key = $key
+ *     AND active = true
+ *     AND expires > time::now()
+ *   `);
+ * ```
+ */
+export class SurrealQLScope {
+  private scope: Record<string, unknown> = {
+    name: '',
+    session: null,
+    signup: null,
+    signin: null,
+    comments: [],
+  };
+
+  constructor(name: string) {
+    this.validateName(name);
+    this.scope.name = name.trim();
+  }
+
+  private validateName(name: string): void {
+    if (!name || name.trim() === '') {
+      throw new Error('Scope name is required and cannot be empty');
+    }
+
+    const trimmed = name.trim();
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmed)) {
+      throw new Error(
+        `Invalid scope name '${trimmed}'. Must be a valid identifier (letters, numbers, underscores only, cannot start with number).`
+      );
+    }
+  }
+
+  /**
+   * Sets the session duration for the scope.
+   *
+   * @param duration - Duration string (e.g., '7d', '24h', '30m', '60s')
+   * @returns The scope instance for method chaining
+   */
+  session(duration: string) {
+    this.scope.session = duration;
+    return this;
+  }
+
+  /**
+   * Sets the SIGNUP logic for the scope.
+   *
+   * This SurrealQL should create a new user record and return the created user.
+   *
+   * @param query - SurrealQL for signup logic
+   * @returns The scope instance for method chaining
+   */
+  signup(query: string) {
+    if (!query || query.trim() === '') {
+      throw new Error('SIGNUP clause is required and cannot be empty');
+    }
+    this.scope.signup = processSurrealQL(query);
+    return this;
+  }
+
+  /**
+   * Sets the SIGNIN logic for the scope.
+   *
+   * This SurrealQL should query and return the user record for authentication.
+   *
+   * @param query - SurrealQL for signin logic
+   * @returns The scope instance for method chaining
+   */
+  signin(query: string) {
+    if (!query || query.trim() === '') {
+      throw new Error('SIGNIN clause is required and cannot be empty');
+    }
+    this.scope.signin = processSurrealQL(query);
+    return this;
+  }
+
+  /** Adds a documentation comment for the scope */
+  comment(text: string) {
+    if (text && text.trim() !== '') {
+      // biome-ignore lint/suspicious/noExplicitAny: Dynamic comment array
+      (this.scope.comments as any[]).push(text.trim());
+    }
+    return this;
+  }
+
+  /** Builds and validates the complete scope definition */
+  build() {
+    // At least one of signup or signin must be provided
+    if (!this.scope.signup && !this.scope.signin) {
+      throw new Error(
+        `Scope ${this.scope.name} requires at least SIGNUP or SIGNIN logic. Use .signup() or .signin().`
+      );
+    }
+
+    return {
+      name: this.scope.name,
+      session: this.scope.session,
+      signup: this.scope.signup,
+      signin: this.scope.signin,
+      comments: [...(this.scope.comments as string[])],
+    };
+  }
+}
+
+/**
+ * Analyzer definition builder for full-text search.
+ *
+ * Analyzers process text for full-text search indexes, defining how text
+ * is tokenized (split into terms) and filtered (normalized, stemmed, etc.)
+ * for search operations.
+ *
+ * ## Tokenizers
+ *
+ * - **blank**: Split on whitespace
+ * - **class**: Split on character class changes (camelCase, etc.)
+ * - **camel**: Split on camelCase boundaries
+ * - **punct**: Split on punctuation
+ *
+ * ## Filters
+ *
+ * - **ascii**: Convert to ASCII
+ * - **lowercase**: Convert to lowercase
+ * - **uppercase**: Convert to uppercase
+ * - **edgengram(min, max)**: Create edge n-grams
+ * - **ngram(min, max)**: Create n-grams
+ * - **snowball(language)**: Apply Snowball stemming (e.g., 'english', 'spanish')
+ *
+ * @example
+ * ```typescript
+ * // English text search
+ * const englishSearch = analyzer('english_search')
+ *   .tokenizers(['class', 'camel', 'blank'])
+ *   .filters(['lowercase', 'ascii', 'snowball(english)']);
+ *
+ * // Autocomplete search
+ * const autocomplete = analyzer('autocomplete')
+ *   .tokenizers(['blank'])
+ *   .filters(['lowercase', 'edgengram(2, 15)']);
+ *
+ * // Case-insensitive search
+ * const caseInsensitive = analyzer('case_insensitive')
+ *   .tokenizers(['blank'])
+ *   .filters(['lowercase']);
+ * ```
+ */
+export class SurrealQLAnalyzer {
+  private analyzer: Record<string, unknown> = {
+    name: '',
+    tokenizers: [],
+    filters: [],
+    comments: [],
+  };
+
+  constructor(name: string) {
+    this.validateName(name);
+    this.analyzer.name = name.trim();
+  }
+
+  private validateName(name: string): void {
+    if (!name || name.trim() === '') {
+      throw new Error('Analyzer name is required and cannot be empty');
+    }
+
+    const trimmed = name.trim();
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmed)) {
+      throw new Error(
+        `Invalid analyzer name '${trimmed}'. Must be a valid identifier (letters, numbers, underscores only, cannot start with number).`
+      );
+    }
+  }
+
+  /**
+   * Sets the tokenizers for the analyzer.
+   *
+   * @param tokenizers - Array of tokenizer names
+   * @returns The analyzer instance for method chaining
+   */
+  tokenizers(tokenizers: string[]) {
+    if (!tokenizers || tokenizers.length === 0) {
+      throw new Error('At least one tokenizer is required');
+    }
+    this.analyzer.tokenizers = tokenizers;
+    return this;
+  }
+
+  /**
+   * Sets the filters for the analyzer.
+   *
+   * @param filters - Array of filter names
+   * @returns The analyzer instance for method chaining
+   */
+  filters(filters: string[]) {
+    if (!filters || filters.length === 0) {
+      throw new Error('At least one filter is required');
+    }
+    this.analyzer.filters = filters;
+    return this;
+  }
+
+  /** Adds a documentation comment for the analyzer */
+  comment(text: string) {
+    if (text && text.trim() !== '') {
+      // biome-ignore lint/suspicious/noExplicitAny: Dynamic comment array
+      (this.analyzer.comments as any[]).push(text.trim());
+    }
+    return this;
+  }
+
+  /** Builds and validates the complete analyzer definition */
+  build() {
+    if (!this.analyzer.tokenizers || (this.analyzer.tokenizers as string[]).length === 0) {
+      throw new Error(
+        `Analyzer ${this.analyzer.name} requires at least one tokenizer. Use .tokenizers(['blank']).`
+      );
+    }
+
+    if (!this.analyzer.filters || (this.analyzer.filters as string[]).length === 0) {
+      throw new Error(
+        `Analyzer ${this.analyzer.name} requires at least one filter. Use .filters(['lowercase']).`
+      );
+    }
+
+    return {
+      name: this.analyzer.name,
+      tokenizers: this.analyzer.tokenizers,
+      filters: this.analyzer.filters,
+      comments: [...(this.analyzer.comments as string[])],
     };
   }
 }
@@ -1335,18 +1785,28 @@ export const array = <T extends string>(type: T) => new SurrealQLArray<T>(type);
 /**
  * Creates a record field for table relationships.
  *
- * @param tableName - The name of the related table
+ * Supports three modes:
+ * - Single table: `record('user')`
+ * - Union type (multiple tables): `record(['post', 'comment', 'user'])`
+ * - Generic (any table): `record()`
+ *
+ * @param tableName - Optional table name(s) to reference
  * @returns A record field builder with all available modifiers
  *
  * @example
  * ```typescript
+ * // Single table reference
  * const authorField = record('user')
  *   .required();
  *
- * const parentField = option('record<category>');
+ * // Union type (multiple possible tables)
+ * const contextField = record(['post', 'comment', 'user']);
+ *
+ * // Generic record (any table)
+ * const subjectField = record();
  * ```
  */
-export const record = (tableName: string) => new SurrealQLRecord(tableName);
+export const record = (tableName?: string | string[]) => new SurrealQLRecord(tableName);
 
 /**
  * Creates an index definition.
@@ -1381,6 +1841,53 @@ export const index = (columns: string[]) => new SurrealQLIndex(columns);
  */
 export const event = (name: string) => new SurrealQLEvent(name);
 
+/**
+ * Creates a function definition.
+ *
+ * @param name - The name of the function (can include 'fn::' prefix)
+ * @returns A function builder with all available modifiers
+ *
+ * @example
+ * ```typescript
+ * const daysSince = fn('fn::days_since')
+ *   .param('time', 'datetime')
+ *   .returns('float')
+ *   .body('RETURN <float> (time::now() - $time) / 60 / 60 / 24;');
+ * ```
+ */
+export const fn = (name: string) => new SurrealQLFunction(name);
+
+/**
+ * Creates a scope definition for authentication.
+ *
+ * @param name - The name of the scope
+ * @returns A scope builder with all available modifiers
+ *
+ * @example
+ * ```typescript
+ * const accountScope = scope('account')
+ *   .session('7d')
+ *   .signup('CREATE user SET...')
+ *   .signin('SELECT * FROM user WHERE...');
+ * ```
+ */
+export const scope = (name: string) => new SurrealQLScope(name);
+
+/**
+ * Creates an analyzer definition for full-text search.
+ *
+ * @param name - The name of the analyzer
+ * @returns An analyzer builder with all available modifiers
+ *
+ * @example
+ * ```typescript
+ * const search = analyzer('relevanceSearch')
+ *   .tokenizers(['camel', 'class'])
+ *   .filters(['ascii', 'snowball(english)']);
+ * ```
+ */
+export const analyzer = (name: string) => new SurrealQLAnalyzer(name);
+
 // Common Field Patterns
 export const commonFields = {
   timestamp: () => datetime().value("time::now()"),
@@ -1410,16 +1917,19 @@ export const commonEvents = {
 };
 
 /**
- * Composes multiple table schemas and relations into a complete database schema.
+ * Composes multiple table schemas, relations, functions, scopes, and analyzers
+ * into a complete database schema.
  *
- * This function combines individual table definitions and relations into a single
- * schema object that can be used with the migration system. It provides a clean
- * way to organize complex database schemas by composing them from smaller,
- * manageable pieces.
+ * This function combines individual schema elements into a single schema object
+ * that can be used with the migration system. It provides a clean way to organize
+ * complex database schemas by composing them from smaller, manageable pieces.
  *
  * @param config - Configuration object for schema composition
  * @param config.models - Object mapping model names to table schema definitions
  * @param config.relations - Optional object mapping relation names to relation definitions
+ * @param config.functions - Optional object mapping function names to function definitions
+ * @param config.scopes - Optional object mapping scope names to scope definitions
+ * @param config.analyzers - Optional object mapping analyzer names to analyzer definitions
  * @param config.comments - Optional array of schema-level documentation comments
  *
  * @returns A complete database schema ready for migration
@@ -1437,6 +1947,22 @@ export const commonEvents = {
  *   to: 'post'
  * });
  *
+ * // Define functions
+ * const daysSince = fn('days_since')
+ *   .param('time', 'datetime')
+ *   .returns('float')
+ *   .body('RETURN <float> (time::now() - $time) / 60 / 60 / 24;');
+ *
+ * // Define scopes
+ * const accountScope = scope('account')
+ *   .session('7d')
+ *   .signin('SELECT * FROM user WHERE email = $email...');
+ *
+ * // Define analyzers
+ * const searchAnalyzer = analyzer('search')
+ *   .tokenizers(['class', 'camel'])
+ *   .filters(['ascii', 'lowercase']);
+ *
  * // Compose complete schema
  * const blogSchema = composeSchema({
  *   models: {
@@ -1445,6 +1971,15 @@ export const commonEvents = {
  *   },
  *   relations: {
  *     authored: authorRelation
+ *   },
+ *   functions: {
+ *     daysSince: daysSince
+ *   },
+ *   scopes: {
+ *     account: accountScope
+ *   },
+ *   analyzers: {
+ *     search: searchAnalyzer
  *   },
  *   comments: [
  *     'Blog application database schema',
@@ -1456,11 +1991,17 @@ export const commonEvents = {
 export function composeSchema(config: {
   models: Record<string, unknown>;
   relations?: Record<string, unknown>;
+  functions?: Record<string, unknown>;
+  scopes?: Record<string, unknown>;
+  analyzers?: Record<string, unknown>;
   comments?: string[];
 }) {
   return {
     tables: Object.values(config.models),
     relations: config.relations ? Object.values(config.relations) : [],
+    functions: config.functions ? Object.values(config.functions) : [],
+    scopes: config.scopes ? Object.values(config.scopes) : [],
+    analyzers: config.analyzers ? Object.values(config.analyzers) : [],
     comments: config.comments || [],
   };
 }
@@ -1494,6 +2035,9 @@ export interface SurrealDBRelation {
 export interface SurrealDBSchema {
   tables: SurrealDBModel[];
   relations: SurrealDBRelation[];
+  functions: unknown[];
+  scopes: unknown[];
+  analyzers: unknown[];
   comments: string[];
 }
 

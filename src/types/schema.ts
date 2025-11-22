@@ -213,6 +213,74 @@ export interface SurrealRelation {
 }
 
 // ============================================================================
+// FUNCTION DEFINITIONS
+// ============================================================================
+
+/**
+ * Definition for a SurrealDB custom function.
+ *
+ * Functions allow you to define reusable logic that can be called throughout
+ * your database queries and business logic. They support parameters, return types,
+ * and complex SurrealQL expressions.
+ */
+export interface SurrealFunction {
+  /** The function name (e.g., 'fn::days_since') */
+  name: string;
+  /** Array of parameter definitions with their types */
+  parameters: Array<{ name: string; type: string }>;
+  /** The return type of the function */
+  returnType: string | null;
+  /** The SurrealQL body of the function */
+  body: string;
+  /** Array of comments for documentation */
+  comments: string[];
+}
+
+// ============================================================================
+// SCOPE DEFINITIONS (AUTHENTICATION)
+// ============================================================================
+
+/**
+ * Definition for a SurrealDB authentication scope.
+ *
+ * Scopes provide session-based authentication with custom SIGNUP and SIGNIN logic.
+ * They define how users authenticate and what session duration to use.
+ */
+export interface SurrealScope {
+  /** The scope name */
+  name: string;
+  /** Session duration (e.g., '7d', '24h', '30m') */
+  session: string | null;
+  /** SurrealQL for user signup logic */
+  signup: string | null;
+  /** SurrealQL for user signin logic */
+  signin: string | null;
+  /** Array of comments for documentation */
+  comments: string[];
+}
+
+// ============================================================================
+// ANALYZER DEFINITIONS (FULL-TEXT SEARCH)
+// ============================================================================
+
+/**
+ * Definition for a SurrealDB text analyzer.
+ *
+ * Analyzers process text for full-text search indexes, defining how text
+ * is tokenized and filtered for search operations.
+ */
+export interface SurrealAnalyzer {
+  /** The analyzer name */
+  name: string;
+  /** Array of tokenizer names (e.g., ['camel', 'class', 'blank']) */
+  tokenizers: string[];
+  /** Array of filter names (e.g., ['ascii', 'snowball(english)']) */
+  filters: string[];
+  /** Array of comments for documentation */
+  comments: string[];
+}
+
+// ============================================================================
 // SCHEMA DEFINITIONS
 // ============================================================================
 
@@ -220,14 +288,21 @@ export interface SurrealRelation {
  * Complete SurrealDB database schema definition.
  *
  * This is the top-level interface that represents an entire database schema,
- * including all tables, relations, and associated metadata. This structure
- * is used throughout the migration system for schema comparisons and generation.
+ * including all tables, relations, functions, scopes, analyzers, and associated
+ * metadata. This structure is used throughout the migration system for schema
+ * comparisons and generation.
  */
 export interface SurrealDBSchema {
   /** Array of table definitions in the schema */
   tables: SurrealTable[];
   /** Array of relation definitions in the schema */
   relations: SurrealRelation[];
+  /** Array of function definitions in the schema */
+  functions: SurrealFunction[];
+  /** Array of scope definitions in the schema */
+  scopes: SurrealScope[];
+  /** Array of analyzer definitions in the schema */
+  analyzers: SurrealAnalyzer[];
   /** Array of schema-level comments for documentation */
   comments: string[];
 }
@@ -407,6 +482,37 @@ export const SurrealDBSchemaSchema = z.object({
           comments: z.array(z.string()),
         }),
       ),
+      comments: z.array(z.string()),
+    }),
+  ),
+  functions: z.array(
+    z.object({
+      name: z.string(),
+      parameters: z.array(
+        z.object({
+          name: z.string(),
+          type: z.string(),
+        }),
+      ),
+      returnType: z.string().nullable(),
+      body: z.string(),
+      comments: z.array(z.string()),
+    }),
+  ),
+  scopes: z.array(
+    z.object({
+      name: z.string(),
+      session: z.string().nullable(),
+      signup: z.string().nullable(),
+      signin: z.string().nullable(),
+      comments: z.array(z.string()),
+    }),
+  ),
+  analyzers: z.array(
+    z.object({
+      name: z.string(),
+      tokenizers: z.array(z.string()),
+      filters: z.array(z.string()),
       comments: z.array(z.string()),
     }),
   ),

@@ -167,4 +167,8 @@ export {
   // Field type builders
   string,
   uuid,
+  // New builders
+  fn,
+  scope,
+  analyzer,
 } from "./schema/concise-schema";

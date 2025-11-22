@@ -754,6 +754,153 @@ export class MigrationManager {
       }
     }
 
+    // Handle functions
+    for (const newFunction of schema.functions || []) {
+      // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
+      const func = newFunction as any;
+      const currentFunction = (currentSchema.functions || []).find(
+        // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
+        (f: any) => f.name === func.name
+      );
+
+      if (!currentFunction) {
+        // New function
+        upChanges.push(`-- New function: ${func.name}`);
+        upChanges.push(this.generateFunctionDefinition(func));
+        upChanges.push("");
+
+        // Track for rollback
+        changeLog.push({
+          type: "function",
+          table: func.name,
+          operation: "create",
+          details: { func },
+        });
+      }
+      // TODO: Implement function modification detection
+    }
+
+    // Check for removed functions
+    for (const currentFunction of currentSchema.functions || []) {
+      // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
+      const func = currentFunction as any;
+      const stillExists = (schema.functions || []).find(
+        // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
+        (f: any) => f.name === func.name
+      );
+      if (!stillExists) {
+        upChanges.push(`-- Removed function: ${func.name}`);
+        upChanges.push(`REMOVE FUNCTION ${func.name};`);
+        upChanges.push("");
+
+        // Track for rollback
+        changeLog.push({
+          type: "function",
+          table: func.name,
+          operation: "remove",
+          details: { currentFunction },
+        });
+      }
+    }
+
+    // Handle scopes
+    for (const newScope of schema.scopes || []) {
+      // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
+      const scope = newScope as any;
+      const currentScope = (currentSchema.scopes || []).find(
+        // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
+        (s: any) => s.name === scope.name
+      );
+
+      if (!currentScope) {
+        // New scope
+        upChanges.push(`-- New scope: ${scope.name}`);
+        upChanges.push(this.generateScopeDefinition(scope));
+        upChanges.push("");
+
+        // Track for rollback
+        changeLog.push({
+          type: "scope",
+          table: scope.name,
+          operation: "create",
+          details: { scope },
+        });
+      }
+      // TODO: Implement scope modification detection
+    }
+
+    // Check for removed scopes
+    for (const currentScope of currentSchema.scopes || []) {
+      // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
+      const scope = currentScope as any;
+      const stillExists = (schema.scopes || []).find(
+        // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
+        (s: any) => s.name === scope.name
+      );
+      if (!stillExists) {
+        upChanges.push(`-- Removed scope: ${scope.name}`);
+        upChanges.push(`REMOVE SCOPE ${scope.name};`);
+        upChanges.push("");
+
+        // Track for rollback
+        changeLog.push({
+          type: "scope",
+          table: scope.name,
+          operation: "remove",
+          details: { currentScope },
+        });
+      }
+    }
+
+    // Handle analyzers
+    for (const newAnalyzer of schema.analyzers || []) {
+      // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
+      const analyzer = newAnalyzer as any;
+      const currentAnalyzer = (currentSchema.analyzers || []).find(
+        // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
+        (a: any) => a.name === analyzer.name
+      );
+
+      if (!currentAnalyzer) {
+        // New analyzer
+        upChanges.push(`-- New analyzer: ${analyzer.name}`);
+        upChanges.push(this.generateAnalyzerDefinition(analyzer));
+        upChanges.push("");
+
+        // Track for rollback
+        changeLog.push({
+          type: "analyzer",
+          table: analyzer.name,
+          operation: "create",
+          details: { analyzer },
+        });
+      }
+      // TODO: Implement analyzer modification detection
+    }
+
+    // Check for removed analyzers
+    for (const currentAnalyzer of currentSchema.analyzers || []) {
+      // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
+      const analyzer = currentAnalyzer as any;
+      const stillExists = (schema.analyzers || []).find(
+        // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
+        (a: any) => a.name === analyzer.name
+      );
+      if (!stillExists) {
+        upChanges.push(`-- Removed analyzer: ${analyzer.name}`);
+        upChanges.push(`REMOVE ANALYZER ${analyzer.name};`);
+        upChanges.push("");
+
+        // Track for rollback
+        changeLog.push({
+          type: "analyzer",
+          table: analyzer.name,
+          operation: "remove",
+          details: { currentAnalyzer },
+        });
+      }
+    }
+
     // Generate rollback migration (reverse order of changes)
     downChanges.push("-- Rollback migration");
     downChanges.push("");
@@ -768,6 +915,18 @@ export class MigrationManager {
           if (change.type === "table" || change.type === "relation") {
             downChanges.push(`-- Rollback: Remove ${change.type} ${change.table}`);
             downChanges.push(`REMOVE TABLE ${change.table};`);
+            downChanges.push("");
+          } else if (change.type === "function") {
+            downChanges.push(`-- Rollback: Remove function ${change.table}`);
+            downChanges.push(`REMOVE FUNCTION ${change.table};`);
+            downChanges.push("");
+          } else if (change.type === "scope") {
+            downChanges.push(`-- Rollback: Remove scope ${change.table}`);
+            downChanges.push(`REMOVE SCOPE ${change.table};`);
+            downChanges.push("");
+          } else if (change.type === "analyzer") {
+            downChanges.push(`-- Rollback: Remove analyzer ${change.table}`);
+            downChanges.push(`REMOVE ANALYZER ${change.table};`);
             downChanges.push("");
           }
           break;
@@ -809,6 +968,27 @@ export class MigrationManager {
               }
             }
             downChanges.push("");
+          } else if (change.type === "function") {
+            const func = change.details.currentFunction;
+            if (func) {
+              downChanges.push(`-- Rollback: Recreate function ${change.table}`);
+              downChanges.push(this.generateFunctionDefinition(func));
+              downChanges.push("");
+            }
+          } else if (change.type === "scope") {
+            const scope = change.details.currentScope;
+            if (scope) {
+              downChanges.push(`-- Rollback: Recreate scope ${change.table}`);
+              downChanges.push(this.generateScopeDefinition(scope));
+              downChanges.push("");
+            }
+          } else if (change.type === "analyzer") {
+            const analyzer = change.details.currentAnalyzer;
+            if (analyzer) {
+              downChanges.push(`-- Rollback: Recreate analyzer ${change.table}`);
+              downChanges.push(this.generateAnalyzerDefinition(analyzer));
+              downChanges.push("");
+            }
           }
           break;
 
@@ -1140,6 +1320,9 @@ export class MigrationManager {
     return {
       tables: virtualizedTables,
       relations: virtualizedRelations,
+      functions: [], // TODO: Implement function introspection
+      scopes: [], // TODO: Implement scope introspection
+      analyzers: [], // TODO: Implement analyzer introspection
       comments: [],
     } as unknown as SurrealDBSchema;
   }
@@ -1545,6 +1728,104 @@ export class MigrationManager {
       // Single statement, no need for block
       return `DEFINE EVENT ${event.name} ON TABLE ${tableName} WHEN ${event.when} THEN ${event.thenStatement};`;
     }
+  }
+
+  /**
+   * Generates a SurrealQL DEFINE FUNCTION statement from a function definition.
+   *
+   * This method constructs the complete function definition including parameters,
+   * return type, and body. Parameters are properly formatted with types, and the
+   * function body is wrapped in a code block.
+   *
+   * @param func - The function definition object
+   * @returns Complete DEFINE FUNCTION statement
+   */
+  private generateFunctionDefinition(
+    // biome-ignore lint/suspicious/noExplicitAny: Dynamic function definitions from schema
+    func: any,
+  ): string {
+    let definition = `DEFINE FUNCTION ${func.name}`;
+
+    // Add parameters
+    if (func.parameters && func.parameters.length > 0) {
+      const params = func.parameters
+        .map((p: { name: string; type: string }) => `$${p.name}: ${p.type}`)
+        .join(', ');
+      definition += `(${params})`;
+    } else {
+      definition += '()';
+    }
+
+    // Add return type if specified
+    if (func.returnType) {
+      definition += ` -> ${func.returnType}`;
+    }
+
+    // Add body (wrapped in code block)
+    definition += ` { ${func.body} }`;
+
+    return definition + ';';
+  }
+
+  /**
+   * Generates a SurrealQL DEFINE SCOPE statement from a scope definition.
+   *
+   * This method constructs the complete scope definition including session duration,
+   * SIGNUP logic, and SIGNIN logic for authentication.
+   *
+   * @param scope - The scope definition object
+   * @returns Complete DEFINE SCOPE statement
+   */
+  private generateScopeDefinition(
+    // biome-ignore lint/suspicious/noExplicitAny: Dynamic scope definitions from schema
+    scope: any,
+  ): string {
+    let definition = `DEFINE SCOPE ${scope.name}`;
+
+    // Add session duration
+    if (scope.session) {
+      definition += ` SESSION ${scope.session}`;
+    }
+
+    // Add SIGNUP logic
+    if (scope.signup) {
+      definition += ` SIGNUP (${scope.signup})`;
+    }
+
+    // Add SIGNIN logic
+    if (scope.signin) {
+      definition += ` SIGNIN (${scope.signin})`;
+    }
+
+    return definition + ';';
+  }
+
+  /**
+   * Generates a SurrealQL DEFINE ANALYZER statement from an analyzer definition.
+   *
+   * This method constructs the complete analyzer definition including tokenizers
+   * and filters for full-text search.
+   *
+   * @param analyzer - The analyzer definition object
+   * @returns Complete DEFINE ANALYZER statement
+   */
+  private generateAnalyzerDefinition(
+    // biome-ignore lint/suspicious/noExplicitAny: Dynamic analyzer definitions from schema
+    analyzer: any,
+  ): string {
+    let definition = `DEFINE ANALYZER ${analyzer.name}`;
+
+    // Add tokenizers
+    if (analyzer.tokenizers && analyzer.tokenizers.length > 0) {
+      definition += ` TOKENIZERS ${analyzer.tokenizers.join(', ')}`;
+    }
+
+    // Add filters
+    if (analyzer.filters && analyzer.filters.length > 0) {
+      definition += ` FILTERS ${analyzer.filters.join(', ')}`;
+    }
+
+    return definition + ';';
   }
 
   /**
