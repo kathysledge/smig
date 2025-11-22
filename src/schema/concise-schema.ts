@@ -630,9 +630,18 @@ export class SurrealQLGeometry extends SurrealQLFieldBase {
  * ```
  */
 export class SurrealQLOption extends SurrealQLFieldBase {
-  constructor(type?: string) {
+  // biome-ignore lint/suspicious/noExplicitAny: Dynamic type parameter can be string or builder object
+  constructor(type?: string | any) {
     super();
-    this.field.type = type ? `option<${type}>` : "option";
+    if (!type) {
+      this.field.type = "option";
+    } else if (typeof type === "object" && type !== null && typeof type.build === "function") {
+      // If type is a builder object, call build() to get the type string
+      const built = type.build();
+      this.field.type = `option<${built.type}>`;
+    } else {
+      this.field.type = `option<${type}>`;
+    }
   }
 }
 
