@@ -1,10 +1,10 @@
-# 🧪 SMIG Testing Strategy
+# 🧪 **smig** testing strategy
 
-This document outlines the comprehensive testing approach for the SMIG (SurrealDB Migration Tool) project.
+This document outlines the comprehensive testing approach for **smig** (SurrealDB Migration Tool).
 
 ## Overview
 
-The testing strategy is designed to ensure reliability, correctness, and robustness across all aspects of the SMIG library:
+The testing strategy is designed to ensure reliability, correctness, and robustness across all aspects of **smig**:
 
 - **Unit Tests**: Test individual components in isolation
 - **Integration Tests**: Test CLI commands with real databases  
@@ -31,22 +31,19 @@ tests/
 ### Unit Tests (Main Suite)
 ```bash
 # Run all unit tests
-pnpm test
-
-# Run with coverage
-pnpm test:coverage
+bun run test
 
 # Run in watch mode
-pnpm test:watch
+bun run test --watch
 ```
 
 ### Integration Tests (Requires SurrealDB)
 ```bash
 # Run integration tests
-pnpm test:integration
+bun run test:integration
 
 # Run in watch mode
-pnpm test:integration:watch
+bun run test:integration --watch
 ```
 
 ## Unit Tests
@@ -65,16 +62,46 @@ pnpm test:integration:watch
 - Field ordering and inheritance
 - Custom field preservation
 
-#### 🔄 **Migration Manager** (`migration-manager.test.ts`)
-- Schema change detection (tables, fields, indexes, events)
+#### ✅ **Field Defaults** (`field-defaults.test.ts`)
+- Default value handling for all field types
+- Complex default expressions (functions, calculations)
+- Array and object defaults
+- Optional field defaults
+
+#### ✅ **Event Validation** (`event-validation-examples.test.ts`)
+- Event creation patterns (onCreate, onUpdate, onDelete)
+- Conditional event execution with `when()`
+- Event action validation
+- Multi-line event bodies
+
+#### ✅ **Events** (`events.test.ts`)
+- Event builder API
+- Event timing (onCreate, onUpdate, onDelete)
+- Conditional execution
+- Event composition and validation
+- Event generation in migrations
+
+#### ✅ **New Features** (`new-features.test.ts`)
+- Custom functions with `fn()` builder
+- Authentication scopes with `scope()` builder
+- Full-text search analyzers with `analyzer()` builder
+- Union type records (`record(['table1', 'table2'])`)
+- Generic records (`record()`)
+- Computed fields with `.computed()` method
+- Function/scope/analyzer introspection
+- Real-world social media schema example
+
+#### ✅ **Migration Manager** (`migration-manager.test.ts`)
+- Schema change detection (tables, fields, indexes, events, functions, scopes, analyzers)
 - Relation property change detection (`from`/`to` changes)
-- Migration diff generation (CREATE, ALTER, DROP statements)
+- Migration diff generation (DEFINE, REMOVE statements)
 - Checksum calculation and verification (SHA-256 with algorithm prefix)
 - Migration recording with messages and timestamps
 - Rollback migration generation
 - Error handling for no-changes scenarios
+- Field property comparison and normalization
 
-#### 🔄 **SurrealClient** (`surreal-client.test.ts`)
+#### ✅ **SurrealClient** (`surreal-client.test.ts`)
 - Database connection management
 - Query execution and error handling
 - SDK method wrappers (`create`, `select`, `delete`)
@@ -82,20 +109,13 @@ pnpm test:integration:watch
 - Schema information retrieval
 - Migration application and rollback
 
-#### 🔄 **Configuration Loader** (`config-loader.test.ts`)
+#### ✅ **Configuration Loader** (`config-loader.test.ts`)
 - Environment variable loading (`.env` support)
 - Config file loading (`smig.config.js`) with ES modules
 - Multi-environment configuration support
 - Configuration precedence (CLI > config file > env vars > defaults)
 - Environment validation and error handling
 - `process.env` variable expansion in config files
-
-#### 🔄 **Debug Logger** (`debug-logger.test.ts`)
-- Immediate file writing (no buffering)
-- Timestamped log entries
-- File creation and management
-- Error handling for file operations
-- Performance testing for rapid logging
 
 ### Mocking Strategy
 
@@ -243,8 +263,8 @@ export default composeSchema({
 
 - name: Run tests
   run: |
-    pnpm test:coverage
-    CI=true pnpm test:integration
+    bun run test
+    CI=true bun run test:integration
 ```
 
 ### Coverage Requirements
@@ -277,14 +297,15 @@ export default composeSchema({
 
 ### Debug Output
 ```bash
-# Run tests with debug output
-DEBUG=smig:* pnpm test
-
 # Run specific test file
-pnpm test tests/migration-manager.test.ts
+bun run test tests/migration-manager.test.ts
 
 # Run integration tests with verbose output  
-pnpm test:integration --reporter=verbose
+bun run test:integration --reporter=verbose
+
+# Run with debug logging (for CLI commands)
+smig generate --debug
+smig migrate --debug
 ```
 
 ### Test Isolation Issues
@@ -311,4 +332,4 @@ pnpm test:integration --reporter=verbose
 
 ---
 
-This comprehensive testing strategy ensures SMIG is reliable, robust, and production-ready for managing SurrealDB schema migrations across different environments and use cases.
+This comprehensive testing strategy ensures **smig** is reliable, robust, and production-ready for managing SurrealDB schema migrations across different environments and use cases.

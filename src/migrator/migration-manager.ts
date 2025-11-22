@@ -1407,7 +1407,8 @@ export class MigrationManager {
     }
 
     // Parse scopes from database info
-    // Note: SurrealDB 2.3+ uses 'accesses' instead of 'scopes', so check both
+    // Note: In SurrealDB 2.3+, scopes are stored as 'accesses' (DEFINE ACCESS syntax)
+    // but we maintain 'scope' terminology in our API for conceptual clarity
     const virtualizedScopes = [];
     if (infoResult && infoResult.length > 0) {
       const scopesObj = (infoResult[0]?.scopes || infoResult[0]?.accesses) as
@@ -1780,10 +1781,11 @@ export class MigrationManager {
   /**
    * Parses a scope definition from INFO FOR DB result.
    *
+   * Note: In SurrealDB 2.3+, scopes are returned as DEFINE ACCESS statements.
    * Extracts session duration, SIGNUP query, and SIGNIN query from the definition string.
    *
    * @param scopeName - The name of the scope
-   * @param scopeDef - The scope definition string from INFO FOR DB
+   * @param scopeDef - The scope definition string from INFO FOR DB (DEFINE ACCESS format)
    * @returns Parsed scope object
    */
   private parseScopeDefinition(scopeName: string, scopeDef: string): Record<string, unknown> {
@@ -2210,13 +2212,15 @@ export class MigrationManager {
   }
 
   /**
-   * Generates a SurrealQL DEFINE SCOPE statement from a scope definition.
+   * Generates a SurrealQL DEFINE ACCESS statement from a scope definition.
    *
-   * This method constructs the complete scope definition including session duration,
+   * Note: In SurrealDB 2.3+, scopes use DEFINE ACCESS syntax instead of DEFINE SCOPE.
+   * This method constructs the complete access definition including session duration,
    * SIGNUP logic, and SIGNIN logic for authentication.
    *
    * @param scope - The scope definition object
-   * @returns Complete DEFINE SCOPE statement
+   * @param overwrite - Whether to include OVERWRITE keyword for modifications
+   * @returns Complete DEFINE ACCESS statement
    */
   private generateScopeDefinition(
     // biome-ignore lint/suspicious/noExplicitAny: Dynamic scope definitions from schema

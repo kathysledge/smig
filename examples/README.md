@@ -83,6 +83,54 @@ smig generate --schema examples/social-network-schema.js
 smig migrate --schema examples/social-network-schema.js
 ```
 
+### 🎯 Social platform schema (`social-platform-schema.js`)
+
+A full-featured social platform demonstrating advanced **smig** capabilities.
+
+**What it demonstrates:**
+- Custom authentication scopes with `scope()` builder
+- Full-text search analyzers with `analyzer()` builder
+- Custom database functions with `fn()` builder
+- Union type records for polymorphic references
+- Computed fields with `<future>` syntax
+- Complex voting systems with nested fields
+- Topic-based content organization
+- Thread and comment hierarchies
+- Comprehensive permission systems
+
+**Tables:**
+- `user` - Users with voting, roles, and computed follower counts
+- `topic` - Content topics with posts and threads
+- `post` - Posts with images, comments, and voting
+- `draft` - Draft posts before publication
+- `thread` - Discussion threads with replies
+- `comment` - Comments on posts with voting
+- `image` - Image attachments
+- `notification` - Polymorphic notifications (union types)
+- `feedback` - User feedback system
+- `report` - Content reporting
+- `error` - Error logging
+- `confirmation` - Email confirmations
+- `passwordReset` - Password reset tokens
+
+**Relations:**
+- `pin` - Users pinning posts
+
+**Functions:**
+- `fn::days_since` - Calculate days elapsed since a datetime
+
+**Scopes:**
+- `account` - Authentication with email/username and Argon2 password hashing
+
+**Analyzers:**
+- `relevanceSearch` - Full-text search with camel case, class tokenizers, and snowball stemming
+
+**Run it:**
+```bash
+smig generate --schema examples/social-platform-schema.js
+smig migrate --schema examples/social-platform-schema.js
+```
+
 ## Key features demonstrated
 
 ### Field types & validation

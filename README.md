@@ -5,7 +5,7 @@
 
 ### SurrealDB schema management with automatic migrations
 
-[![npm version](https://badge.fury.io/js/smig.svg?version=0.2.0)](https://badge.fury.io/js/smig)
+[![npm version](https://badge.fury.io/js/smig.svg?version=0.3.0)](https://badge.fury.io/js/smig)
 [![License: MIT](https://img.shields.io/badge/License-MIT-violet.svg)](https://opensource.org/licenses/MIT)
 
 ---
@@ -962,6 +962,7 @@ Explore production-ready schemas in the [`examples/`](https://github.com/kathysl
 - **[Minimal example](https://github.com/kathysledge/smig/raw/main/examples/minimal-example.js)** - The simplest possible schema to get started
 - **[Blog schema](https://github.com/kathysledge/smig/raw/main/examples/simple-blog-schema.js)** - Realistic blog with users, posts, and graph relations
 - **[Social network schema](https://github.com/kathysledge/smig/raw/main/examples/social-network-schema.js)** - Complex application demonstrating events, validation, indexes, and advanced patterns
+- **[Social platform schema](https://github.com/kathysledge/smig/raw/main/examples/social-platform-schema.js)** - Full-featured social platform with topics, posts, threads, voting, authentication scopes, and full-text search
 
 Each example includes detailed documentation and demonstrates best practices. Run them with:
 
@@ -1155,6 +1156,33 @@ Found a bug? Have a feature request? Please open an issue on GitHub with:
 For security concerns or vulnerabilities, please email chris@chwd.ca (or open a private security advisory on GitHub).
 
 ## Changelog
+
+### [0.3.0] - 2025-11-22
+
+**Breaking Changes**
+
+- 🔄 **SurrealDB 2.3+ Compatibility** - Updated to use `DEFINE ACCESS` syntax instead of `DEFINE SCOPE`
+  - Scopes now generate `DEFINE ACCESS ... ON DATABASE TYPE RECORD` statements
+  - Removal uses `REMOVE ACCESS ... ON DATABASE` syntax
+  - Automatic parsing of both `scopes` and `accesses` fields for backward compatibility
+  - Session duration parsing updated for new `DURATION FOR TOKEN ..., FOR SESSION ...` format
+
+**Enhancements**
+
+- 🔧 **Improved Schema Comparison** - Enhanced field comparison to eliminate spurious modifications
+  - Fixed VALUE extraction for multi-line `<future>` blocks with nested braces
+  - Normalized whitespace and parentheses in computed field values
+  - Added duration normalization (7d = 1w) for scope session comparison
+  - Case-insensitive comparison for analyzer tokenizers and filters
+  - Fixed DEFAULT value parsing to exclude ASSERT clauses
+  - Proper handling of array wildcard fields (`[*]`) from database introspection
+  - Normalized permissions, comments, and boolean field flags for accurate comparison
+
+- 📝 **Code Documentation** - Added clarifying comments explaining scope/access terminology mapping
+
+**Examples**
+
+- 📚 **Social Platform Schema** - Added comprehensive example demonstrating topics, posts, threads, voting system, authentication scopes, and full-text search analyzers
 
 ### [0.2.0] - 2025-11-22
 

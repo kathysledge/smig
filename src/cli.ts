@@ -179,7 +179,7 @@ const program = new Command();
 program
   .name("smig")
   .description("Automatic SurrealDB migrations with a concise DSL")
-  .version("0.2.0")
+  .version("0.3.0")
   .configureHelp({
     showGlobalOptions: true,
   });
