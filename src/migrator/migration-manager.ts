@@ -872,7 +872,7 @@ export class MigrationManager {
       );
       if (!stillExists) {
         upChanges.push(`-- Removed scope: ${scope.name}`);
-        upChanges.push(`REMOVE SCOPE ${scope.name};`);
+        upChanges.push(`REMOVE ACCESS ${scope.name} ON DATABASE;`);
         upChanges.push("");
 
         // Track for rollback
@@ -970,7 +970,7 @@ export class MigrationManager {
             downChanges.push("");
           } else if (change.type === "scope") {
             downChanges.push(`-- Rollback: Remove scope ${change.table}`);
-            downChanges.push(`REMOVE SCOPE ${change.table};`);
+            downChanges.push(`REMOVE ACCESS ${change.table} ON DATABASE;`);
             downChanges.push("");
           } else if (change.type === "analyzer") {
             downChanges.push(`-- Rollback: Remove analyzer ${change.table}`);
@@ -1407,16 +1407,21 @@ export class MigrationManager {
     }
 
     // Parse scopes from database info
+    // Note: SurrealDB 2.3+ uses 'accesses' instead of 'scopes', so check both
     const virtualizedScopes = [];
-    if (infoResult && infoResult.length > 0 && infoResult[0].scopes) {
-      const scopesObj = infoResult[0].scopes as Record<string, unknown>;
-      for (const [scopeName, scopeDef] of Object.entries(scopesObj)) {
-        try {
-          const parsedScope = this.parseScopeDefinition(scopeName, scopeDef as string);
-          virtualizedScopes.push(parsedScope);
-          debugLog(`Parsed scope ${scopeName}:`, parsedScope);
-        } catch (error) {
-          debugLog(`Could not parse scope ${scopeName}:`, error);
+    if (infoResult && infoResult.length > 0) {
+      const scopesObj = (infoResult[0]?.scopes || infoResult[0]?.accesses) as
+        | Record<string, unknown>
+        | undefined;
+      if (scopesObj) {
+        for (const [scopeName, scopeDef] of Object.entries(scopesObj)) {
+          try {
+            const parsedScope = this.parseScopeDefinition(scopeName, scopeDef as string);
+            virtualizedScopes.push(parsedScope);
+            debugLog(`Parsed scope ${scopeName}:`, parsedScope);
+          } catch (error) {
+            debugLog(`Could not parse scope ${scopeName}:`, error);
+          }
         }
       }
     }
@@ -1784,23 +1789,23 @@ export class MigrationManager {
   private parseScopeDefinition(scopeName: string, scopeDef: string): Record<string, unknown> {
     debugLog(`Parsing scope definition for ${scopeName}:`, scopeDef);
 
-    // Parse session duration
+    // Parse session duration - look for "FOR SESSION" (may be after "DURATION FOR TOKEN")
     let session: string | null = null;
-    const sessionMatch = scopeDef.match(/SESSION\s+(\S+)/);
+    const sessionMatch = scopeDef.match(/FOR\s+SESSION\s+(\w+)/);
     if (sessionMatch) {
       session = sessionMatch[1];
     }
 
     // Parse SIGNUP query - everything between SIGNUP ( and ) before SIGNIN
     let signup: string | null = null;
-    const signupMatch = scopeDef.match(/SIGNUP\s+\((.*?)\)\s*(?:SIGNIN|$)/s);
+    const signupMatch = scopeDef.match(/SIGNUP\s+\((.*?)\)\s*SIGNIN/s);
     if (signupMatch) {
       signup = signupMatch[1].trim();
     }
 
-    // Parse SIGNIN query - everything between SIGNIN ( and )
+    // Parse SIGNIN query - everything between SIGNIN ( and ) before WITH JWT
     let signin: string | null = null;
-    const signinMatch = scopeDef.match(/SIGNIN\s+\((.*?)\)\s*$/s);
+    const signinMatch = scopeDef.match(/SIGNIN\s+\((.*?)\)\s*(?:WITH\s+JWT|DURATION|$)/s);
     if (signinMatch) {
       signin = signinMatch[1].trim();
     }
@@ -1898,8 +1903,36 @@ export class MigrationManager {
     // biome-ignore lint/suspicious/noExplicitAny: Dynamic scope introspection
     newScope: any,
   ): boolean {
+    // Normalize duration to days for comparison (SurrealDB may convert 7d to 1w, etc.)
+    const normalizeDuration = (duration: string | null): number | null => {
+      if (!duration) return null;
+      const match = duration.match(/^(\d+)([smhdwy])$/);
+      if (!match) return null;
+      const [, value, unit] = match;
+      const num = Number.parseInt(value, 10);
+      // Convert to days
+      switch (unit) {
+        case "s":
+          return num / 86400; // seconds to days
+        case "m":
+          return num / 1440; // minutes to days
+        case "h":
+          return num / 24; // hours to days
+        case "d":
+          return num; // days
+        case "w":
+          return num * 7; // weeks to days
+        case "y":
+          return num * 365; // years to days
+        default:
+          return null;
+      }
+    };
+
     // Compare session duration
-    if (currentScope.session !== newScope.session) {
+    const currentDays = normalizeDuration(currentScope.session);
+    const newDays = normalizeDuration(newScope.session);
+    if (currentDays !== newDays) {
       return true;
     }
 
@@ -1930,16 +1963,19 @@ export class MigrationManager {
     // biome-ignore lint/suspicious/noExplicitAny: Dynamic analyzer introspection
     newAnalyzer: any,
   ): boolean {
+    // Normalize case for comparison (SurrealDB stores tokenizers/filters in uppercase)
+    const normalizeCase = (arr: string[]) => arr.map((s) => s.toUpperCase()).sort();
+
     // Compare tokenizers
-    const sortedCurrentTokenizers = [...(currentAnalyzer.tokenizers || [])].sort();
-    const sortedNewTokenizers = [...(newAnalyzer.tokenizers || [])].sort();
+    const sortedCurrentTokenizers = normalizeCase(currentAnalyzer.tokenizers || []);
+    const sortedNewTokenizers = normalizeCase(newAnalyzer.tokenizers || []);
     if (JSON.stringify(sortedCurrentTokenizers) !== JSON.stringify(sortedNewTokenizers)) {
       return true;
     }
 
     // Compare filters
-    const sortedCurrentFilters = [...(currentAnalyzer.filters || [])].sort();
-    const sortedNewFilters = [...(newAnalyzer.filters || [])].sort();
+    const sortedCurrentFilters = normalizeCase(currentAnalyzer.filters || []);
+    const sortedNewFilters = normalizeCase(newAnalyzer.filters || []);
     if (JSON.stringify(sortedCurrentFilters) !== JSON.stringify(sortedNewFilters)) {
       return true;
     }
@@ -2187,12 +2223,7 @@ export class MigrationManager {
     scope: any,
     overwrite = false,
   ): string {
-    let definition = `DEFINE ${overwrite ? "OVERWRITE " : ""}SCOPE ${scope.name}`;
-
-    // Add session duration
-    if (scope.session) {
-      definition += ` SESSION ${scope.session}`;
-    }
+    let definition = `DEFINE ${overwrite ? "OVERWRITE " : ""}ACCESS ${scope.name} ON DATABASE TYPE RECORD`;
 
     // Add SIGNUP logic
     if (scope.signup) {
@@ -2202,6 +2233,11 @@ export class MigrationManager {
     // Add SIGNIN logic
     if (scope.signin) {
       definition += ` SIGNIN (${scope.signin})`;
+    }
+
+    // Add session duration
+    if (scope.session) {
+      definition += ` DURATION FOR SESSION ${scope.session}`;
     }
 
     return `${definition};`;
