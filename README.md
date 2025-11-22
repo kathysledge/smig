@@ -5,7 +5,7 @@
 
 ### SurrealDB schema management with automatic migrations
 
-[![npm version](https://badge.fury.io/js/smig.svg?version=0.1.0)](https://badge.fury.io/js/smig)
+[![npm version](https://badge.fury.io/js/smig.svg?version=0.1.1)](https://badge.fury.io/js/smig)
 [![License: MIT](https://img.shields.io/badge/License-MIT-violet.svg)](https://opensource.org/licenses/MIT)
 
 ---
@@ -1155,6 +1155,10 @@ Found a bug? Have a feature request? Please open an issue on GitHub with:
 For security concerns or vulnerabilities, please email chris@chwd.ca (or open a private security advisory on GitHub).
 
 ## Changelog
+
+### [0.1.1] - 2025-11-22
+
+Simply trying to cache bust the version badge
 
 ### [0.1.0] - 2025-11-22
 
