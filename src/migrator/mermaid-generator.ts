@@ -82,8 +82,8 @@ export class MermaidGenerator {
       const relationKey = `${relation.from}-${relation.name}-${relation.to}`;
       if (!processedRelationships.has(relationKey)) {
         const cardinality = this.inferCardinality(relation);
-        const sanitizedName = this.sanitizeFieldName(relation.name);
-        lines.push(`    ${relation.from} ${cardinality} ${relation.to} : "${sanitizedName}"`);
+        const labelName = this.getRelationshipLabel(relation.name);
+        lines.push(`    ${relation.from} ${cardinality} ${relation.to} : "${labelName}"`);
         processedRelationships.add(relationKey);
       }
     }
@@ -97,8 +97,8 @@ export class MermaidGenerator {
           if (recordType === table.name) {
             const relationKey = `${table.name}-${field.name}-${recordType}`;
             if (!processedRelationships.has(relationKey)) {
-              const sanitizedFieldName = this.sanitizeFieldName(field.name);
-              lines.push(`    ${table.name} ||--o{ ${recordType} : "${sanitizedFieldName}"`);
+              const labelName = this.getRelationshipLabel(field.name);
+              lines.push(`    ${table.name} ||--o{ ${recordType} : "${labelName}"`);
               processedRelationships.add(relationKey);
             }
             continue;
@@ -117,8 +117,8 @@ export class MermaidGenerator {
               cardinality = isOptional ? "}o--o|" : "}o--||";
             }
 
-            const sanitizedFieldName = this.sanitizeFieldName(field.name);
-            lines.push(`    ${table.name} ${cardinality} ${recordType} : "${sanitizedFieldName}"`);
+            const labelName = this.getRelationshipLabel(field.name);
+            lines.push(`    ${table.name} ${cardinality} ${recordType} : "${labelName}"`);
             processedRelationships.add(relationKey);
           }
         }
@@ -225,11 +225,27 @@ export class MermaidGenerator {
   }
 
   /**
-   * Sanitizes field names for Mermaid compatibility
-   * Replaces dots with underscores to avoid parse errors
+   * Sanitizes field names for use in table field definitions
+   * Converts dots to underscores due to Mermaid ER diagram parser limitations
+   *
+   * Note: Mermaid's ER diagram parser only accepts alphanumeric characters and
+   * underscores in field names (ATTRIBUTE_WORD tokens). Quotes are not supported
+   * in this context, unlike in relationship labels.
    */
   private sanitizeFieldName(name: string): string {
     return name.replace(/\./g, "_");
+  }
+
+  /**
+   * Gets the field name for use in relationship labels
+   * Removes quotes if present since the relationship template adds its own quotes
+   */
+  private getRelationshipLabel(name: string): string {
+    // If the name is already quoted, remove the quotes for the label
+    if (name.startsWith('"') && name.endsWith('"')) {
+      return name.slice(1, -1);
+    }
+    return name;
   }
 
   /**

@@ -2,6 +2,16 @@
 
 All notable changes to **smig** will be documented in this file.
 
+## [0.4.1] - 2025-11-24
+
+**Improvements**
+
+- 🎨 **Mermaid Nested Field Names** - Improved handling of nested field names (containing dots) in diagram generation
+  - **Relationship labels** now preserve dots perfectly (`user ||--o{ user : "votes.positive"`)
+  - **Field definitions** use underscores (`array votes_positive`) due to current Mermaid ER diagram parser limitations
+  - This hybrid approach provides the best clarity possible within Mermaid's current constraints
+  - **Future work**: We plan to collaborate with the Mermaid.js maintainers to enable dots in field definitions, allowing full preservation of nested field names throughout diagrams
+
 ## [0.4.0] - 2025-11-24
 
 **New Features**
@@ -14,7 +24,6 @@ All notable changes to **smig** will be documented in this file.
   - Interactive CLI prompts for detail level selection
   - File overwrite protection with confirmation prompts
   - Export to `.mermaid` files for use with GitHub, GitLab, documentation sites, and Mermaid Live
-  - Nested field name sanitization (dots replaced with underscores for Mermaid compatibility)
 
 **CLI Enhancements**
 

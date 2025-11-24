@@ -618,7 +618,7 @@ describe("MermaidGenerator", () => {
       expect(diagram).toContain("}");
     });
 
-    it("should handle nested field names by sanitizing dots", () => {
+    it("should handle nested field names with dots", () => {
       const schema = defineSchema({
         table: "user",
         fields: {
@@ -633,11 +633,13 @@ describe("MermaidGenerator", () => {
 
       const diagram = generateMermaidDiagram(fullSchema, { level: "minimal" });
 
-      // Dots should be replaced with underscores to avoid Mermaid parse errors
-      expect(diagram).toContain("votes_positive");
-      expect(diagram).toContain("votes_negative");
-      expect(diagram).not.toContain("votes.positive");
-      expect(diagram).not.toContain("votes.negative");
+      // Field definitions use underscores (Mermaid parser limitation)
+      expect(diagram).toContain("array votes_positive");
+      expect(diagram).toContain("array votes_negative");
+      
+      // But relationship labels preserve dots (they support quotes)
+      expect(diagram).toContain('"votes.positive"');
+      expect(diagram).toContain('"votes.negative"');
     });
 
     it("should handle generic record types", () => {
