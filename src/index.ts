@@ -101,7 +101,7 @@
  * - **CLI Tools**: Command-line interface for development and deployment
  *
  * @module smig
- * @version 0.3.0
+ * @version 0.4.0
  * @author Chris Harris
  * @license MIT
  */
@@ -112,6 +112,9 @@
 
 /** Low-level database client for direct SurrealDB operations */
 export { SurrealClient } from "./database/surreal-client";
+export type { DiagramLevel, MermaidGeneratorOptions } from "./migrator/mermaid-generator";
+/** Mermaid diagram generation functionality */
+export { generateMermaidDiagram, MermaidGenerator } from "./migrator/mermaid-generator";
 /** Main migration management and schema loading functionality */
 export { loadSchemaFromFile, MigrationManager } from "./migrator/migration-manager";
 

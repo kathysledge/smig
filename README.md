@@ -5,7 +5,7 @@
 
 ### SurrealDB schema management with automatic migrations
 
-[![npm version](https://badge.fury.io/js/smig.svg?version=0.3.0)](https://badge.fury.io/js/smig)
+[![npm version](https://badge.fury.io/js/smig.svg?version=0.4.0)](https://badge.fury.io/js/smig)
 [![License: MIT](https://img.shields.io/badge/License-MIT-violet.svg)](https://opensource.org/licenses/MIT)
 
 ---
@@ -604,6 +604,9 @@ bun smig config [--env production] [--show-secrets]
 
 # Test database connection
 bun smig test [--env development]
+
+# Generate Mermaid ER diagram
+bun smig mermaid [--output ./my-diagram.mermaid]
 ```
 
 ### Global options
@@ -620,6 +623,62 @@ bun smig test [--env development]
 
 # Override schema file
 --schema ./custom-schema.js
+```
+
+## Diagram generation
+
+**smig** includes a powerful visualization feature that generates Mermaid ER diagrams from your schema. This helps you understand your database structure at a glance and share schema designs with your team.
+
+### Generate a diagram
+
+```bash
+# Interactive mode - prompts for detail level
+bun smig mermaid
+
+# Specify output file
+bun smig mermaid --output docs/schema.mermaid
+
+# With custom schema file
+bun smig mermaid --schema ./custom-schema.js
+```
+
+### Diagram detail levels
+
+When you run `smig mermaid`, you'll be prompted to choose between two detail levels:
+
+**Minimal (executive summary)**
+- Entity names and relationships
+- Field names with basic types
+- Key constraints (unique, primary key)
+- Validation summaries (e.g., "3-20 chars", "0-150")
+
+**Detailed (comprehensive view)**
+- Everything from minimal mode, plus:
+- Default values
+- Computed field indicators
+- Value expressions (e.g., `time::now()`)
+- Readonly field markers
+- Field comments and documentation
+
+### Viewing diagrams
+
+After generating your diagram, you can visualize it using:
+
+- **[Mermaid Viewer](https://newmo-oss.github.io/mermaid-viewer/)** - Paste your diagram and see it rendered instantly
+- **GitHub/GitLab** - Both platforms render Mermaid diagrams natively in markdown files
+- **VS Code** - Use the Mermaid extension for inline previews
+- **Documentation sites** - Most modern doc platforms support Mermaid (Docusaurus, VuePress, etc.)
+
+### Example output
+
+```bash
+$ bun smig mermaid
+✔ Select diagram detail level: › Minimal (executive summary)
+✔ File 'schema-diagram.mermaid' already exists. Do you want to overwrite it? … yes
+✓ Mermaid diagram generated successfully
+📊 Diagram written to: schema-diagram.mermaid
+
+You can visualize this diagram at [https://newmo-oss.github.io/mermaid-viewer/](https://newmo-oss.github.io/mermaid-viewer/)
 ```
 
 ## Migration workflow
@@ -1157,96 +1216,7 @@ For security concerns or vulnerabilities, please email chris@chwd.ca (or open a 
 
 ## Changelog
 
-### [0.3.0] - 2025-11-22
-
-**Breaking Changes**
-
-- 🔄 **SurrealDB 2.3+ Compatibility** - Updated to use `DEFINE ACCESS` syntax instead of `DEFINE SCOPE`
-  - Scopes now generate `DEFINE ACCESS ... ON DATABASE TYPE RECORD` statements
-  - Removal uses `REMOVE ACCESS ... ON DATABASE` syntax
-  - Automatic parsing of both `scopes` and `accesses` fields for backward compatibility
-  - Session duration parsing updated for new `DURATION FOR TOKEN ..., FOR SESSION ...` format
-
-**Enhancements**
-
-- 🔧 **Improved Schema Comparison** - Enhanced field comparison to eliminate spurious modifications
-  - Fixed VALUE extraction for multi-line `<future>` blocks with nested braces
-  - Normalized whitespace and parentheses in computed field values
-  - Added duration normalization (7d = 1w) for scope session comparison
-  - Case-insensitive comparison for analyzer tokenizers and filters
-  - Fixed DEFAULT value parsing to exclude ASSERT clauses
-  - Proper handling of array wildcard fields (`[*]`) from database introspection
-  - Normalized permissions, comments, and boolean field flags for accurate comparison
-
-- 📝 **Code Documentation** - Added clarifying comments explaining scope/access terminology mapping
-
-**Examples**
-
-- 📚 **Social Platform Schema** - Added comprehensive example demonstrating topics, posts, threads, voting system, authentication scopes, and full-text search analyzers
-
-### [0.2.0] - 2025-11-22
-
-Busting the version badge again
-
-### [0.1.2] - 2025-11-22
-
-**Enhancements**
-
-- ✅ **Full Introspection Support** - Complete schema introspection for functions, scopes, and analyzers
-  - Automatically detects existing functions, scopes, and analyzers in the database
-  - Enables modification detection for all schema elements
-  - Supports proper rollback for function/scope/analyzer changes
-  - Parses SurrealDB `INFO FOR DB` output to extract complete schema state
-
-### [0.1.1] - 2025-11-22
-
-Simply trying to cache bust the version badge
-
-### [0.1.0] - 2025-11-22
-
-**Major Features**
-
-- ✨ **Custom Functions** - Define reusable database functions with `fn()` builder
-  - Type-safe parameters with `.param(name, type)`
-  - Optional return type specification with `.returns(type)`
-  - Full SurrealQL body support
-  - Automatic migration generation
-
-- 🔐 **Authentication Scopes** - Built-in auth configuration with `scope()` builder
-  - Session duration management with `.session(duration)`
-  - Custom SIGNUP logic with `.signup(query)`
-  - Custom SIGNIN logic with `.signin(query)`
-  - Argon2 password hashing support
-
-- 🔍 **Full-Text Search Analyzers** - Configure text analysis with `analyzer()` builder
-  - Tokenizer configuration (camel, class, blank, punct)
-  - Filter configuration (ascii, lowercase, snowball, edgengram, ngram)
-  - Language-specific stemming
-  - Integration with SEARCH indexes
-
-- 🔗 **Union Type Records** - Polymorphic table references
-  - Single table: `record('user')`
-  - Multiple tables: `record(['post', 'comment', 'user'])`
-  - Generic record: `record()` (any table)
-  - Useful for notifications, activity feeds
-
-- ⚡ **Computed Fields** - Dynamic field calculations with `.computed()` method
-  - Automatic wrapping in SurrealDB's `<future>` syntax
-  - Always up-to-date derived values
-  - Reduces storage overhead
-  - No background job maintenance required
-
-**Enhancements**
-
-- 📊 Extended `SurrealDBSchema` interface to include functions, scopes, and analyzers
-- 🔄 Enhanced `MigrationManager` to generate migrations for all new schema elements
-- ↩️ Added rollback support for functions, scopes, and analyzers
-- 🧪 Comprehensive test suite with 38 new tests
-- 📚 Updated API reference documentation
-
-**Breaking Changes**
-
-- None - all changes are backward compatible
+See [CHANGELOG.md](CHANGELOG.md) for the complete version history.
 
 ## License
 

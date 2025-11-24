@@ -179,7 +179,7 @@ const program = new Command();
 program
   .name("smig")
   .description("Automatic SurrealDB migrations with a concise DSL")
-  .version("0.3.0")
+  .version("0.4.0")
   .configureHelp({
     showGlobalOptions: true,
   });
@@ -748,6 +748,99 @@ program
       spinner.fail(
         chalk.red(`Configuration error: ${error instanceof Error ? error.message : error}`),
       );
+      process.exit(1);
+    }
+  });
+
+// Mermaid command
+program
+  .command("mermaid")
+  .description("Generate Mermaid ER diagram from schema")
+  .option("-o, --output <path>", "Output file path (defaults to schema-diagram.mermaid)")
+  .option("--debug", "Enable debug logging to file")
+  .action(async (options) => {
+    const globalOpts = program.opts();
+
+    // Initialize debug logger if debug flag is set
+    if (options.debug) {
+      const debugLogger = new DebugLogger(true);
+      setDebugLogger(debugLogger);
+    }
+
+    const spinner = ora("Loading configuration...").start();
+
+    try {
+      // Load configuration using the new system
+      const config = await getConfigFromOptions(globalOpts);
+
+      spinner.text = "Loading schema file...";
+      const schemaPath = path.resolve(config.schema);
+      const schema = await loadSchemaFromFile(schemaPath);
+
+      spinner.stop();
+
+      // Prompt for diagram detail level
+      const detailLevel = await clack.select({
+        message: "Select diagram detail level:",
+        options: [
+          {
+            value: "minimal",
+            label: "Minimal (executive summary)",
+            hint: "Entities with field names and types only",
+          },
+          {
+            value: "detailed",
+            label: "Detailed (comprehensive view)",
+            hint: "All entity details including constraints, defaults, and computed fields",
+          },
+        ],
+        initialValue: "minimal",
+      });
+
+      if (clack.isCancel(detailLevel)) {
+        clack.cancel(chalk.yellow("Diagram generation cancelled"));
+        process.exit(0);
+      }
+
+      // Determine output path
+      const outputPath = options.output || path.resolve("schema-diagram.mermaid");
+
+      // Check if file exists and prompt to overwrite
+      const fs = await import("fs-extra");
+      if (await fs.pathExists(outputPath)) {
+        const overwrite = await clack.confirm({
+          message: `File '${outputPath}' already exists. Do you want to overwrite it?`,
+          initialValue: false,
+        });
+
+        if (clack.isCancel(overwrite) || !overwrite) {
+          clack.cancel(chalk.yellow("Diagram generation cancelled"));
+          process.exit(0);
+        }
+      }
+
+      spinner.start("Generating Mermaid diagram...");
+
+      // Generate the diagram
+      const { generateMermaidDiagram } = await import("./migrator/mermaid-generator");
+      const diagram = generateMermaidDiagram(schema, {
+        level: detailLevel as "minimal" | "detailed",
+        includeComments: true,
+      });
+
+      // Write to file
+      await writeFile(outputPath, diagram, "utf-8");
+
+      spinner.succeed(chalk.green("Mermaid diagram generated successfully"));
+      console.log(chalk.blue(`📊 Diagram written to: ${outputPath}`));
+      console.log(
+        chalk.dim(
+          "\nYou can visualize this diagram at https://newmo-oss.github.io/mermaid-viewer/",
+        ),
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      spinner.fail(chalk.red(`Diagram generation failed: ${errorMessage}`));
       process.exit(1);
     }
   });
