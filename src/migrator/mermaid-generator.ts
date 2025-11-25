@@ -363,7 +363,7 @@ export class MermaidGenerator {
     // Comments
     if (field.comment && this.options.includeComments) {
       const comment = this.truncate(field.comment, 40);
-      annotations.push(`"${comment}"`);
+      annotations.push(comment);
     }
 
     return annotations.length > 0 ? `"${annotations.join("; ")}"` : "";
@@ -371,13 +371,15 @@ export class MermaidGenerator {
 
   /**
    * Formats a default value for display
+   * Note: Uses single quotes for string values to avoid conflicts with
+   * the outer double quotes in the annotation string
    */
   private formatDefaultValue(value: unknown): string {
     if (typeof value === "string") {
       if (value.length > 20) {
-        return `"${value.substring(0, 17)}..."`;
+        return `'${value.substring(0, 17)}...'`;
       }
-      return `"${value}"`;
+      return `'${value}'`;
     }
     if (typeof value === "boolean" || typeof value === "number") {
       return String(value);

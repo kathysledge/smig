@@ -101,7 +101,7 @@
  * - **CLI Tools**: Command-line interface for development and deployment
  *
  * @module smig
- * @version 0.4.1
+ * @version 0.4.2
  * @author Chris Harris
  * @license MIT
  */

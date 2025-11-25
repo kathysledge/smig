@@ -432,7 +432,7 @@ describe("MermaidGenerator", () => {
 
       expect(diagram).toMatch(/isActive.*default: true/);
       expect(diagram).toMatch(/tokens.*default: 0/);
-      expect(diagram).toMatch(/role.*default: "user"/);
+      expect(diagram).toMatch(/role.*default: 'user'/);
     });
 
     it("should show computed fields", () => {
@@ -636,7 +636,7 @@ describe("MermaidGenerator", () => {
       // Field definitions use underscores (Mermaid parser limitation)
       expect(diagram).toContain("array votes_positive");
       expect(diagram).toContain("array votes_negative");
-      
+
       // But relationship labels preserve dots (they support quotes)
       expect(diagram).toContain('"votes.positive"');
       expect(diagram).toContain('"votes.negative"');

@@ -2,6 +2,14 @@
 
 All notable changes to **smig** will be documented in this file.
 
+## [0.4.2] - 2025-11-25
+
+**Bug Fixes**
+
+- 🐛 **Mermaid Annotation Quotes** - Fixed double quote issues in detailed diagrams
+  - String default values now use single quotes (e.g., `"default: 'time::now()'"`) to avoid conflicts with outer annotation quotes
+  - Improves readability and ensures proper Mermaid rendering
+
 ## [0.4.1] - 2025-11-24
 
 **Improvements**
