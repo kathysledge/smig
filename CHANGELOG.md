@@ -2,6 +2,10 @@
 
 All notable changes to **smig** will be documented in this file.
 
+## [0.4.3] - 2025-11-25
+
+Just a version badge cache bust
+
 ## [0.4.2] - 2025-11-25
 
 **Bug Fixes**
