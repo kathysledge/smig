@@ -2188,7 +2188,7 @@ export class MigrationManager {
     func: any,
     overwrite = false,
   ): string {
-    let definition = `DEFINE ${overwrite ? "OVERWRITE " : ""}FUNCTION ${func.name}`;
+    let definition = `DEFINE FUNCTION ${overwrite ? "OVERWRITE " : ""}${func.name}`;
 
     // Add parameters
     if (func.parameters && func.parameters.length > 0) {
@@ -2227,7 +2227,7 @@ export class MigrationManager {
     scope: any,
     overwrite = false,
   ): string {
-    let definition = `DEFINE ${overwrite ? "OVERWRITE " : ""}ACCESS ${scope.name} ON DATABASE TYPE RECORD`;
+    let definition = `DEFINE ACCESS ${overwrite ? "OVERWRITE " : ""}${scope.name} ON DATABASE TYPE RECORD`;
 
     // Add SIGNUP logic
     if (scope.signup) {
@@ -2261,7 +2261,7 @@ export class MigrationManager {
     analyzer: any,
     overwrite = false,
   ): string {
-    let definition = `DEFINE ${overwrite ? "OVERWRITE " : ""}ANALYZER ${analyzer.name}`;
+    let definition = `DEFINE ANALYZER ${overwrite ? "OVERWRITE " : ""}${analyzer.name}`;
 
     // Add tokenizers
     if (analyzer.tokenizers && analyzer.tokenizers.length > 0) {
