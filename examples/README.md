@@ -187,18 +187,18 @@ events: {
   // Automatic timestamp updates
   updateTimestamp: event('post_updated_at')
     .onUpdate()
-    .then('UPDATE $after.id SET updatedAt = time::now()'),
+    .thenDo('UPDATE $after.id SET updatedAt = time::now()'),
 
   // Automatic counter updates
   incrementPostCount: event('post_count_increment')
     .onCreate()
-    .then('UPDATE $after.author SET postCount += 1'),
+    .thenDo('UPDATE $after.author SET postCount += 1'),
 
   // Audit trails
   auditProfileUpdate: event('user_profile_audit')
     .onUpdate()
     .when('$before.bio != $after.bio')
-    .then(`
+    .thenDo(`
       CREATE audit_log SET
         table = "user",
         recordId = $after.id,
@@ -209,7 +209,7 @@ events: {
   // Complex business logic (single statement, multiple lines OK)
   extractHashtags: event('post_hashtag_extraction')
     .onCreate()
-    .then(`
+    .thenDo(`
       UPDATE $after.id SET
         hashtags = string::matches($after.content, /#\\w+/g)
       WHERE array::len(string::matches($after.content, /#\\w+/g)) > 0
@@ -217,7 +217,7 @@ events: {
 }
 ```
 
-**⚠️ Important event constraint:** Each event can only contain **one SurrealQL statement**. Multiple statements separated by semicolons in a single `.then()` clause will cause the subsequent statements to execute outside the event context. However, you can use multiple lines for readability within a single statement.
+**⚠️ Important event constraint:** Each event can only contain **one SurrealQL statement**. Multiple statements separated by semicolons in a single `.thenDo()` clause will cause the subsequent statements to execute outside the event context. However, you can use multiple lines for readability within a single statement.
 
 ### Relations
 ```javascript

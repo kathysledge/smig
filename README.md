@@ -5,7 +5,7 @@
 
 ### SurrealDB schema management with automatic migrations
 
-[![npm version](https://badge.fury.io/js/smig.svg?version=0.4.3)](https://badge.fury.io/js/smig)
+[![npm version](https://badge.fury.io/js/smig.svg?version=0.4.4)](https://badge.fury.io/js/smig)
 [![License: MIT](https://img.shields.io/badge/License-MIT-violet.svg)](https://opensource.org/licenses/MIT)
 
 ---
@@ -41,6 +41,7 @@ Inspired by [Alembic](https://alembic.sqlalchemy.org/en/latest/) (Python) and ma
 - 🔐 **Authentication scopes** - Define custom auth with SIGNUP/SIGNIN logic
 - 🔍 **Full-text search** - Analyzer configuration for advanced search
 - ⚙️ **Custom functions** - Reusable database functions with type safety
+- 🎨 **Mermaid ER diagrams** - Auto-generate visual diagrams from your schema
 
 ---
 
@@ -396,19 +397,19 @@ events: {
   // Update counter when post is created
   incrementPostCount: event('post_count_increment')
     .onCreate()
-    .then('UPDATE $after.author SET postCount += 1'),
+    .thenDo('UPDATE $after.author SET postCount += 1'),
 
   // Track when user logs in
   trackLogin: event('user_login_tracker')
     .onUpdate()
     .when('$before.lastLoginAt != $after.lastLoginAt')
-    .then('UPDATE $after.id SET loginCount += 1'),
+    .thenDo('UPDATE $after.id SET loginCount += 1'),
 
   // Audit trail for sensitive changes
   auditProfileUpdate: event('profile_audit')
     .onUpdate()
     .when('$before.email != $after.email')
-    .then(`
+    .thenDo(`
       CREATE audit_log SET
         table = "user",
         recordId = $after.id,
@@ -452,7 +453,7 @@ events: {
   // You can also define custom events for complex business logic
   complexBusinessLogic: event('complex_logic')
     .onCreate()
-    .then(`
+    .thenDo(`
       UPDATE $after.id SET
         calculatedField = $after.value1 * $after.value2,
         category = CASE
@@ -754,7 +755,6 @@ bun smig status --env production
 * **Review generated migrations** before applying them
 * **Test migrations on staging** before production
 * **Backup production data** before major schema changes
-* **Use meaningful migration messages** with `--message`
 * **Never edit applied migrations** - Always create new ones
 * **Run migrations in your deployment pipeline** - Automate with CI/CD
 
@@ -1101,7 +1101,7 @@ For custom logic (data transformations, complex business rules), use one of thes
 events: {
   migrateData: event('migrate_old_format')
     .onCreate()
-    .then('UPDATE $after SET newField = transform($after.oldField)')
+    .thenDo('UPDATE $after SET newField = transform($after.oldField)')
 }
 ```
 
@@ -1183,12 +1183,18 @@ bun run test
 
 # Run integration tests
 bun run test:integration
+
+# Format and lint your changes (auto-fixes issues):
+bun run format        # For src/ changes
+bun run format:tests  # For test changes
+bun run format:examples  # For example changes
 ```
 
 ### Guidelines
 
 - **Code style**: Follow the existing code style and TypeScript best practices
 - **Testing**: Add tests for new features and ensure existing tests pass
+- **Formatting**: Always run the appropriate format command before committing - it checks and auto-fixes linting issues
 - **Documentation**: Update documentation for any API changes
 - **Commit messages**: Use clear, descriptive commit messages
 - **Pull requests**: Keep PRs focused on a single feature or fix

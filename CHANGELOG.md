@@ -2,6 +2,12 @@
 
 All notable changes to **smig** will be documented in this file.
 
+## [0.4.4] - 2025-11-26
+
+Changed event method to `thenDo` in docs (had to change from `then` as it’s a reserved keyword in JavaScript and Biome was complaining.)
+
+Added formatting section to contributing guidelines. 
+
 ## [0.4.3] - 2025-11-25
 
 Just a version badge cache bust
