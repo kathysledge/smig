@@ -2,7 +2,7 @@
 
 All notable changes to **smig** will be documented in this file.
 
-## [0.4.5] - 2025-11-27
+## [0.4.6] - 2025-11-26
 
 **Bug Fixes**
 
