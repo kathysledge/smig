@@ -2,6 +2,23 @@
 
 All notable changes to **smig** will be documented in this file.
 
+## [0.4.5] - 2025-11-27
+
+**Bug Fixes**
+
+- 🐛 **Function/Scope/Analyzer Change Detection** - Fixed critical bug where `hasChanges()` didn't detect modifications to functions, scopes (access), or analyzers
+  - Previously, changing only functions, scopes, or analyzers would not trigger migrations
+  - `generateDiff()` worked correctly, but `hasChanges()` returned false, preventing migration execution
+  - Now properly detects additions, modifications, and removals of all schema object types
+  - Added comprehensive test suite with 7 tests specifically for this bug fix
+
+- 🔧 **OVERWRITE Keyword Syntax** - Corrected DEFINE statement syntax for SurrealDB compatibility
+  - Fixed: `DEFINE FUNCTION OVERWRITE` (was: `DEFINE OVERWRITE FUNCTION`)
+  - Fixed: `DEFINE ACCESS OVERWRITE` (was: `DEFINE OVERWRITE ACCESS`)
+  - Fixed: `DEFINE ANALYZER OVERWRITE` (was: `DEFINE OVERWRITE ANALYZER`)
+  - OVERWRITE keyword now correctly placed after object type, before object name
+  - Ensures compatibility with SurrealDB's syntax requirements
+
 ## [0.4.4] - 2025-11-26
 
 Changed event method to `thenDo` in docs (had to change from `then` as it’s a reserved keyword in JavaScript and Biome was complaining.)

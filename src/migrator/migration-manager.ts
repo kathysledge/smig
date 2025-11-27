@@ -11,7 +11,15 @@ import { createHash } from "node:crypto";
 import * as path from "node:path";
 import * as fs from "fs-extra";
 import { SurrealClient } from "../database/surreal-client";
-import type { DatabaseConfig, Migration, MigrationStatus, SurrealDBSchema } from "../types/schema";
+import type {
+  DatabaseConfig,
+  Migration,
+  MigrationStatus,
+  SurrealAnalyzer,
+  SurrealDBSchema,
+  SurrealFunction,
+  SurrealScope,
+} from "../types/schema";
 import { debugLog, debugLogSchema } from "../utils/debug-logger";
 
 /**
@@ -470,6 +478,76 @@ export class MigrationManager {
       }
     }
 
+    // Check for function changes
+    for (const newFunction of schema.functions || []) {
+      const currentFunction = (currentSchema.functions || []).find(
+        (f) => f.name === newFunction.name,
+      );
+
+      if (!currentFunction) {
+        return true; // New function found
+      }
+
+      // Check if function has been modified
+      if (this.isFunctionModified(currentFunction, newFunction)) {
+        return true; // Function modified
+      }
+    }
+
+    // Check for removed functions
+    for (const currentFunction of currentSchema.functions || []) {
+      const stillExists = (schema.functions || []).find((f) => f.name === currentFunction.name);
+      if (!stillExists) {
+        return true; // Removed function found
+      }
+    }
+
+    // Check for scope changes
+    for (const newScope of schema.scopes || []) {
+      const currentScope = (currentSchema.scopes || []).find((s) => s.name === newScope.name);
+
+      if (!currentScope) {
+        return true; // New scope found
+      }
+
+      // Check if scope has been modified
+      if (this.isScopeModified(currentScope, newScope)) {
+        return true; // Scope modified
+      }
+    }
+
+    // Check for removed scopes
+    for (const currentScope of currentSchema.scopes || []) {
+      const stillExists = (schema.scopes || []).find((s) => s.name === currentScope.name);
+      if (!stillExists) {
+        return true; // Removed scope found
+      }
+    }
+
+    // Check for analyzer changes
+    for (const newAnalyzer of schema.analyzers || []) {
+      const currentAnalyzer = (currentSchema.analyzers || []).find(
+        (a) => a.name === newAnalyzer.name,
+      );
+
+      if (!currentAnalyzer) {
+        return true; // New analyzer found
+      }
+
+      // Check if analyzer has been modified
+      if (this.isAnalyzerModified(currentAnalyzer, newAnalyzer)) {
+        return true; // Analyzer modified
+      }
+    }
+
+    // Check for removed analyzers
+    for (const currentAnalyzer of currentSchema.analyzers || []) {
+      const stillExists = (schema.analyzers || []).find((a) => a.name === currentAnalyzer.name);
+      if (!stillExists) {
+        return true; // Removed analyzer found
+      }
+    }
+
     return false; // No changes detected
   }
 
@@ -759,40 +837,37 @@ export class MigrationManager {
 
     // Handle functions
     for (const newFunction of schema.functions || []) {
-      // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
-      const func = newFunction as any;
       const currentFunction = (currentSchema.functions || []).find(
-        // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
-        (f: any) => f.name === func.name,
+        (f) => f.name === newFunction.name,
       );
 
       if (!currentFunction) {
         // New function
-        upChanges.push(`-- New function: ${func.name}`);
-        upChanges.push(this.generateFunctionDefinition(func));
+        upChanges.push(`-- New function: ${newFunction.name}`);
+        upChanges.push(this.generateFunctionDefinition(newFunction));
         upChanges.push("");
 
         // Track for rollback
         changeLog.push({
           type: "function",
-          table: func.name,
+          table: newFunction.name,
           operation: "create",
-          details: { func },
+          details: { func: newFunction },
         });
       } else {
         // Check if function has been modified
-        const funcModified = this.isFunctionModified(currentFunction, func);
+        const funcModified = this.isFunctionModified(currentFunction, newFunction);
         if (funcModified) {
-          upChanges.push(`-- Modified function: ${func.name}`);
-          upChanges.push(this.generateFunctionDefinition(func, true)); // true = use OVERWRITE
+          upChanges.push(`-- Modified function: ${newFunction.name}`);
+          upChanges.push(this.generateFunctionDefinition(newFunction, true)); // true = use OVERWRITE
           upChanges.push("");
 
           // Track for rollback
           changeLog.push({
             type: "function",
-            table: func.name,
+            table: newFunction.name,
             operation: "modify",
-            details: { currentFunction, newFunction: func },
+            details: { currentFunction, newFunction },
           });
         }
       }
@@ -800,21 +875,16 @@ export class MigrationManager {
 
     // Check for removed functions
     for (const currentFunction of currentSchema.functions || []) {
-      // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
-      const func = currentFunction as any;
-      const stillExists = (schema.functions || []).find(
-        // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
-        (f: any) => f.name === func.name,
-      );
+      const stillExists = (schema.functions || []).find((f) => f.name === currentFunction.name);
       if (!stillExists) {
-        upChanges.push(`-- Removed function: ${func.name}`);
-        upChanges.push(`REMOVE FUNCTION ${func.name};`);
+        upChanges.push(`-- Removed function: ${currentFunction.name}`);
+        upChanges.push(`REMOVE FUNCTION ${currentFunction.name};`);
         upChanges.push("");
 
         // Track for rollback
         changeLog.push({
           type: "function",
-          table: func.name,
+          table: currentFunction.name,
           operation: "remove",
           details: { currentFunction },
         });
@@ -823,40 +893,35 @@ export class MigrationManager {
 
     // Handle scopes
     for (const newScope of schema.scopes || []) {
-      // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
-      const scope = newScope as any;
-      const currentScope = (currentSchema.scopes || []).find(
-        // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
-        (s: any) => s.name === scope.name,
-      );
+      const currentScope = (currentSchema.scopes || []).find((s) => s.name === newScope.name);
 
       if (!currentScope) {
         // New scope
-        upChanges.push(`-- New scope: ${scope.name}`);
-        upChanges.push(this.generateScopeDefinition(scope));
+        upChanges.push(`-- New scope: ${newScope.name}`);
+        upChanges.push(this.generateScopeDefinition(newScope));
         upChanges.push("");
 
         // Track for rollback
         changeLog.push({
           type: "scope",
-          table: scope.name,
+          table: newScope.name,
           operation: "create",
-          details: { scope },
+          details: { scope: newScope },
         });
       } else {
         // Check if scope has been modified
-        const scopeModified = this.isScopeModified(currentScope, scope);
+        const scopeModified = this.isScopeModified(currentScope, newScope);
         if (scopeModified) {
-          upChanges.push(`-- Modified scope: ${scope.name}`);
-          upChanges.push(this.generateScopeDefinition(scope, true)); // true = use OVERWRITE
+          upChanges.push(`-- Modified scope: ${newScope.name}`);
+          upChanges.push(this.generateScopeDefinition(newScope, true)); // true = use OVERWRITE
           upChanges.push("");
 
           // Track for rollback
           changeLog.push({
             type: "scope",
-            table: scope.name,
+            table: newScope.name,
             operation: "modify",
-            details: { currentScope, newScope: scope },
+            details: { currentScope, newScope },
           });
         }
       }
@@ -864,21 +929,16 @@ export class MigrationManager {
 
     // Check for removed scopes
     for (const currentScope of currentSchema.scopes || []) {
-      // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
-      const scope = currentScope as any;
-      const stillExists = (schema.scopes || []).find(
-        // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
-        (s: any) => s.name === scope.name,
-      );
+      const stillExists = (schema.scopes || []).find((s) => s.name === currentScope.name);
       if (!stillExists) {
-        upChanges.push(`-- Removed scope: ${scope.name}`);
-        upChanges.push(`REMOVE ACCESS ${scope.name} ON DATABASE;`);
+        upChanges.push(`-- Removed scope: ${currentScope.name}`);
+        upChanges.push(`REMOVE ACCESS ${currentScope.name} ON DATABASE;`);
         upChanges.push("");
 
         // Track for rollback
         changeLog.push({
           type: "scope",
-          table: scope.name,
+          table: currentScope.name,
           operation: "remove",
           details: { currentScope },
         });
@@ -887,40 +947,37 @@ export class MigrationManager {
 
     // Handle analyzers
     for (const newAnalyzer of schema.analyzers || []) {
-      // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
-      const analyzer = newAnalyzer as any;
       const currentAnalyzer = (currentSchema.analyzers || []).find(
-        // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
-        (a: any) => a.name === analyzer.name,
+        (a) => a.name === newAnalyzer.name,
       );
 
       if (!currentAnalyzer) {
         // New analyzer
-        upChanges.push(`-- New analyzer: ${analyzer.name}`);
-        upChanges.push(this.generateAnalyzerDefinition(analyzer));
+        upChanges.push(`-- New analyzer: ${newAnalyzer.name}`);
+        upChanges.push(this.generateAnalyzerDefinition(newAnalyzer));
         upChanges.push("");
 
         // Track for rollback
         changeLog.push({
           type: "analyzer",
-          table: analyzer.name,
+          table: newAnalyzer.name,
           operation: "create",
-          details: { analyzer },
+          details: { analyzer: newAnalyzer },
         });
       } else {
         // Check if analyzer has been modified
-        const analyzerModified = this.isAnalyzerModified(currentAnalyzer, analyzer);
+        const analyzerModified = this.isAnalyzerModified(currentAnalyzer, newAnalyzer);
         if (analyzerModified) {
-          upChanges.push(`-- Modified analyzer: ${analyzer.name}`);
-          upChanges.push(this.generateAnalyzerDefinition(analyzer, true)); // true = use OVERWRITE
+          upChanges.push(`-- Modified analyzer: ${newAnalyzer.name}`);
+          upChanges.push(this.generateAnalyzerDefinition(newAnalyzer, true)); // true = use OVERWRITE
           upChanges.push("");
 
           // Track for rollback
           changeLog.push({
             type: "analyzer",
-            table: analyzer.name,
+            table: newAnalyzer.name,
             operation: "modify",
-            details: { currentAnalyzer, newAnalyzer: analyzer },
+            details: { currentAnalyzer, newAnalyzer },
           });
         }
       }
@@ -928,21 +985,16 @@ export class MigrationManager {
 
     // Check for removed analyzers
     for (const currentAnalyzer of currentSchema.analyzers || []) {
-      // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
-      const analyzer = currentAnalyzer as any;
-      const stillExists = (schema.analyzers || []).find(
-        // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection
-        (a: any) => a.name === analyzer.name,
-      );
+      const stillExists = (schema.analyzers || []).find((a) => a.name === currentAnalyzer.name);
       if (!stillExists) {
-        upChanges.push(`-- Removed analyzer: ${analyzer.name}`);
-        upChanges.push(`REMOVE ANALYZER ${analyzer.name};`);
+        upChanges.push(`-- Removed analyzer: ${currentAnalyzer.name}`);
+        upChanges.push(`REMOVE ANALYZER ${currentAnalyzer.name};`);
         upChanges.push("");
 
         // Track for rollback
         changeLog.push({
           type: "analyzer",
-          table: analyzer.name,
+          table: currentAnalyzer.name,
           operation: "remove",
           details: { currentAnalyzer },
         });
@@ -1867,12 +1919,7 @@ export class MigrationManager {
    * @param newFunc - The new function from the schema
    * @returns True if the function has been modified
    */
-  private isFunctionModified(
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic function introspection
-    currentFunc: any,
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic function introspection
-    newFunc: any,
-  ): boolean {
+  private isFunctionModified(currentFunc: SurrealFunction, newFunc: SurrealFunction): boolean {
     // Compare parameters
     if (JSON.stringify(currentFunc.parameters) !== JSON.stringify(newFunc.parameters)) {
       return true;
@@ -1899,12 +1946,7 @@ export class MigrationManager {
    * @param newScope - The new scope from the schema
    * @returns True if the scope has been modified
    */
-  private isScopeModified(
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic scope introspection
-    currentScope: any,
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic scope introspection
-    newScope: any,
-  ): boolean {
+  private isScopeModified(currentScope: SurrealScope, newScope: SurrealScope): boolean {
     // Normalize duration to days for comparison (SurrealDB may convert 7d to 1w, etc.)
     const normalizeDuration = (duration: string | null): number | null => {
       if (!duration) return null;
@@ -1960,10 +2002,8 @@ export class MigrationManager {
    * @returns True if the analyzer has been modified
    */
   private isAnalyzerModified(
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic analyzer introspection
-    currentAnalyzer: any,
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic analyzer introspection
-    newAnalyzer: any,
+    currentAnalyzer: SurrealAnalyzer,
+    newAnalyzer: SurrealAnalyzer,
   ): boolean {
     // Normalize case for comparison (SurrealDB stores tokenizers/filters in uppercase)
     const normalizeCase = (arr: string[]) => arr.map((s) => s.toUpperCase()).sort();
