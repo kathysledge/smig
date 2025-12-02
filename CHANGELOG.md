@@ -2,6 +2,12 @@
 
 All notable changes to **smig** will be documented in this file.
 
+## [0.4.7] - 2025-12-02
+
+- Changed license to ISC (was MIT)
+- Updated all dependencies
+- Changed sponsorship option to “Buy Me a Coffee”
+
 ## [0.4.6] - 2025-11-26
 
 **Bug Fixes**

@@ -10,3 +10,4 @@ vite.config.ts
 tsconfig.json
 biome.json
 bun.lock
+.github

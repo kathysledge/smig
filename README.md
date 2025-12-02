@@ -5,8 +5,8 @@
 
 ### SurrealDB schema management with automatic migrations
 
-[![npm version](https://badge.fury.io/js/smig.svg?version=0.4.6)](https://badge.fury.io/js/smig)
-[![License: MIT](https://img.shields.io/badge/License-MIT-violet.svg)](https://opensource.org/licenses/MIT)
+[![npm version](https://badge.fury.io/js/smig.svg?version=0.4.7)](https://badge.fury.io/js/smig)
+[![License: ISC](https://img.shields.io/badge/License-ISC-violet.svg)](https://opensource.org/license/isc-license-txt)
 
 ---
 
@@ -679,7 +679,7 @@ $ bun smig mermaid
 ✓ Mermaid diagram generated successfully
 📊 Diagram written to: schema-diagram.mermaid
 
-You can visualize this diagram at [https://newmo-oss.github.io/mermaid-viewer/](https://newmo-oss.github.io/mermaid-viewer/)
+You can visualize this diagram at https://newmo-oss.github.io/mermaid-viewer/
 ```
 
 ## Migration workflow
@@ -1226,8 +1226,12 @@ See [CHANGELOG.md](https://github.com/kathysledge/smig/blob/main/CHANGELOG.md) f
 
 ## License
 
-MIT © [Chris Harris](https://github.com/kathysledge)
+ISC © [Chris Harris](https://github.com/kathysledge)
 
 ---
 
-Built with ❤️ for the SurrealDB community. [**Sponsor this project**](https://github.com/sponsors/kathysledge)
+Built with ❤️ for the SurrealDB community.
+
+<a href="https://www.buymeacoffee.com/kathysledge">
+  <img alt="Buy me a coffee" width="420" src="https://github.com/kathysledge/smig/raw/main/media/buy-me-a-coffee-button.avif">
+</a>
