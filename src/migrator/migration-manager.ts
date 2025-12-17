@@ -171,7 +171,7 @@ export class MigrationManager {
    * const userSchema = defineSchema({
    *   table: 'user',
    *   fields: {
-   *     id: uuid().default('rand::uuid::v7()'),
+   *     id_uuid: uuid().default('rand::uuid::v7()'),
    *     name: string().required(),
    *     email: string().unique()
    *   }
@@ -591,7 +591,7 @@ export class MigrationManager {
    * //
    * // -- New table: user
    * // DEFINE TABLE user SCHEMAFULL;
-   * // DEFINE FIELD id ON TABLE user TYPE uuid DEFAULT rand::uuid::v7();
+   * // DEFINE FIELD id_uuid ON TABLE user TYPE uuid DEFAULT rand::uuid::v7();
    * // DEFINE FIELD name ON TABLE user TYPE string ASSERT $value != NONE;
    *
    * console.log('Rollback migration:');
@@ -2929,7 +2929,7 @@ export class MigrationManager {
  * const userSchema = defineSchema({
  *   table: 'user',
  *   fields: {
- *     id: uuid().default('rand::uuid::v7()'),
+ *     id_uuid: uuid().default('rand::uuid::v7()'),
  *     name: string().required()
  *   }
  * });

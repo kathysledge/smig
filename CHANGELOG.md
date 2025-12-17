@@ -4,7 +4,17 @@ All notable changes to **smig** will be documented in this file.
 
 ## [0.5.0] - 2025-12-17
 
-- Changed all UUID default value examples to UUID v7.
+✔ **BREAKING:** changed `schemafull` model property (default true) to `schemaless` (default false)
+
+✔ Integration tests for all example schemas, including running generate after migrate to make sure there are no additional changes found
+
+✔ Integration tests with a random schema of a number of every type of entity and parameter (stored in the integration tests folder), that gets tested to make sure it generates and migrates, and then run it with a second schema (a copy of the first but with random changes) to test it generates and migrates correctly with no further generated statements, rollback compare again
+
+✔ Added tests of multiple events in curly braces (`{...;...;}`), and changed docs that said there could only be one event statement
+
+✔ Changed all UUID field default values to v7, and noticed I couldn’t create a record as the id being generated was a SurrealDB default type, not a UUID. Tried going back to v4 UUIDs as default, and I still couldn’t create a record without specifying the id value. Determined it’s not possible to set a field named `id` with a default value of the UUID function, so updated `uuid` field examples to to use the field name, `id_uuid`.
+
+✔ Single quotes throughout source code via Biome setting
 
 ## [0.4.7] - 2025-12-02
 

@@ -156,7 +156,7 @@ describe('Field Default Values', () => {
           defineSchema({
             table: 'user',
             fields: {
-              id: string().default('rand::uuid::v7()'),
+              id_uuid: string().default('rand::uuid::v7()'),
             },
           }),
         ],
@@ -168,7 +168,7 @@ describe('Field Default Values', () => {
       const result = await manager.generateDiff(schema as unknown as SurrealDBSchema);
 
       expect(result.up).toContain(
-        'DEFINE FIELD id ON TABLE user TYPE string DEFAULT rand::uuid::v7();',
+        'DEFINE FIELD id_uuid ON TABLE user TYPE string DEFAULT rand::uuid::v7();',
       );
     });
 

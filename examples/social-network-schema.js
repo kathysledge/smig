@@ -35,7 +35,7 @@ const userSchema = defineSchema({
   table: 'user',
   schemafull: true,
   fields: {
-    id: uuid().default('rand::uuid::v7()'),
+    id_uuid: uuid().default('rand::uuid::v7()'),
     username: string().assert('$value ~ /^[a-zA-Z0-9_]{3,20}$/'), // Alphanumeric and underscore, 3-20 chars
     email: string().assert('$value ~ /^[^@]+@[^@]+\\.[^@]+$/'), // Email validation
     firstName: string().assert('$value != NONE'),
@@ -87,7 +87,7 @@ const postSchema = defineSchema({
   table: 'post',
   schemafull: true,
   fields: {
-    id: uuid().default('rand::uuid::v7()'),
+    id_uuid: uuid().default('rand::uuid::v7()'),
     content: string()
       .assert('$value != NONE')
       .assert('string::len($value) >= 1 AND string::len($value) <= 5000'),
@@ -142,7 +142,7 @@ const commentSchema = defineSchema({
   table: 'comment',
   schemafull: true,
   fields: {
-    id: uuid().default('rand::uuid::v7()'),
+    id_uuid: uuid().default('rand::uuid::v7()'),
     content: string()
       .assert('$value != NONE')
       .assert('string::len($value) >= 1 AND string::len($value) <= 2000'),
@@ -208,7 +208,7 @@ const notificationSchema = defineSchema({
   table: 'notification',
   schemafull: true,
   fields: {
-    id: uuid().default('rand::uuid::v7()'),
+    id_uuid: uuid().default('rand::uuid::v7()'),
     recipient: cf.owner('user'),
     type: string() // 'like', 'follow', 'mention', 'reply'
       .assert('$value INSIDE ["like", "follow", "mention", "reply"]'),

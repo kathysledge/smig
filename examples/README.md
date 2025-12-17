@@ -143,7 +143,7 @@ isActive: bool().default(true),
 createdAt: cf.timestamp(), // Common pattern for timestamps
 
 // Advanced types
-id: uuid().default('rand::uuid::v7()'),
+id_uuid: uuid().default('rand::uuid::v7()'),
 tags: array('string').default([]),
 bio: option('string'), // Optional field (can be NONE)
 settings: option('object'), // Optional JSON data

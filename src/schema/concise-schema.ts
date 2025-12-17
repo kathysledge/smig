@@ -26,7 +26,7 @@
  * const userSchema = defineSchema({
  *   table: 'user',
  *   fields: {
- *     id: uuid().default('rand::uuid::v7()'),
+ *     id_uuid: uuid().default('rand::uuid::v7()'),
  *     name: string().required(),
  *     age: option('int')
  *   },
@@ -1483,7 +1483,7 @@ export class SurrealQLAnalyzer {
  *   table: 'user',
  *   schemafull: true,
  *   fields: {
- *     id: uuid().default('rand::uuid::v7()'),
+ *     id_uuid: uuid().default('rand::uuid::v7()'),
  *     email: string().assert('$value ~ /^[^@]+@[^@]+\\.[^@]+$/').unique(),
  *     name: string().required(),
  *     isActive: bool().default(true),

@@ -5,14 +5,19 @@
 
 ### SurrealDB schema management with automatic migrations
 
-[![npm version](https://badge.fury.io/js/smig.svg?version=0.4.7)](https://badge.fury.io/js/smig)
+[![npm version 0.5.0](https://badge.fury.io/js/smig.svg?version=0.4.7)](https://badge.fury.io/js/smig)
 [![License: ISC](https://img.shields.io/badge/License-ISC-violet.svg)](https://opensource.org/license/isc-license-txt)
+
+> [!NOTE]
+> This is the README for the legacy `0.x` version of **smig** with SurrealDB 2 compatibility. For SurrealDB 3 compatibility, you need the `1.x` version ([view README](https://github.com/kathysledge/smig/raw/main/README.md))
 
 ---
 
 **smig** is the first library to provide **automatic migration generation** for SurrealDB. Stop writing migration scripts by hand: define your schema once, and let **smig** handle the rest.
 
 Inspired by [Alembic](https://alembic.sqlalchemy.org/en/latest/) (Python) and mature migration tools from established ecosystems, **smig** brings production-grade schema management to SurrealDB.
+
+
 
 ---
 
@@ -235,7 +240,7 @@ const schema = defineSchema({
     createdAt: datetime().value('time::now()'),
 
     // Advanced types
-    id: uuid().default('rand::uuid::v7()'),
+    id_uuid: uuid().default('rand::uuid::v7()'),
     tags: array('string').default([]),
     metadata: object(),
     location: geometry(),
@@ -1052,11 +1057,11 @@ For now, **smig** works with SurrealDB 2.x using the `DEFINE OVERWRITE` method f
 
 Great question! SurrealDB is smart about IDs - it automatically generates an optimized record identifier for every record you create. These IDs are stored as efficient binary values that are lightning-fast to query and don't bloat your database.
 
-That said, if you want custom IDs (like UUIDs for external API compatibility), you can absolutely define your own:
+That said, if you want custom IDs (like UUIDs for external API compatibility), you can absolutely define your own (although you can’t use default values if the field is named `id` due to the way SurrealDB applies default values to fields named `id`):
 
 ```javascript
 fields: {
-  id: uuid().default('rand::uuid::v7()'),
+  id_uuid: uuid().default('rand::uuid::v7()'),
   // ... other fields
 }
 ```
