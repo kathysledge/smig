@@ -1,6 +1,10 @@
-# Changelog
+# Changelog for the `v0.x` branch (SurrealDB 2 compatible)
 
 All notable changes to **smig** will be documented in this file.
+
+## [0.5.0] - 2025-12-17
+
+- Changed all UUID default value examples to UUID v7.
 
 ## [0.4.7] - 2025-12-02
 

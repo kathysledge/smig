@@ -235,7 +235,7 @@ const schema = defineSchema({
     createdAt: datetime().value('time::now()'),
 
     // Advanced types
-    id: uuid().default('rand::uuid::v4()'),
+    id: uuid().default('rand::uuid::v7()'),
     tags: array('string').default([]),
     metadata: object(),
     location: geometry(),
@@ -1045,7 +1045,7 @@ That said, if you want custom IDs (like UUIDs for external API compatibility), y
 
 ```javascript
 fields: {
-  id: uuid().default('rand::uuid::v4()'),
+  id: uuid().default('rand::uuid::v7()'),
   // ... other fields
 }
 ```

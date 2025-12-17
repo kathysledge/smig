@@ -26,7 +26,7 @@
  * const userSchema = defineSchema({
  *   table: 'user',
  *   fields: {
- *     id: uuid().default('rand::uuid::v4()'),
+ *     id: uuid().default('rand::uuid::v7()'),
  *     name: string().required(),
  *     age: option('int')
  *   },
@@ -114,7 +114,7 @@ function processSurrealQL(input: string): string {
  *   .comment('User email address with validation');
  *
  * const userId = string()
- *   .default('rand::uuid::v4()')
+ *   .default('rand::uuid::v7()')
  *   .readonly()
  *   .comment('Auto-generated unique identifier');
  * ```
@@ -1483,7 +1483,7 @@ export class SurrealQLAnalyzer {
  *   table: 'user',
  *   schemafull: true,
  *   fields: {
- *     id: uuid().default('rand::uuid::v4()'),
+ *     id: uuid().default('rand::uuid::v7()'),
  *     email: string().assert('$value ~ /^[^@]+@[^@]+\\.[^@]+$/').unique(),
  *     name: string().required(),
  *     isActive: bool().default(true),
@@ -1716,7 +1716,7 @@ export const decimal = () => new SurrealQLDecimal();
  * @example
  * ```typescript
  * const userIdField = uuid()
- *   .default('rand::uuid::v4()');
+ *   .default('rand::uuid::v7()');
  * ```
  */
 export const uuid = () => new SurrealQLUuid();
