@@ -2045,24 +2045,17 @@ export class MigrationManager {
     const hasInField = tableInfo.fields?.some((f: Record<string, unknown>) => f.name === 'in');
     const hasOutField = tableInfo.fields?.some((f: Record<string, unknown>) => f.name === 'out');
 
-    // If it has both 'in' and 'out' fields, it's likely a relation
+    // If it has both 'in' and 'out' fields, it's a relation
+    // This is the only reliable way to detect relations - the 'in' and 'out' fields
+    // are automatically created by SurrealDB for relation tables
     if (hasInField && hasOutField) {
       debugLog(`Table ${tableName} identified as relation (has 'in' and 'out' fields)`);
       return true;
     }
 
-    // Fallback to heuristic for edge cases
-    const heuristicMatch =
-      tableName.includes('_') ||
-      tableName === 'like' ||
-      tableName === 'follow' ||
-      tableName === 'bookmark';
-
-    if (heuristicMatch) {
-      debugLog(`Table ${tableName} identified as relation (heuristic match)`);
-    }
-
-    return heuristicMatch;
+    // Don't use name-based heuristics as they cause false positives
+    // (e.g., "simple_test" would match because it contains "_")
+    return false;
   }
 
   /**
@@ -2154,6 +2147,15 @@ export class MigrationManager {
       definition += ` DEFAULT ${this.serializeDefaultValue(field.default)}`;
     }
 
+    // Add permissions (null/undefined means use default "FULL")
+    if (
+      field.permissions !== null &&
+      field.permissions !== undefined &&
+      field.permissions !== 'FULL'
+    ) {
+      definition += ` PERMISSIONS ${field.permissions}`;
+    }
+
     definition += ';';
     return definition;
   }
@@ -2200,16 +2202,26 @@ export class MigrationManager {
     // biome-ignore lint/suspicious/noExplicitAny: Dynamic event definitions from schema introspection
     event: any,
   ): string {
+    const trimmedStatement = event.thenStatement.trim();
+
+    // If the statement is already wrapped in braces, don't wrap again
+    const isAlreadyWrapped = trimmedStatement.startsWith('{') && trimmedStatement.endsWith('}');
+
+    if (isAlreadyWrapped) {
+      // User already provided braces, use as-is
+      return `DEFINE EVENT ${event.name} ON TABLE ${tableName} WHEN ${event.when} THEN ${trimmedStatement};`;
+    }
+
     // Check if the then action contains multiple statements or control flow (FOR, IF, etc.)
-    const hasMultipleStatements = event.thenStatement.includes(';');
-    const hasControlFlow = /\b(FOR|IF|LET)\b/.test(event.thenStatement);
+    const hasMultipleStatements = trimmedStatement.includes(';');
+    const hasControlFlow = /\b(FOR|IF|LET)\b/.test(trimmedStatement);
 
     if (hasMultipleStatements || hasControlFlow) {
       // Wrap multiple statements or control flow in a block with braces
-      return `DEFINE EVENT ${event.name} ON TABLE ${tableName} WHEN ${event.when} THEN {\n${event.thenStatement}\n};`;
+      return `DEFINE EVENT ${event.name} ON TABLE ${tableName} WHEN ${event.when} THEN {\n${trimmedStatement}\n};`;
     } else {
       // Single statement, no need for block
-      return `DEFINE EVENT ${event.name} ON TABLE ${tableName} WHEN ${event.when} THEN ${event.thenStatement};`;
+      return `DEFINE EVENT ${event.name} ON TABLE ${tableName} WHEN ${event.when} THEN ${trimmedStatement};`;
     }
   }
 
@@ -2436,20 +2448,47 @@ export class MigrationManager {
 
     // Compare field properties to detect actual changes
     // Handle permissions: null/undefined in TypeScript schema means "FULL" (default)
-    const newPermissions =
-      newField.permissions === null || newField.permissions === undefined
-        ? 'FULL'
-        : newField.permissions;
-    const currentPermissions =
-      currentField.permissions === null || currentField.permissions === undefined
-        ? 'FULL'
-        : currentField.permissions;
+    // Also normalize permission strings for comparison (whitespace, case, syntax differences)
+    const normalizePermissions = (perm: unknown): string => {
+      if (perm === null || perm === undefined) return 'FULL';
+      let normalized = String(perm).replace(/\s+/g, ' ').trim().toUpperCase();
+      // SurrealDB drops DELETE from field permissions (deprecated)
+      // Remove DELETE and surrounding commas from comparison
+      // Handle: ", DELETE", "DELETE,", ", DELETE,", "DELETE WHERE", ", DELETE WHERE"
+      normalized = normalized.replace(/,?\s*DELETE\s*,?/gi, ' ');
+      // SurrealDB normalizes "FOR x FOR y" to "FOR x, FOR y" (adds commas between FOR clauses)
+      // Replace space-separated FOR clauses with comma-separated ones
+      normalized = normalized.replace(/(\S)\s+FOR\s+/g, '$1, FOR ');
+      // Remove comma before WHERE (e.g., "UPDATE, WHERE" -> "UPDATE WHERE")
+      normalized = normalized.replace(/,\s+WHERE\b/gi, ' WHERE');
+      // Clean up: normalize spaces, remove double/trailing commas
+      normalized = normalized.replace(/\s+/g, ' '); // Normalize all whitespace
+      normalized = normalized.replace(/,\s*,+/g, ','); // Remove double commas
+      normalized = normalized.replace(/\s*,\s*/g, ', '); // Normalize comma spacing
+      normalized = normalized.replace(/^,\s*/, ''); // Remove leading comma
+      normalized = normalized.replace(/,\s*$/, ''); // Remove trailing comma
+      return normalized.trim();
+    };
+    const newPermissions = normalizePermissions(newField.permissions);
+    const currentPermissions = normalizePermissions(currentField.permissions);
 
     // Normalize default values for comparison
     // The database returns defaults as strings, but our schema may have arrays, objects, etc.
+    // Also handles cases where SurrealDB adds extra quotes around literal values
     const normalizeDefault = (value: unknown): string => {
       if (value === null || value === undefined) return '';
-      if (typeof value === 'string') return value;
+      if (typeof value === 'string') {
+        let normalized = value;
+        // Remove outer quotes that SurrealDB may add around literal values
+        // e.g., "'0.00'" -> "0.00", "'active'" -> "active"
+        if (
+          (normalized.startsWith("'") && normalized.endsWith("'")) ||
+          (normalized.startsWith('"') && normalized.endsWith('"'))
+        ) {
+          normalized = normalized.slice(1, -1);
+        }
+        return normalized;
+      }
       if (Array.isArray(value)) return JSON.stringify(value);
       if (typeof value === 'object') return JSON.stringify(value);
       return String(value);
@@ -2483,7 +2522,7 @@ export class MigrationManager {
     const newComment = normalizeComment(newField.comment);
     const currentComment = normalizeComment(currentField.comment);
 
-    // Normalize value and assert (whitespace differences shouldn't trigger changes)
+    // Normalize value and assert (whitespace and quote differences shouldn't trigger changes)
     const normalizeWhitespace = (value: unknown): string => {
       if (value === null || value === undefined) return '';
       let normalized = String(value).replace(/\s+/g, ' ').trim();
@@ -2493,6 +2532,17 @@ export class MigrationManager {
       normalized = normalized.replace(/\)\s*;?\s*\}/g, ' }');
       // Remove trailing semicolons before closing braces (SurrealDB may omit them)
       normalized = normalized.replace(/;\s*\}/g, ' }');
+      // Normalize quote styles in array literals - SurrealDB returns single quotes but
+      // schema may use double quotes: ["a", "b"] vs ['a', 'b']
+      // Convert all string quotes in arrays to double quotes for consistent comparison
+      normalized = normalized.replace(/\[([^\]]*)\]/g, (match, contents) => {
+        // Replace single-quoted strings with double-quoted strings inside arrays
+        const normalizedContents = contents.replace(/'([^'\\]*(\\.[^'\\]*)*)'/g, '"$1"');
+        return `[${normalizedContents}]`;
+      });
+      // Normalize duration values - SurrealDB normalizes 7d to 1w, etc.
+      // Convert weeks to days for consistent comparison (1w = 7d)
+      normalized = normalized.replace(/\b(\d+)w\b/g, (_, num) => `${parseInt(num) * 7}d`);
       return normalized.trim();
     };
     const newValue = normalizeWhitespace(newField.value);

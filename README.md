@@ -465,7 +465,18 @@ events: {
 }
 ```
 
-**⚠️ Important**: Each event can only contain **one SurrealQL statement**. Multiple statements separated by semicolons will cause subsequent statements to execute outside the event context. However, you can use multiple lines for readability within a single statement.
+**Multiple statements**: Events can contain multiple SurrealQL statements when wrapped in curly braces `{ ... }`. The statements should be separated by semicolons. **smig** automatically wraps multi-statement events in a block:
+
+```javascript
+events: {
+  multiAction: event('multi_action')
+    .onCreate()
+    .thenDo(`{
+      UPDATE $after.author SET postCount += 1;
+      CREATE notification SET recipient = $after.author, message = "Post created";
+    }`),
+}
+```
 
 ## Permissions
 

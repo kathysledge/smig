@@ -322,7 +322,10 @@ export function validateConfig(config: SmigConfig): void {
     config.schema.startsWith('../') ||
     config.schema.startsWith('/')
   ) {
-    const schemaPath = join(process.cwd(), config.schema);
+    // For absolute paths (starting with /), use as-is; for relative paths, join with cwd
+    const schemaPath = config.schema.startsWith('/')
+      ? config.schema
+      : join(process.cwd(), config.schema);
     if (!existsSync(schemaPath)) {
       throw new Error(`Schema file not found: ${schemaPath}`);
     }
