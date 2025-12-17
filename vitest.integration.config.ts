@@ -10,11 +10,8 @@ export default defineConfig({
     exclude: ["node_modules/**/*"],
     // Integration tests should run sequentially to avoid database and file conflicts
     pool: "forks",
-    poolOptions: {
-      forks: {
-        singleFork: true,
-      },
-    },
+    maxWorkers: 1,
+    isolate: false,
     fileParallelism: false, // Prevent test files from running in parallel
   },
   resolve: {
