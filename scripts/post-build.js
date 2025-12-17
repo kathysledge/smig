@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { readFile, writeFile, chmod } from 'fs/promises';
-import { existsSync } from 'fs';
+import { existsSync } from 'node:fs';
+import { chmod, readFile, writeFile } from 'node:fs/promises';
 
 /**
  * Post-build script to:
@@ -11,7 +11,7 @@ import { existsSync } from 'fs';
 async function postBuild() {
   try {
     const cliPath = './dist/cli.js';
-    
+
     if (!existsSync(cliPath)) {
       console.error('CLI file not found at dist/cli.js');
       process.exit(1);
@@ -19,10 +19,10 @@ async function postBuild() {
 
     // Read the CLI file
     let content = await readFile(cliPath, 'utf8');
-    
+
     // Add shebang if not present
     if (!content.startsWith('#!')) {
-      content = '#!/usr/bin/env node\n' + content;
+      content = `#!/usr/bin/env node\n${content}`;
       await writeFile(cliPath, content, 'utf8');
       console.log('Added shebang to CLI file');
     }

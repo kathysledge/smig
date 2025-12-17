@@ -2128,6 +2128,17 @@ export class MigrationManager {
     return String(value);
   }
 
+  /**
+   * Converts double quotes to single quotes in array literals to match SurrealDB output.
+   * SurrealDB returns arrays with single-quoted strings: ['a', 'b'] not ["a", "b"]
+   */
+  private toSurrealQuotes(value: string): string {
+    return value.replace(/\[([^\]]*)\]/g, (_match, contents) => {
+      const normalized = contents.replace(/"([^"\\]*(\\.[^"\\]*)*)"/g, "'$1'");
+      return `[${normalized}]`;
+    });
+  }
+
   private generateFieldDefinition(
     tableName: string,
     // biome-ignore lint/suspicious/noExplicitAny: Dynamic field definitions from schema introspection
@@ -2140,7 +2151,7 @@ export class MigrationManager {
     }
 
     if (field.assert) {
-      definition += ` ASSERT ${field.assert}`;
+      definition += ` ASSERT ${this.toSurrealQuotes(field.assert)}`;
     }
 
     if (field.default !== undefined && field.default !== null) {
@@ -2532,17 +2543,16 @@ export class MigrationManager {
       normalized = normalized.replace(/\)\s*;?\s*\}/g, ' }');
       // Remove trailing semicolons before closing braces (SurrealDB may omit them)
       normalized = normalized.replace(/;\s*\}/g, ' }');
-      // Normalize quote styles in array literals - SurrealDB returns single quotes but
-      // schema may use double quotes: ["a", "b"] vs ['a', 'b']
-      // Convert all string quotes in arrays to double quotes for consistent comparison
-      normalized = normalized.replace(/\[([^\]]*)\]/g, (match, contents) => {
-        // Replace single-quoted strings with double-quoted strings inside arrays
-        const normalizedContents = contents.replace(/'([^'\\]*(\\.[^'\\]*)*)'/g, '"$1"');
+      // Normalize quote styles in array literals - SurrealDB returns single quotes
+      // Convert double quotes to single quotes to match SurrealDB output: ["a", "b"] -> ['a', 'b']
+      normalized = normalized.replace(/\[([^\]]*)\]/g, (_match, contents) => {
+        // Replace double-quoted strings with single-quoted strings inside arrays
+        const normalizedContents = contents.replace(/"([^"\\]*(\\.[^"\\]*)*)"/g, "'$1'");
         return `[${normalizedContents}]`;
       });
       // Normalize duration values - SurrealDB normalizes 7d to 1w, etc.
       // Convert weeks to days for consistent comparison (1w = 7d)
-      normalized = normalized.replace(/\b(\d+)w\b/g, (_, num) => `${parseInt(num) * 7}d`);
+      normalized = normalized.replace(/\b(\d+)w\b/g, (_, num) => `${parseInt(num, 10) * 7}d`);
       return normalized.trim();
     };
     const newValue = normalizeWhitespace(newField.value);
@@ -2635,7 +2645,7 @@ export class MigrationManager {
 
       // Add assertion
       if (newField.assert) {
-        fieldDefinition += ` ASSERT ${newField.assert}`;
+        fieldDefinition += ` ASSERT ${this.toSurrealQuotes(newField.assert)}`;
       }
 
       // Add default

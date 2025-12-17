@@ -15,7 +15,7 @@ import { exec } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { promisify } from 'node:util';
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { cleanupTestFiles, TEST_DATABASES } from './setup';
 
 const execAsync = promisify(exec);
@@ -63,7 +63,7 @@ export default {
 
         // Get all migrations and roll them back
         await execAsync(`node ${CLI_PATH} status 2>/dev/null || true`);
-      } catch (error) {
+      } catch (_error) {
         // Ignore cleanup errors
       }
     }
