@@ -9,7 +9,7 @@
  * For full SurrealDB client functionality, refer to the official SurrealDB TypeScript client.
  */
 
-declare module "surrealdb" {
+declare module 'surrealdb' {
   /**
    * Represents a SurrealDB record identifier.
    *

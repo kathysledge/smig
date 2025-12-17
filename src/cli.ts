@@ -92,17 +92,17 @@
  * ```
  */
 
-import { writeFile } from "node:fs/promises";
+import { writeFile } from 'node:fs/promises';
 // import * as dotenv from "dotenv";
-import * as path from "node:path";
-import * as clack from "@clack/prompts";
-import chalk from "chalk";
-import { Command } from "commander";
-import ora from "ora";
-import { loadSchemaFromFile, MigrationManager } from "./migrator/migration-manager";
-import type { DatabaseConfig } from "./types/schema";
-import { type ConfigOptions, loadConfig, validateConfig } from "./utils/config-loader.js";
-import { DebugLogger, debugLog, setDebugLogger } from "./utils/debug-logger";
+import * as path from 'node:path';
+import * as clack from '@clack/prompts';
+import chalk from 'chalk';
+import { Command } from 'commander';
+import ora from 'ora';
+import { loadSchemaFromFile, MigrationManager } from './migrator/migration-manager';
+import type { DatabaseConfig } from './types/schema';
+import { type ConfigOptions, loadConfig, validateConfig } from './utils/config-loader.js';
+import { DebugLogger, debugLog, setDebugLogger } from './utils/debug-logger';
 
 // Note: .env loading is now handled by the config loader to avoid duplicates
 
@@ -177,29 +177,29 @@ async function getConfigFromOptions(
 const program = new Command();
 
 program
-  .name("smig")
-  .description("Automatic SurrealDB migrations with a concise DSL")
-  .version("0.4.7")
+  .name('smig')
+  .description('Automatic SurrealDB migrations with a concise DSL')
+  .version('0.4.7')
   .configureHelp({
     showGlobalOptions: true,
   });
 
 // Global options
 program
-  .option("-u, --url <url>", "SurrealDB server URL (overrides config and env)")
-  .option("-n, --namespace <namespace>", "SurrealDB namespace (overrides config and env)")
-  .option("-d, --database <database>", "SurrealDB database (overrides config and env)")
-  .option("-U, --username <username>", "SurrealDB username (overrides config and env)")
-  .option("-p, --password <password>", "SurrealDB password (overrides config and env)")
-  .option("-s, --schema <path>", "Path to schema file (overrides config and env)")
-  .option("--env <environment>", "Environment name from smig.config.js");
+  .option('-u, --url <url>', 'SurrealDB server URL (overrides config and env)')
+  .option('-n, --namespace <namespace>', 'SurrealDB namespace (overrides config and env)')
+  .option('-d, --database <database>', 'SurrealDB database (overrides config and env)')
+  .option('-U, --username <username>', 'SurrealDB username (overrides config and env)')
+  .option('-p, --password <password>', 'SurrealDB password (overrides config and env)')
+  .option('-s, --schema <path>', 'Path to schema file (overrides config and env)')
+  .option('--env <environment>', 'Environment name from smig.config.js');
 
 // Migrate command
 program
-  .command("migrate")
-  .description("Apply schema changes to the database")
-  .option("--debug", "Enable debug logging to file")
-  .option("-m, --message <message>", "Migration message for tracking purposes")
+  .command('migrate')
+  .description('Apply schema changes to the database')
+  .option('--debug', 'Enable debug logging to file')
+  .option('-m, --message <message>', 'Migration message for tracking purposes')
 
   .action(async (options) => {
     const globalOpts = program.opts();
@@ -210,28 +210,28 @@ program
       setDebugLogger(debugLogger);
     }
 
-    const spinner = ora("Initializing migration...").start();
+    const spinner = ora('Initializing migration...').start();
     let migrationManager: MigrationManager | undefined;
 
     try {
       // Load configuration using the new system
-      spinner.text = "Loading configuration...";
+      spinner.text = 'Loading configuration...';
       const config = await getConfigFromOptions(globalOpts);
 
       // Load schema from file
-      spinner.text = "Loading schema file...";
+      spinner.text = 'Loading schema file...';
       const schemaPath = path.resolve(config.schema);
       const schema = await loadSchemaFromFile(schemaPath);
 
       // Initialize migration manager
-      spinner.text = "Connecting to database...";
+      spinner.text = 'Connecting to database...';
       migrationManager = new MigrationManager(config);
-      spinner.text = "Initializing...";
+      spinner.text = 'Initializing...';
       await migrationManager.initialize();
-      spinner.text = "Done initializing...";
+      spinner.text = 'Done initializing...';
 
       // Apply migration
-      spinner.text = "Applying migration...";
+      spinner.text = 'Applying migration...';
       await migrationManager.migrate(schema, undefined, undefined, options.message);
 
       spinner.succeed(chalk.green(`Migration applied successfully`));
@@ -239,9 +239,9 @@ program
       const errorMessage = error instanceof Error ? error.message : String(error);
 
       // Handle "no changes" as a success case, not an error
-      if (errorMessage.includes("No changes detected")) {
-        spinner.succeed(chalk.green("Database schema is up to date"));
-        console.log(chalk.yellow("No changes detected - no migration needed."));
+      if (errorMessage.includes('No changes detected')) {
+        spinner.succeed(chalk.green('Database schema is up to date'));
+        console.log(chalk.yellow('No changes detected - no migration needed.'));
       } else {
         spinner.fail(chalk.red(`Migration failed: ${errorMessage}`));
         process.exit(1);
@@ -256,37 +256,37 @@ program
 
 // Status command
 program
-  .command("status")
-  .description("Show migration status")
+  .command('status')
+  .description('Show migration status')
   .action(async () => {
     const globalOpts = program.opts();
-    const spinner = ora("Loading configuration...").start();
+    const spinner = ora('Loading configuration...').start();
 
     try {
       // Load configuration using the new system
       const config = await getConfigFromOptions(globalOpts);
 
-      spinner.text = "Checking migration status...";
+      spinner.text = 'Checking migration status...';
 
       const migrationManager = new MigrationManager(config);
       await migrationManager.initialize();
 
       const status = await migrationManager.status();
 
-      spinner.succeed(chalk.green("Migration status retrieved"));
+      spinner.succeed(chalk.green('Migration status retrieved'));
 
-      console.log("\n📊 Migration Status:");
+      console.log('\n📊 Migration Status:');
       console.log(`Applied migrations: ${status.length}`);
 
       if (status.length > 0) {
-        console.log("\nApplied migrations:");
+        console.log('\nApplied migrations:');
         for (const item of status) {
           if (item.migration) {
             console.log(`  - ${item.migration.id} (${item.migration.appliedAt.toISOString()})`);
           }
         }
       } else {
-        console.log("\nNo migrations applied yet.");
+        console.log('\nNo migrations applied yet.');
       }
 
       // Check for pending changes
@@ -296,13 +296,13 @@ program
         const hasChanges = await migrationManager.hasChanges(schema);
 
         if (hasChanges) {
-          console.log("\n🔄 Pending changes detected:");
+          console.log('\n🔄 Pending changes detected:');
           console.log('Run "smig migrate" to apply changes');
         } else {
-          console.log("\n✅ Database is up to date with schema");
+          console.log('\n✅ Database is up to date with schema');
         }
       } catch (_error) {
-        console.log("\n⚠️  Could not check for pending changes (smig)");
+        console.log('\n⚠️  Could not check for pending changes (smig)');
       }
 
       await migrationManager.close();
@@ -315,17 +315,17 @@ program
 
 // Rollback command
 program
-  .command("rollback")
-  .description("Rollback migrations from the database")
+  .command('rollback')
+  .description('Rollback migrations from the database')
   .option(
-    "-i, --id <id>",
+    '-i, --id <id>',
     "Migration ID to rollback (defaults to last migration). Can be just the ID part, '_migrations:' prefix will be added automatically if missing.",
   )
   .option(
-    "-t, --to <id>",
+    '-t, --to <id>',
     "Rollback all migrations after and including this migration ID. Can be just the ID part, '_migrations:' prefix will be added automatically if missing.",
   )
-  .option("--debug", "Enable debug logging to file")
+  .option('--debug', 'Enable debug logging to file')
   .action(async (options) => {
     const globalOpts = program.opts();
 
@@ -335,14 +335,14 @@ program
       setDebugLogger(debugLogger);
     }
 
-    const spinner = ora("Loading configuration...").start();
+    const spinner = ora('Loading configuration...').start();
 
     let migrationManager: MigrationManager | null = null;
     try {
       // Load configuration using the new system
       const config = await getConfigFromOptions(globalOpts);
 
-      spinner.text = "Rolling back migration...";
+      spinner.text = 'Rolling back migration...';
 
       migrationManager = new MigrationManager(config);
       await migrationManager.initialize();
@@ -350,7 +350,7 @@ program
       const status = await migrationManager.status();
 
       if (status.length === 0) {
-        spinner.fail(chalk.red("No migrations to rollback"));
+        spinner.fail(chalk.red('No migrations to rollback'));
         return;
       }
 
@@ -358,17 +358,17 @@ program
       const normalizeMigrationId = (id: string): string => {
         if (!id) return id;
         // Add _migrations: prefix if not already present
-        return id.startsWith("_migrations:") ? id : `_migrations:${id}`;
+        return id.startsWith('_migrations:') ? id : `_migrations:${id}`;
       };
 
       // Determine rollback strategy
       if (options.to && options.id) {
-        spinner.fail(chalk.red("Cannot specify both --id and --to options"));
+        spinner.fail(chalk.red('Cannot specify both --id and --to options'));
         return;
       }
 
       let migrationsToRollback: string[] = [];
-      let rollbackType = "";
+      let rollbackType = '';
 
       if (options.to) {
         // Normalize the target migration ID
@@ -386,7 +386,7 @@ program
           .slice(targetIndex)
           .reverse()
           .map((s) => s.migration?.id)
-          .filter((id): id is string => typeof id === "string");
+          .filter((id): id is string => typeof id === 'string');
         rollbackType = `rollback to migration "${normalizedTo}" (${migrationsToRollback.length} migrations)`;
       } else {
         // Single migration rollback
@@ -402,7 +402,7 @@ program
         }
 
         if (!migrationId) {
-          spinner.fail(chalk.red("No migration to rollback"));
+          spinner.fail(chalk.red('No migration to rollback'));
           return;
         }
 
@@ -420,12 +420,12 @@ program
       });
 
       if (clack.isCancel(confirmed) || !confirmed) {
-        clack.cancel(chalk.yellow("Rollback cancelled"));
+        clack.cancel(chalk.yellow('Rollback cancelled'));
         process.exit(0);
       }
 
       // Restart the spinner for the actual rollback
-      spinner.start("Rolling back migration(s)...");
+      spinner.start('Rolling back migration(s)...');
 
       // Execute rollbacks in order (latest first)
       for (const migrationId of migrationsToRollback) {
@@ -435,7 +435,7 @@ program
 
       spinner.succeed(
         chalk.green(
-          `✅ ${migrationsToRollback.length === 1 ? "Migration" : "Migrations"} rolled back successfully: ${migrationsToRollback.join(", ")}`,
+          `✅ ${migrationsToRollback.length === 1 ? 'Migration' : 'Migrations'} rolled back successfully: ${migrationsToRollback.join(', ')}`,
         ),
       );
 
@@ -453,10 +453,10 @@ program
 
 // Generate command
 program
-  .command("generate")
-  .description("Generate SurrealQL diff from schema file")
-  .option("-o, --output <path>", "Output file path (defaults to stdout)")
-  .option("--debug", "Enable debug logging to file")
+  .command('generate')
+  .description('Generate SurrealQL diff from schema file')
+  .option('-o, --output <path>', 'Output file path (defaults to stdout)')
+  .option('--debug', 'Enable debug logging to file')
   .action(async (options) => {
     const globalOpts = program.opts();
 
@@ -466,17 +466,17 @@ program
       setDebugLogger(debugLogger);
     }
 
-    const spinner = ora("Loading configuration...").start();
+    const spinner = ora('Loading configuration...').start();
 
     try {
       // Load configuration using the new system
       const config = await getConfigFromOptions(globalOpts);
 
-      spinner.text = "Loading schema file...";
+      spinner.text = 'Loading schema file...';
       const schemaPath = path.resolve(config.schema);
       const schema = await loadSchemaFromFile(schemaPath);
 
-      spinner.text = "Generating SurrealQL diff...";
+      spinner.text = 'Generating SurrealQL diff...';
 
       const migrationManager = new MigrationManager(config);
       await migrationManager.initialize();
@@ -488,23 +488,23 @@ program
         // Generate the actual diff
         const { up, down } = await migrationManager.generateDiff(schema);
 
-        spinner.succeed(chalk.green("SurrealQL diff generated successfully"));
+        spinner.succeed(chalk.green('SurrealQL diff generated successfully'));
 
         if (options.output) {
-          await writeFile(options.output, up, "utf-8");
+          await writeFile(options.output, up, 'utf-8');
           console.log(chalk.blue(`📄 SurrealQL written to: ${options.output}`));
         }
 
-        console.log(`\n${chalk.cyan("Generated SurrealQL Diff:")}`);
-        console.log("=".repeat(50));
+        console.log(`\n${chalk.cyan('Generated SurrealQL Diff:')}`);
+        console.log('='.repeat(50));
         console.log(up);
 
-        console.log(`\n${chalk.cyan("Generated Rollback Migration:")}`);
-        console.log("=".repeat(50));
+        console.log(`\n${chalk.cyan('Generated Rollback Migration:')}`);
+        console.log('='.repeat(50));
         console.log(down);
       } else {
-        spinner.succeed(chalk.green("Schema analysis completed"));
-        console.log(chalk.yellow("No changes detected - database schema is up to date."));
+        spinner.succeed(chalk.green('Schema analysis completed'));
+        console.log(chalk.yellow('No changes detected - database schema is up to date.'));
       }
 
       // Close the database connection
@@ -518,10 +518,10 @@ program
 
 // Init command
 program
-  .command("init")
-  .description("Initialize a new schema file")
-  .option("-o, --output <path>", "Output file path", "./schema.js")
-  .option("--debug", "Enable debug logging to file")
+  .command('init')
+  .description('Initialize a new schema file')
+  .option('-o, --output <path>', 'Output file path', './schema.js')
+  .option('--debug', 'Enable debug logging to file')
   .action(async (options) => {
     // Initialize debug logger if debug flag is set
     if (options.debug) {
@@ -529,10 +529,10 @@ program
       setDebugLogger(debugLogger);
     }
 
-    const spinner = ora("Creating schema file...").start();
+    const spinner = ora('Creating schema file...').start();
 
     try {
-      const fs = await import("fs-extra");
+      const fs = await import('fs-extra');
       const outputPath = path.resolve(options.output);
 
       // Check if file already exists
@@ -545,11 +545,11 @@ program
         });
 
         if (clack.isCancel(overwrite) || !overwrite) {
-          clack.cancel("Schema file creation cancelled.");
+          clack.cancel('Schema file creation cancelled.');
           process.exit(0);
         }
 
-        spinner.start("Creating schema file...");
+        spinner.start('Creating schema file...');
       }
 
       const template = `import {
@@ -631,11 +631,11 @@ const fullSchema = composeSchema({
 export default fullSchema;
 `;
 
-      await writeFile(outputPath, template, "utf-8");
+      await writeFile(outputPath, template, 'utf-8');
 
       spinner.succeed(chalk.green(`Schema file created: ${outputPath}`));
-      console.log(chalk.blue("\n📝 Next steps:"));
-      console.log("1. Edit the schema file to define your models");
+      console.log(chalk.blue('\n📝 Next steps:'));
+      console.log('1. Edit the schema file to define your models');
       console.log('2. Run "smig migrate" to apply to database');
       console.log('3. Run "smig status" to check migration status');
     } catch (error) {
@@ -647,29 +647,29 @@ export default fullSchema;
 
 // Test command
 program
-  .command("test")
-  .description("Test database connection")
+  .command('test')
+  .description('Test database connection')
   .action(async () => {
     const globalOpts = program.opts();
-    const spinner = ora("Loading configuration...").start();
+    const spinner = ora('Loading configuration...').start();
 
     try {
       // Load configuration using the new system
       const config = await getConfigFromOptions(globalOpts);
 
-      spinner.text = "Testing database connection...";
+      spinner.text = 'Testing database connection...';
 
-      const { SurrealClient } = await import("./database/surreal-client");
+      const { SurrealClient } = await import('./database/surreal-client');
       const client = new SurrealClient(config);
 
       await client.connect();
 
       // Test a simple query
-      await client.executeQuery("SELECT * FROM _migrations LIMIT 1");
+      await client.executeQuery('SELECT * FROM _migrations LIMIT 1');
 
       await client.disconnect();
 
-      spinner.succeed(chalk.green("Database connection successful"));
+      spinner.succeed(chalk.green('Database connection successful'));
       console.log(chalk.blue(`📊 Connected to: ${config.url}`));
       console.log(chalk.blue(`📁 Namespace: ${config.namespace}`));
       console.log(chalk.blue(`🗄️  Database: ${config.database}`));
@@ -682,10 +682,10 @@ program
 
 // Config command
 program
-  .command("config")
-  .description("Show current configuration and available environments")
-  .option("--show-secrets", "Show password and other sensitive values")
-  .option("--debug", "Enable debug logging to file")
+  .command('config')
+  .description('Show current configuration and available environments')
+  .option('--show-secrets', 'Show password and other sensitive values')
+  .option('--debug', 'Enable debug logging to file')
   .action(async (options) => {
     const globalOpts = program.opts();
 
@@ -694,7 +694,7 @@ program
       const debugLogger = new DebugLogger(true);
       setDebugLogger(debugLogger);
     }
-    const spinner = ora("Loading configuration...").start();
+    const spinner = ora('Loading configuration...').start();
 
     try {
       // Load configuration using the new system
@@ -707,43 +707,43 @@ program
 
       // Debug logging for config command
       if (options.debug) {
-        debugLog("Config command executed", {
+        debugLog('Config command executed', {
           globalOptions: globalOpts,
           commandOptions: options,
-          selectedEnvironment: globalOpts.env || "default",
+          selectedEnvironment: globalOpts.env || 'default',
           availableEnvironments: environments,
-          finalConfig: options.showSecrets ? config : { ...config, password: "[HIDDEN]" },
+          finalConfig: options.showSecrets ? config : { ...config, password: '[HIDDEN]' },
         });
       }
 
-      spinner.succeed(chalk.green("Configuration loaded"));
+      spinner.succeed(chalk.green('Configuration loaded'));
 
-      console.log(chalk.bold("\n🔧 Current Configuration:"));
+      console.log(chalk.bold('\n🔧 Current Configuration:'));
       console.log(chalk.blue(`  Schema:    ${config.schema}`));
       console.log(chalk.blue(`  URL:       ${config.url}`));
       console.log(chalk.blue(`  Namespace: ${config.namespace}`));
       console.log(chalk.blue(`  Database:  ${config.database}`));
       console.log(chalk.blue(`  Username:  ${config.username}`));
-      console.log(chalk.blue(`  Password:  ${options.showSecrets ? config.password : "***"}`));
+      console.log(chalk.blue(`  Password:  ${options.showSecrets ? config.password : '***'}`));
 
       if (globalOpts.env) {
         console.log(chalk.yellow(`  Environment: ${globalOpts.env}`));
       }
 
       if (environments.length > 0) {
-        console.log(chalk.bold("\n🌍 Available Environments:"));
+        console.log(chalk.bold('\n🌍 Available Environments:'));
         environments.forEach((env: string) => {
-          const prefix = env === globalOpts.env ? chalk.green("→ ") : "  ";
+          const prefix = env === globalOpts.env ? chalk.green('→ ') : '  ';
           console.log(`${prefix}${env}`);
         });
-        console.log(chalk.dim("\nUse --env <name> to select an environment"));
+        console.log(chalk.dim('\nUse --env <name> to select an environment'));
       }
 
-      console.log(chalk.bold("\n📋 Configuration Sources (in order of precedence):"));
-      console.log("  1. Command line arguments");
-      console.log("  2. smig.config.js");
-      console.log("  3. .env file");
-      console.log("  4. Built-in defaults");
+      console.log(chalk.bold('\n📋 Configuration Sources (in order of precedence):'));
+      console.log('  1. Command line arguments');
+      console.log('  2. smig.config.js');
+      console.log('  3. .env file');
+      console.log('  4. Built-in defaults');
     } catch (error) {
       spinner.fail(
         chalk.red(`Configuration error: ${error instanceof Error ? error.message : error}`),
@@ -754,10 +754,10 @@ program
 
 // Mermaid command
 program
-  .command("mermaid")
-  .description("Generate Mermaid ER diagram from schema")
-  .option("-o, --output <path>", "Output file path (defaults to schema-diagram.mermaid)")
-  .option("--debug", "Enable debug logging to file")
+  .command('mermaid')
+  .description('Generate Mermaid ER diagram from schema')
+  .option('-o, --output <path>', 'Output file path (defaults to schema-diagram.mermaid)')
+  .option('--debug', 'Enable debug logging to file')
   .action(async (options) => {
     const globalOpts = program.opts();
 
@@ -767,13 +767,13 @@ program
       setDebugLogger(debugLogger);
     }
 
-    const spinner = ora("Loading configuration...").start();
+    const spinner = ora('Loading configuration...').start();
 
     try {
       // Load configuration using the new system
       const config = await getConfigFromOptions(globalOpts);
 
-      spinner.text = "Loading schema file...";
+      spinner.text = 'Loading schema file...';
       const schemaPath = path.resolve(config.schema);
       const schema = await loadSchemaFromFile(schemaPath);
 
@@ -781,32 +781,32 @@ program
 
       // Prompt for diagram detail level
       const detailLevel = await clack.select({
-        message: "Select diagram detail level:",
+        message: 'Select diagram detail level:',
         options: [
           {
-            value: "minimal",
-            label: "Minimal (executive summary)",
-            hint: "Entities with field names and types only",
+            value: 'minimal',
+            label: 'Minimal (executive summary)',
+            hint: 'Entities with field names and types only',
           },
           {
-            value: "detailed",
-            label: "Detailed (comprehensive view)",
-            hint: "All entity details including constraints, defaults, and computed fields",
+            value: 'detailed',
+            label: 'Detailed (comprehensive view)',
+            hint: 'All entity details including constraints, defaults, and computed fields',
           },
         ],
-        initialValue: "minimal",
+        initialValue: 'minimal',
       });
 
       if (clack.isCancel(detailLevel)) {
-        clack.cancel(chalk.yellow("Diagram generation cancelled"));
+        clack.cancel(chalk.yellow('Diagram generation cancelled'));
         process.exit(0);
       }
 
       // Determine output path
-      const outputPath = options.output || path.resolve("schema-diagram.mermaid");
+      const outputPath = options.output || path.resolve('schema-diagram.mermaid');
 
       // Check if file exists and prompt to overwrite
-      const fs = await import("fs-extra");
+      const fs = await import('fs-extra');
       if (await fs.pathExists(outputPath)) {
         const overwrite = await clack.confirm({
           message: `File '${outputPath}' already exists. Do you want to overwrite it?`,
@@ -814,28 +814,28 @@ program
         });
 
         if (clack.isCancel(overwrite) || !overwrite) {
-          clack.cancel(chalk.yellow("Diagram generation cancelled"));
+          clack.cancel(chalk.yellow('Diagram generation cancelled'));
           process.exit(0);
         }
       }
 
-      spinner.start("Generating Mermaid diagram...");
+      spinner.start('Generating Mermaid diagram...');
 
       // Generate the diagram
-      const { generateMermaidDiagram } = await import("./migrator/mermaid-generator");
+      const { generateMermaidDiagram } = await import('./migrator/mermaid-generator');
       const diagram = generateMermaidDiagram(schema, {
-        level: detailLevel as "minimal" | "detailed",
+        level: detailLevel as 'minimal' | 'detailed',
         includeComments: true,
       });
 
       // Write to file
-      await writeFile(outputPath, diagram, "utf-8");
+      await writeFile(outputPath, diagram, 'utf-8');
 
-      spinner.succeed(chalk.green("Mermaid diagram generated successfully"));
+      spinner.succeed(chalk.green('Mermaid diagram generated successfully'));
       console.log(chalk.blue(`📊 Diagram written to: ${outputPath}`));
       console.log(
         chalk.dim(
-          "\nYou can visualize this diagram at https://newmo-oss.github.io/mermaid-viewer/",
+          '\nYou can visualize this diagram at https://newmo-oss.github.io/mermaid-viewer/',
         ),
       );
     } catch (error) {

@@ -7,8 +7,8 @@
  * processes and troubleshoot issues.
  */
 
-import { appendFile, writeFile } from "node:fs/promises";
-import { format } from "date-fns";
+import { appendFile, writeFile } from 'node:fs/promises';
+import { format } from 'date-fns';
 
 /**
  * File-based debug logger for migration operations.
@@ -62,7 +62,7 @@ export class DebugLogger {
   constructor(enabled: boolean = false) {
     this.enabled = enabled;
     if (enabled) {
-      this.logFile = `smig-debug-${format(new Date(), "yyyy-MM-dd-HHmmss")}.txt`;
+      this.logFile = `smig-debug-${format(new Date(), 'yyyy-MM-dd-HHmmss')}.txt`;
     }
   }
 
@@ -85,11 +85,11 @@ export class DebugLogger {
   log(message: string, data?: unknown): void {
     if (!this.enabled || !this.logFile) return;
 
-    const timestamp = format(new Date(), "yyyy-MM-dd HH:mm:ss.SSS");
+    const timestamp = format(new Date(), 'yyyy-MM-dd HH:mm:ss.SSS');
     let logMessage = `[${timestamp}] ${message}`;
 
     if (data !== undefined) {
-      if (typeof data === "object") {
+      if (typeof data === 'object') {
         logMessage += `\n${JSON.stringify(data, null, 2)}`;
       } else {
         logMessage += ` ${data}`;
@@ -115,14 +115,14 @@ export class DebugLogger {
         // Create the file with initial header on first write
         await writeFile(
           this.logFile,
-          `=== SMIG Debug Log - ${format(new Date(), "yyyy-MM-dd HH:mm:ss")} ===\n`,
-          "utf8",
+          `=== SMIG Debug Log - ${format(new Date(), 'yyyy-MM-dd HH:mm:ss')} ===\n`,
+          'utf8',
         );
         this.fileInitialized = true;
       }
 
       // Append the new content
-      await appendFile(this.logFile, content, "utf8");
+      await appendFile(this.logFile, content, 'utf8');
     } catch (_error) {
       // Don't throw errors for logging failures, just silently continue
       // This prevents debug logging from breaking the main operation
@@ -142,8 +142,8 @@ export class DebugLogger {
     if (!this.enabled) return;
 
     this.log(`=== ${name} ===`);
-    this.log("Schema representation:", schema);
-    this.log(""); // Empty line for readability
+    this.log('Schema representation:', schema);
+    this.log(''); // Empty line for readability
   }
 
   /**

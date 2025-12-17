@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { MigrationManager } from "../src/migrator/migration-manager";
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MigrationManager } from '../src/migrator/migration-manager';
 import {
   commonFields,
   composeSchema,
@@ -9,7 +9,7 @@ import {
   index,
   int,
   string,
-} from "../src/schema/concise-schema";
+} from '../src/schema/concise-schema';
 
 // Mock dependencies
 // biome-ignore lint/suspicious/noExplicitAny: Mock client needs flexible typing for tests
@@ -17,7 +17,7 @@ let mockClient: any;
 // biome-ignore lint/suspicious/noExplicitAny: Mock logger needs flexible typing for tests
 let mockLogger: any;
 
-vi.mock("../src/database/surreal-client", () => {
+vi.mock('../src/database/surreal-client', () => {
   return {
     SurrealClient: class {
       constructor() {
@@ -28,7 +28,7 @@ vi.mock("../src/database/surreal-client", () => {
   };
 });
 
-vi.mock("../src/utils/debug-logger", () => {
+vi.mock('../src/utils/debug-logger', () => {
   return {
     DebugLogger: class {
       constructor() {
@@ -43,7 +43,7 @@ vi.mock("../src/utils/debug-logger", () => {
   };
 });
 
-describe("MigrationManager", () => {
+describe('MigrationManager', () => {
   let migrationManager: MigrationManager;
 
   beforeEach(() => {
@@ -64,12 +64,12 @@ describe("MigrationManager", () => {
     };
 
     migrationManager = new MigrationManager({
-      url: "ws://localhost:8000",
-      namespace: "test",
-      database: "test",
-      username: "root",
-      password: "root",
-      schema: "./schema.js",
+      url: 'ws://localhost:8000',
+      namespace: 'test',
+      database: 'test',
+      username: 'root',
+      password: 'root',
+      schema: './schema.js',
     });
   });
 
@@ -77,12 +77,12 @@ describe("MigrationManager", () => {
     vi.clearAllMocks();
   });
 
-  describe("Schema Detection", () => {
-    it("should detect new tables", async () => {
+  describe('Schema Detection', () => {
+    it('should detect new tables', async () => {
       const schema = composeSchema({
         models: {
           user: defineSchema({
-            table: "user",
+            table: 'user',
             fields: {
               name: string().required(),
               email: string().unique(),
@@ -98,11 +98,11 @@ describe("MigrationManager", () => {
       expect(hasChanges).toBe(true);
     });
 
-    it("should detect field changes", async () => {
+    it('should detect field changes', async () => {
       const schema = composeSchema({
         models: {
           user: defineSchema({
-            table: "user",
+            table: 'user',
             fields: {
               name: string().required(),
               age: int(), // New field
@@ -115,9 +115,9 @@ describe("MigrationManager", () => {
       mockClient.getCurrentDatabaseSchema.mockResolvedValue({
         tables: [
           {
-            name: "user",
+            name: 'user',
             schemafull: true,
-            fields: [{ name: "name", type: "string", optional: false }],
+            fields: [{ name: 'name', type: 'string', optional: false }],
             indexes: [],
             events: [],
           },
@@ -129,14 +129,14 @@ describe("MigrationManager", () => {
       expect(hasChanges).toBe(true);
     });
 
-    it("should detect relation changes", async () => {
+    it('should detect relation changes', async () => {
       const schema = composeSchema({
         models: {},
         relations: {
           like: defineRelation({
-            name: "like",
-            from: "user",
-            to: "post2", // Changed from 'post' to 'post2'
+            name: 'like',
+            from: 'user',
+            to: 'post2', // Changed from 'post' to 'post2'
             fields: {
               createdAt: commonFields.timestamp(),
             },
@@ -148,13 +148,13 @@ describe("MigrationManager", () => {
         tables: [],
         relations: [
           {
-            name: "like",
-            from: "user",
-            to: "post",
+            name: 'like',
+            from: 'user',
+            to: 'post',
             fields: [
-              { name: "in", type: "record<user>", optional: false },
-              { name: "out", type: "record<post>", optional: false },
-              { name: "createdAt", type: "datetime", optional: false, value: "time::now()" },
+              { name: 'in', type: 'record<user>', optional: false },
+              { name: 'out', type: 'record<post>', optional: false },
+              { name: 'createdAt', type: 'datetime', optional: false, value: 'time::now()' },
             ],
             indexes: [],
             events: [],
@@ -166,11 +166,11 @@ describe("MigrationManager", () => {
       expect(hasChanges).toBe(true);
     });
 
-    it("should detect no changes when schemas match", async () => {
+    it('should detect no changes when schemas match', async () => {
       const schema = composeSchema({
         models: {
           user: defineSchema({
-            table: "user",
+            table: 'user',
             schemafull: true,
             fields: {
               name: string().required(),
@@ -187,24 +187,24 @@ describe("MigrationManager", () => {
       const hasChanges = await migrationManager.hasChanges(schema);
       // Note: Complex schema comparison may detect subtle differences in structure
       // This test primarily validates that the hasChanges method works without errors
-      expect(typeof hasChanges).toBe("boolean");
+      expect(typeof hasChanges).toBe('boolean');
     });
   });
 
-  describe("Migration Generation", () => {
-    it("should generate CREATE TABLE statements for new tables", async () => {
+  describe('Migration Generation', () => {
+    it('should generate CREATE TABLE statements for new tables', async () => {
       const schema = composeSchema({
         models: {
           user: defineSchema({
-            table: "user",
+            table: 'user',
             schemafull: true,
             fields: {
               name: string().required(),
               email: string().unique(),
-              createdAt: datetime().value("time::now()"),
+              createdAt: datetime().value('time::now()'),
             },
             indexes: {
-              email: index(["email"]).unique(),
+              email: index(['email']).unique(),
             },
           }),
         },
@@ -215,21 +215,21 @@ describe("MigrationManager", () => {
 
       const diff = await migrationManager.generateDiff(schema);
 
-      expect(diff.up).toContain("DEFINE TABLE user SCHEMAFULL");
-      expect(diff.up).toContain("DEFINE FIELD name ON TABLE user TYPE string");
-      expect(diff.up).toContain("DEFINE FIELD email ON TABLE user TYPE string");
-      expect(diff.up).toContain("DEFINE INDEX email ON TABLE user COLUMNS email UNIQUE");
-      expect(diff.down).toContain("REMOVE TABLE user");
+      expect(diff.up).toContain('DEFINE TABLE user SCHEMAFULL');
+      expect(diff.up).toContain('DEFINE FIELD name ON TABLE user TYPE string');
+      expect(diff.up).toContain('DEFINE FIELD email ON TABLE user TYPE string');
+      expect(diff.up).toContain('DEFINE INDEX email ON TABLE user COLUMNS email UNIQUE');
+      expect(diff.down).toContain('REMOVE TABLE user');
     });
 
-    it("should generate relation recreation when from/to changes", async () => {
+    it('should generate relation recreation when from/to changes', async () => {
       const schema = composeSchema({
         models: {},
         relations: {
           like: defineRelation({
-            name: "like",
-            from: "user",
-            to: "post2", // Changed
+            name: 'like',
+            from: 'user',
+            to: 'post2', // Changed
             fields: {
               rating: int().default(5),
             },
@@ -241,13 +241,13 @@ describe("MigrationManager", () => {
         tables: [],
         relations: [
           {
-            name: "like",
-            from: "user",
-            to: "post", // Original
+            name: 'like',
+            from: 'user',
+            to: 'post', // Original
             fields: [
-              { name: "in", type: "record<user>", optional: false },
-              { name: "out", type: "record<post>", optional: false },
-              { name: "rating", type: "int", optional: false, default: 5 },
+              { name: 'in', type: 'record<user>', optional: false },
+              { name: 'out', type: 'record<post>', optional: false },
+              { name: 'rating', type: 'int', optional: false, default: 5 },
             ],
             indexes: [],
             events: [],
@@ -259,22 +259,22 @@ describe("MigrationManager", () => {
 
       // The current implementation treats this as a new relation rather than recreation
       // This test validates that the diff generation works and includes the correct new definition
-      expect(diff.up).toContain("-- New relation: like");
-      expect(diff.up).toContain("DEFINE TABLE like SCHEMAFULL");
-      expect(diff.up).toContain("DEFINE FIELD out ON TABLE like TYPE record<post2>");
-      expect(diff.up).toContain("DEFINE FIELD rating ON TABLE like TYPE int DEFAULT 5");
+      expect(diff.up).toContain('-- New relation: like');
+      expect(diff.up).toContain('DEFINE TABLE like SCHEMAFULL');
+      expect(diff.up).toContain('DEFINE FIELD out ON TABLE like TYPE record<post2>');
+      expect(diff.up).toContain('DEFINE FIELD rating ON TABLE like TYPE int DEFAULT 5');
     });
 
-    it("should generate rollback statements for sub-fields with dots in names", async () => {
+    it('should generate rollback statements for sub-fields with dots in names', async () => {
       // This test verifies the fix for sub-field name changes (e.g., "emails.address")
       const schema = composeSchema({
         models: {
           user: defineSchema({
-            table: "user",
+            table: 'user',
             schemafull: true,
             fields: {
               name: string().required(),
-              "emails.address": string(), // New sub-field name
+              'emails.address': string(), // New sub-field name
             },
           }),
         },
@@ -283,22 +283,22 @@ describe("MigrationManager", () => {
 
       // Mock the database INFO commands that getCurrentDatabaseSchema uses
       mockClient.executeQuery.mockImplementation((query: string) => {
-        if (query.includes("INFO FOR DB")) {
+        if (query.includes('INFO FOR DB')) {
           // Return database info with user table
           return Promise.resolve([
             {
               tables: {
-                user: "DEFINE TABLE user SCHEMAFULL",
+                user: 'DEFINE TABLE user SCHEMAFULL',
               },
             },
           ]);
-        } else if (query.includes("INFO FOR TABLE user")) {
+        } else if (query.includes('INFO FOR TABLE user')) {
           // Return table info with the old sub-field
           return Promise.resolve([
             {
               fields: {
-                name: "DEFINE FIELD name ON TABLE user TYPE string ASSERT $value != NONE",
-                "emails.oldaddress": "DEFINE FIELD emails.oldaddress ON TABLE user TYPE string",
+                name: 'DEFINE FIELD name ON TABLE user TYPE string ASSERT $value != NONE',
+                'emails.oldaddress': 'DEFINE FIELD emails.oldaddress ON TABLE user TYPE string',
               },
               indexes: {},
               events: {},
@@ -311,111 +311,111 @@ describe("MigrationManager", () => {
       const diff = await migrationManager.generateDiff(schema);
 
       // Verify forward migration includes both new field and removal of old field
-      expect(diff.up).toContain("DEFINE FIELD emails.address ON TABLE user TYPE string");
-      expect(diff.up).toContain("REMOVE FIELD emails.oldaddress ON TABLE user");
+      expect(diff.up).toContain('DEFINE FIELD emails.address ON TABLE user TYPE string');
+      expect(diff.up).toContain('REMOVE FIELD emails.oldaddress ON TABLE user');
 
       // Verify rollback migration includes both removal of new field and restoration of old field
-      expect(diff.down).toContain("REMOVE FIELD emails.address ON TABLE user");
-      expect(diff.down).toContain("DEFINE FIELD emails.oldaddress ON TABLE user TYPE string");
+      expect(diff.down).toContain('REMOVE FIELD emails.address ON TABLE user');
+      expect(diff.down).toContain('DEFINE FIELD emails.oldaddress ON TABLE user TYPE string');
     });
   });
 
-  describe("Checksum Operations", () => {
-    it("should calculate SHA256 checksums with algorithm prefix", () => {
-      const content = "test migration content";
+  describe('Checksum Operations', () => {
+    it('should calculate SHA256 checksums with algorithm prefix', () => {
+      const content = 'test migration content';
       const checksum = migrationManager.calculateChecksum(content);
 
       expect(checksum).toMatch(/^sha256\./);
-      expect(checksum.split(".")[1]).toHaveLength(64); // SHA256 hex length
+      expect(checksum.split('.')[1]).toHaveLength(64); // SHA256 hex length
     });
 
-    it("should parse checksums correctly", () => {
-      const checksum = "sha256.abc123def456";
+    it('should parse checksums correctly', () => {
+      const checksum = 'sha256.abc123def456';
       const { algorithm, hash } = migrationManager.parseChecksum(checksum);
 
-      expect(algorithm).toBe("sha256");
-      expect(hash).toBe("abc123def456");
+      expect(algorithm).toBe('sha256');
+      expect(hash).toBe('abc123def456');
     });
 
-    it("should verify checksums", () => {
-      const content = "test content";
+    it('should verify checksums', () => {
+      const content = 'test content';
       const checksum = migrationManager.calculateChecksum(content);
 
       expect(migrationManager.verifyChecksum(content, checksum)).toBe(true);
-      expect(migrationManager.verifyChecksum("different content", checksum)).toBe(false);
+      expect(migrationManager.verifyChecksum('different content', checksum)).toBe(false);
     });
   });
 
-  describe("Migration Management", () => {
-    it("should record migration with message", async () => {
+  describe('Migration Management', () => {
+    it('should record migration with message', async () => {
       const migration = {
-        id: "test-migration",
-        up: "CREATE TABLE test",
-        down: "DROP TABLE test",
-        checksum: "sha256.abc123",
-        downChecksum: "sha256.def456",
-        message: "Test migration",
+        id: 'test-migration',
+        up: 'CREATE TABLE test',
+        down: 'DROP TABLE test',
+        checksum: 'sha256.abc123',
+        downChecksum: 'sha256.def456',
+        message: 'Test migration',
       };
 
-      mockClient.create.mockResolvedValue({ id: "test-migration" });
+      mockClient.create.mockResolvedValue({ id: 'test-migration' });
 
       await migrationManager.recordMigration(migration);
 
       expect(mockClient.create).toHaveBeenCalledWith(
-        "_migrations",
+        '_migrations',
         expect.objectContaining({
-          up: "CREATE TABLE test",
-          down: "DROP TABLE test",
-          checksum: "sha256.abc123",
-          downChecksum: "sha256.def456",
-          message: "Test migration",
+          up: 'CREATE TABLE test',
+          down: 'DROP TABLE test',
+          checksum: 'sha256.abc123',
+          downChecksum: 'sha256.def456',
+          message: 'Test migration',
           appliedAt: expect.any(Date),
         }),
       );
     });
 
-    it("should record migration without message", async () => {
+    it('should record migration without message', async () => {
       const migration = {
-        id: "test-migration",
-        up: "CREATE TABLE test",
-        down: "DROP TABLE test",
-        checksum: "sha256.abc123",
-        downChecksum: "sha256.def456",
+        id: 'test-migration',
+        up: 'CREATE TABLE test',
+        down: 'DROP TABLE test',
+        checksum: 'sha256.abc123',
+        downChecksum: 'sha256.def456',
       };
 
-      mockClient.create.mockResolvedValue({ id: "test-migration" });
+      mockClient.create.mockResolvedValue({ id: 'test-migration' });
 
       await migrationManager.recordMigration(migration);
 
       expect(mockClient.create).toHaveBeenCalledWith(
-        "_migrations",
+        '_migrations',
         expect.objectContaining({
-          up: "CREATE TABLE test",
-          down: "DROP TABLE test",
-          checksum: "sha256.abc123",
-          downChecksum: "sha256.def456",
+          up: 'CREATE TABLE test',
+          down: 'DROP TABLE test',
+          checksum: 'sha256.abc123',
+          downChecksum: 'sha256.def456',
           message: undefined, // Should be undefined for SurrealDB NONE
           appliedAt: expect.any(Date),
         }),
       );
     });
 
-    it("should get applied migrations", async () => {
+    it('should get applied migrations', async () => {
       const mockMigrations = [
         {
-          id: "migration1",
-          up: "CREATE TABLE test1",
-          down: "DROP TABLE test1",
-          checksum: "sha256.abc123",
-          timestamp: "2023-01-01T00:00:00Z",
-          message: "First migration",
+          id: 'migration1',
+          up: 'CREATE TABLE test1',
+          down: 'DROP TABLE test1',
+          checksum: 'sha256.abc123',
+          timestamp: '2023-01-01T00:00:00Z',
+          message: 'First migration',
         },
         {
-          id: "migration2",
-          up: "CREATE TABLE test2",
-          down: "DROP TABLE test2",
-          checksum: "sha256.def456",
-          timestamp: "2023-01-02T00:00:00Z",
+          id: 'migration2',
+          up: 'CREATE TABLE test2',
+          down: 'DROP TABLE test2',
+          checksum: 'sha256.def456',
+          timestamp: '2023-01-02T00:00:00Z',
           message: undefined,
         },
       ];
@@ -424,35 +424,35 @@ describe("MigrationManager", () => {
 
       const migrations = await migrationManager.getAppliedMigrations();
 
-      expect(mockClient.select).toHaveBeenCalledWith("_migrations");
+      expect(mockClient.select).toHaveBeenCalledWith('_migrations');
       expect(migrations).toHaveLength(2);
-      expect(migrations[0].message).toBe("First migration");
+      expect(migrations[0].message).toBe('First migration');
       expect(migrations[1].message).toBeUndefined();
     });
   });
 
-  describe("Error Handling", () => {
-    it("should throw error when no changes detected during migration", async () => {
+  describe('Error Handling', () => {
+    it('should throw error when no changes detected during migration', async () => {
       const schema = composeSchema({ models: {}, relations: {} });
 
       mockClient.getCurrentDatabaseSchema.mockResolvedValue({ tables: [], relations: [] });
 
-      await expect(migrationManager.migrate(schema)).rejects.toThrow("No changes detected");
+      await expect(migrationManager.migrate(schema)).rejects.toThrow('No changes detected');
     });
 
-    it("should handle connection errors gracefully", async () => {
-      mockClient.connect.mockRejectedValue(new Error("Connection failed"));
+    it('should handle connection errors gracefully', async () => {
+      mockClient.connect.mockRejectedValue(new Error('Connection failed'));
 
-      await expect(migrationManager.initialize()).rejects.toThrow("Connection failed");
+      await expect(migrationManager.initialize()).rejects.toThrow('Connection failed');
     });
   });
 
-  describe("Utility Methods", () => {
-    it("should trim diff content", async () => {
+  describe('Utility Methods', () => {
+    it('should trim diff content', async () => {
       const schema = composeSchema({
         models: {
           user: defineSchema({
-            table: "user",
+            table: 'user',
             fields: {
               name: string(),
             },
@@ -470,20 +470,20 @@ describe("MigrationManager", () => {
       expect(diff.down).toBe(diff.down.trim());
     });
 
-    it("should extract relation info correctly", () => {
+    it('should extract relation info correctly', () => {
       const tableInfo = {
-        name: "like",
+        name: 'like',
         fields: [
-          { name: "in", type: "record<user>" },
-          { name: "out", type: "record<post>" },
+          { name: 'in', type: 'record<user>' },
+          { name: 'out', type: 'record<post>' },
         ],
       };
 
       const relationInfo = migrationManager.extractRelationInfo(tableInfo);
 
       expect(relationInfo).toEqual({
-        from: "user",
-        to: "post",
+        from: 'user',
+        to: 'post',
       });
     });
   });

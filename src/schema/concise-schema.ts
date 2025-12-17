@@ -58,7 +58,7 @@
  */
 
 // import { outdent } from "outdent";
-import dedent from "dedent";
+import dedent from 'dedent';
 
 // ============================================================================
 // CONCISE SURREALDB SCHEMA DEFINITION SYSTEM
@@ -73,7 +73,7 @@ import dedent from "dedent";
  */
 function processSurrealQL(input: string): string {
   // Only process multi-line strings through outdent
-  if (input.includes("\n")) {
+  if (input.includes('\n')) {
     // Create a template literal from the string and process it
     return dedent`${input}`;
   }
@@ -121,7 +121,7 @@ function processSurrealQL(input: string): string {
  */
 class SurrealQLFieldBase {
   protected field: Record<string, unknown> = {
-    type: "string",
+    type: 'string',
     optional: false,
     readonly: false,
     flexible: false,
@@ -131,7 +131,7 @@ class SurrealQLFieldBase {
     value: null,
     assert: null,
     assertConditions: [], // Stack of assertion conditions
-    permissions: "FULL", // Default to FULL permissions
+    permissions: 'FULL', // Default to FULL permissions
     comment: null,
     comments: [],
   };
@@ -252,7 +252,7 @@ class SurrealQLFieldBase {
       // Wrap each condition in parentheses and join with AND
       field.assert = field.assertConditions
         .map((condition: string) => `(${condition})`)
-        .join(" AND ");
+        .join(' AND ');
     }
   }
 
@@ -275,12 +275,12 @@ class SurrealQLFieldBase {
    * use indexes with the unique() modifier.
    */
   unique() {
-    return this.assert("$value != NONE");
+    return this.assert('$value != NONE');
   }
 
   /** Convenience method to make the field required (must have a value) */
   required() {
-    return this.assert("$value != NONE");
+    return this.assert('$value != NONE');
   }
 
   /**
@@ -393,7 +393,7 @@ class SurrealQLFieldBase {
 export class SurrealQLString extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = "string";
+    this.field.type = 'string';
   }
 
   // Note: Removed email(), url(), regex(), length() methods to prevent accidental assertion overrides
@@ -423,7 +423,7 @@ export class SurrealQLString extends SurrealQLFieldBase {
 export class SurrealQLInt extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = "int";
+    this.field.type = 'int';
   }
 
   // Note: Removed min(), max(), range() methods to prevent accidental assertion overrides
@@ -454,7 +454,7 @@ export class SurrealQLInt extends SurrealQLFieldBase {
 export class SurrealQLFloat extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = "float";
+    this.field.type = 'float';
   }
 
   // Note: Removed min(), max(), range() methods to prevent accidental assertion overrides
@@ -472,7 +472,7 @@ export class SurrealQLFloat extends SurrealQLFieldBase {
 export class SurrealQLBool extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = "bool";
+    this.field.type = 'bool';
   }
 }
 
@@ -487,7 +487,7 @@ export class SurrealQLBool extends SurrealQLFieldBase {
 export class SurrealQLDatetime extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = "datetime";
+    this.field.type = 'datetime';
   }
 }
 
@@ -512,7 +512,7 @@ export class SurrealQLDatetime extends SurrealQLFieldBase {
 export class SurrealQLDecimal extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = "decimal";
+    this.field.type = 'decimal';
   }
 
   // Note: Removed min(), max(), range() methods to prevent accidental assertion overrides
@@ -529,7 +529,7 @@ export class SurrealQLDecimal extends SurrealQLFieldBase {
 export class SurrealQLUuid extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = "uuid";
+    this.field.type = 'uuid';
   }
 }
 
@@ -554,7 +554,7 @@ export class SurrealQLUuid extends SurrealQLFieldBase {
 export class SurrealQLDuration extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = "duration";
+    this.field.type = 'duration';
   }
 }
 
@@ -579,7 +579,7 @@ export class SurrealQLDuration extends SurrealQLFieldBase {
 export class SurrealQLObject extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = "object";
+    this.field.type = 'object';
   }
 }
 
@@ -604,7 +604,7 @@ export class SurrealQLObject extends SurrealQLFieldBase {
 export class SurrealQLGeometry extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = "geometry";
+    this.field.type = 'geometry';
   }
 }
 
@@ -634,8 +634,8 @@ export class SurrealQLOption extends SurrealQLFieldBase {
   constructor(type?: string | any) {
     super();
     if (!type) {
-      this.field.type = "option";
-    } else if (typeof type === "object" && type !== null && typeof type.build === "function") {
+      this.field.type = 'option';
+    } else if (typeof type === 'object' && type !== null && typeof type.build === 'function') {
       // If type is a builder object, call build() to get the type string
       const built = type.build();
       this.field.type = `option<${built.type}>`;
@@ -664,7 +664,7 @@ export class SurrealQLOption extends SurrealQLFieldBase {
  */
 export class SurrealQLAny {
   private field: Record<string, unknown> = {
-    type: "any",
+    type: 'any',
     optional: false,
     default: null,
     value: null,
@@ -704,7 +704,7 @@ export class SurrealQLAny {
     } else {
       field.assert = field.assertConditions
         .map((condition: string) => `(${condition})`)
-        .join(" AND ");
+        .join(' AND ');
     }
   }
 
@@ -740,7 +740,7 @@ export class SurrealQLAny {
  */
 export class SurrealQLArray<T extends string> {
   private field: Record<string, unknown> = {
-    type: "array",
+    type: 'array',
     optional: false,
     default: null,
     value: null,
@@ -752,7 +752,7 @@ export class SurrealQLArray<T extends string> {
   // biome-ignore lint/suspicious/noExplicitAny: Dynamic type parameter can be string or builder object
   constructor(type: T | any) {
     // If type is an object with a build() method, call it to get the type string
-    if (typeof type === "object" && type !== null && typeof type.build === "function") {
+    if (typeof type === 'object' && type !== null && typeof type.build === 'function') {
       const built = type.build();
       this.field.type = `array<${built.type}>`;
     } else {
@@ -786,7 +786,7 @@ export class SurrealQLArray<T extends string> {
     } else {
       field.assert = field.assertConditions
         .map((condition: string) => `(${condition})`)
-        .join(" AND ");
+        .join(' AND ');
     }
   }
 
@@ -825,10 +825,10 @@ export class SurrealQLRecord extends SurrealQLFieldBase {
     super();
     if (!tableName) {
       // Generic record type (no specific table)
-      this.field.type = "record";
+      this.field.type = 'record';
     } else if (Array.isArray(tableName)) {
       // Union type (multiple tables)
-      const tables = tableName.map((t) => t.toLowerCase()).join(" | ");
+      const tables = tableName.map((t) => t.toLowerCase()).join(' | ');
       this.field.type = `record<${tables}>`;
     } else {
       // Single table reference
@@ -867,7 +867,7 @@ export class SurrealQLIndex {
   private index: Record<string, unknown> = {
     columns: [],
     unique: false,
-    type: "BTREE",
+    type: 'BTREE',
     analyzer: null,
     highlights: false,
     comments: [],
@@ -885,25 +885,25 @@ export class SurrealQLIndex {
 
   /** Sets index type to BTREE (default) - good for range queries */
   btree() {
-    this.index.type = "BTREE";
+    this.index.type = 'BTREE';
     return this;
   }
 
   /** Sets index type to HASH - fast equality lookups */
   hash() {
-    this.index.type = "HASH";
+    this.index.type = 'HASH';
     return this;
   }
 
   /** Sets index type to SEARCH - enables full-text search */
   search() {
-    this.index.type = "SEARCH";
+    this.index.type = 'SEARCH';
     return this;
   }
 
   /** Sets index type to MTREE - for multi-dimensional data */
   mtree() {
-    this.index.type = "MTREE";
+    this.index.type = 'MTREE';
     return this;
   }
 
@@ -977,8 +977,8 @@ export class SurrealQLEvent {
   }
 
   private validateName(name: string): void {
-    if (!name || name.trim() === "") {
-      throw new Error("Event name is required and cannot be empty");
+    if (!name || name.trim() === '') {
+      throw new Error('Event name is required and cannot be empty');
     }
 
     const trimmed = name.trim();
@@ -991,21 +991,21 @@ export class SurrealQLEvent {
 
   /** Sets the event to trigger on CREATE operations */
   onCreate() {
-    this.event.type = "CREATE";
+    this.event.type = 'CREATE';
     this.triggerSet = true;
     return this;
   }
 
   /** Sets the event to trigger on UPDATE operations */
   onUpdate() {
-    this.event.type = "UPDATE";
+    this.event.type = 'UPDATE';
     this.triggerSet = true;
     return this;
   }
 
   /** Sets the event to trigger on DELETE operations */
   onDelete() {
-    this.event.type = "DELETE";
+    this.event.type = 'DELETE';
     this.triggerSet = true;
     return this;
   }
@@ -1018,8 +1018,8 @@ export class SurrealQLEvent {
 
   /** Sets the SurrealQL code to execute when the event triggers */
   thenDo(action: string) {
-    if (!action || action.trim() === "") {
-      throw new Error("THEN clause is required and cannot be empty");
+    if (!action || action.trim() === '') {
+      throw new Error('THEN clause is required and cannot be empty');
     }
     this.event.thenStatement = processSurrealQL(action);
     return this;
@@ -1027,7 +1027,7 @@ export class SurrealQLEvent {
 
   /** Adds a documentation comment for the event */
   comment(text: string) {
-    if (text && text.trim() !== "") {
+    if (text && text.trim() !== '') {
       // biome-ignore lint/suspicious/noExplicitAny: Dynamic event builder requires flexible typing
       (this.event as any).comments.push(text.trim());
     }
@@ -1037,7 +1037,7 @@ export class SurrealQLEvent {
   /** Builds and validates the complete event definition */
   build() {
     if (!this.triggerSet) {
-      throw new Error("Event trigger type must be set. Use onCreate(), onUpdate(), or onDelete().");
+      throw new Error('Event trigger type must be set. Use onCreate(), onUpdate(), or onDelete().');
     }
 
     if (!this.event.thenStatement) {
@@ -1092,10 +1092,10 @@ export class SurrealQLEvent {
  */
 export class SurrealQLFunction {
   private func: Record<string, unknown> = {
-    name: "",
+    name: '',
     parameters: [],
     returnType: null,
-    body: "",
+    body: '',
     comments: [],
   };
 
@@ -1105,14 +1105,14 @@ export class SurrealQLFunction {
   }
 
   private validateName(name: string): void {
-    if (!name || name.trim() === "") {
-      throw new Error("Function name is required and cannot be empty");
+    if (!name || name.trim() === '') {
+      throw new Error('Function name is required and cannot be empty');
     }
 
     const trimmed = name.trim();
 
     // Allow 'fn::' prefix format
-    if (trimmed.startsWith("fn::")) {
+    if (trimmed.startsWith('fn::')) {
       const localName = trimmed.substring(4);
       if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(localName)) {
         throw new Error(
@@ -1157,8 +1157,8 @@ export class SurrealQLFunction {
    * @returns The function instance for method chaining
    */
   body(code: string) {
-    if (!code || code.trim() === "") {
-      throw new Error("Function body is required and cannot be empty");
+    if (!code || code.trim() === '') {
+      throw new Error('Function body is required and cannot be empty');
     }
     this.func.body = processSurrealQL(code);
     return this;
@@ -1166,7 +1166,7 @@ export class SurrealQLFunction {
 
   /** Adds a documentation comment for the function */
   comment(text: string) {
-    if (text && text.trim() !== "") {
+    if (text && text.trim() !== '') {
       // biome-ignore lint/suspicious/noExplicitAny: Dynamic comment array
       (this.func.comments as any[]).push(text.trim());
     }
@@ -1175,7 +1175,7 @@ export class SurrealQLFunction {
 
   /** Builds and validates the complete function definition */
   build() {
-    if (!this.func.body || (this.func.body as string).trim() === "") {
+    if (!this.func.body || (this.func.body as string).trim() === '') {
       throw new Error(
         `Function ${this.func.name} requires a body. Use .body("your SurrealQL here").`,
       );
@@ -1236,7 +1236,7 @@ export class SurrealQLFunction {
  */
 export class SurrealQLScope {
   private scope: Record<string, unknown> = {
-    name: "",
+    name: '',
     session: null,
     signup: null,
     signin: null,
@@ -1249,8 +1249,8 @@ export class SurrealQLScope {
   }
 
   private validateName(name: string): void {
-    if (!name || name.trim() === "") {
-      throw new Error("Scope name is required and cannot be empty");
+    if (!name || name.trim() === '') {
+      throw new Error('Scope name is required and cannot be empty');
     }
 
     const trimmed = name.trim();
@@ -1281,8 +1281,8 @@ export class SurrealQLScope {
    * @returns The scope instance for method chaining
    */
   signup(query: string) {
-    if (!query || query.trim() === "") {
-      throw new Error("SIGNUP clause is required and cannot be empty");
+    if (!query || query.trim() === '') {
+      throw new Error('SIGNUP clause is required and cannot be empty');
     }
     this.scope.signup = processSurrealQL(query);
     return this;
@@ -1297,8 +1297,8 @@ export class SurrealQLScope {
    * @returns The scope instance for method chaining
    */
   signin(query: string) {
-    if (!query || query.trim() === "") {
-      throw new Error("SIGNIN clause is required and cannot be empty");
+    if (!query || query.trim() === '') {
+      throw new Error('SIGNIN clause is required and cannot be empty');
     }
     this.scope.signin = processSurrealQL(query);
     return this;
@@ -1306,7 +1306,7 @@ export class SurrealQLScope {
 
   /** Adds a documentation comment for the scope */
   comment(text: string) {
-    if (text && text.trim() !== "") {
+    if (text && text.trim() !== '') {
       // biome-ignore lint/suspicious/noExplicitAny: Dynamic comment array
       (this.scope.comments as any[]).push(text.trim());
     }
@@ -1375,7 +1375,7 @@ export class SurrealQLScope {
  */
 export class SurrealQLAnalyzer {
   private analyzer: Record<string, unknown> = {
-    name: "",
+    name: '',
     tokenizers: [],
     filters: [],
     comments: [],
@@ -1387,8 +1387,8 @@ export class SurrealQLAnalyzer {
   }
 
   private validateName(name: string): void {
-    if (!name || name.trim() === "") {
-      throw new Error("Analyzer name is required and cannot be empty");
+    if (!name || name.trim() === '') {
+      throw new Error('Analyzer name is required and cannot be empty');
     }
 
     const trimmed = name.trim();
@@ -1407,7 +1407,7 @@ export class SurrealQLAnalyzer {
    */
   tokenizers(tokenizers: string[]) {
     if (!tokenizers || tokenizers.length === 0) {
-      throw new Error("At least one tokenizer is required");
+      throw new Error('At least one tokenizer is required');
     }
     this.analyzer.tokenizers = tokenizers;
     return this;
@@ -1421,7 +1421,7 @@ export class SurrealQLAnalyzer {
    */
   filters(filters: string[]) {
     if (!filters || filters.length === 0) {
-      throw new Error("At least one filter is required");
+      throw new Error('At least one filter is required');
     }
     this.analyzer.filters = filters;
     return this;
@@ -1429,7 +1429,7 @@ export class SurrealQLAnalyzer {
 
   /** Adds a documentation comment for the analyzer */
   comment(text: string) {
-    if (text && text.trim() !== "") {
+    if (text && text.trim() !== '') {
       // biome-ignore lint/suspicious/noExplicitAny: Dynamic comment array
       (this.analyzer.comments as any[]).push(text.trim());
     }
@@ -1913,26 +1913,26 @@ export const analyzer = (name: string) => new SurrealQLAnalyzer(name);
 
 // Common Field Patterns
 export const commonFields = {
-  timestamp: () => datetime().value("time::now()"),
+  timestamp: () => datetime().value('time::now()'),
   emptyTimestamp: () => datetime(),
-  metadata: () => option("object"),
-  tags: () => option("array<string>"),
-  owner: (tableName: string = "user") => record(tableName),
+  metadata: () => option('object'),
+  tags: () => option('array<string>'),
+  owner: (tableName: string = 'user') => record(tableName),
 };
 
 // Common Index Patterns
 export const commonIndexes = {
-  primary: (_tableName: string) => index(["id"]).unique(),
-  createdAt: (_tableName: string) => index(["createdAt"]),
-  updatedAt: (_tableName: string) => index(["updatedAt"]),
+  primary: (_tableName: string) => index(['id']).unique(),
+  createdAt: (_tableName: string) => index(['createdAt']),
+  updatedAt: (_tableName: string) => index(['updatedAt']),
   contentSearch: (_tableName: string) =>
-    index(["content"]).search().analyzer("english").highlights(),
+    index(['content']).search().analyzer('english').highlights(),
 };
 
 // Common Event Patterns
 export const commonEvents = {
   updateTimestamp: (tableName: string) =>
-    event(`${tableName}_update_timestamp`).onUpdate().thenDo("SET updatedAt = time::now()"),
+    event(`${tableName}_update_timestamp`).onUpdate().thenDo('SET updatedAt = time::now()'),
   cascadeDelete: (tableName: string, relatedTable: string, foreignKey: string) =>
     event(`${tableName}_cascade_delete`)
       .onDelete()

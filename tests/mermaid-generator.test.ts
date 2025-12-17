@@ -2,8 +2,8 @@
  * @fileoverview Comprehensive test suite for Mermaid diagram generator
  */
 
-import { describe, expect, it } from "vitest";
-import { generateMermaidDiagram } from "../src/migrator/mermaid-generator";
+import { describe, expect, it } from 'vitest';
+import { generateMermaidDiagram } from '../src/migrator/mermaid-generator';
 import {
   array,
   bool,
@@ -16,12 +16,12 @@ import {
   option,
   record,
   string,
-} from "../src/schema/concise-schema";
-import type { SurrealDBSchema } from "../src/types/schema";
+} from '../src/schema/concise-schema';
+import type { SurrealDBSchema } from '../src/types/schema';
 
-describe("MermaidGenerator", () => {
-  describe("Basic Diagram Generation", () => {
-    it("should generate minimal ER diagram header", () => {
+describe('MermaidGenerator', () => {
+  describe('Basic Diagram Generation', () => {
+    it('should generate minimal ER diagram header', () => {
       const schema: SurrealDBSchema = {
         tables: [],
         relations: [],
@@ -31,13 +31,13 @@ describe("MermaidGenerator", () => {
         comments: [],
       };
 
-      const diagram = generateMermaidDiagram(schema, { level: "minimal" });
-      expect(diagram).toContain("erDiagram");
+      const diagram = generateMermaidDiagram(schema, { level: 'minimal' });
+      expect(diagram).toContain('erDiagram');
     });
 
-    it("should generate diagram with single table", () => {
+    it('should generate diagram with single table', () => {
       const userSchema = defineSchema({
-        table: "user",
+        table: 'user',
         schemafull: true,
         fields: {
           email: string(),
@@ -49,22 +49,22 @@ describe("MermaidGenerator", () => {
         models: { user: userSchema },
       });
 
-      const diagram = generateMermaidDiagram(schema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(schema, { level: 'minimal' });
 
-      expect(diagram).toContain("erDiagram");
-      expect(diagram).toContain("user {");
-      expect(diagram).toContain("string email");
-      expect(diagram).toContain("string name");
+      expect(diagram).toContain('erDiagram');
+      expect(diagram).toContain('user {');
+      expect(diagram).toContain('string email');
+      expect(diagram).toContain('string name');
     });
 
-    it("should generate diagram with multiple tables", () => {
+    it('should generate diagram with multiple tables', () => {
       const userSchema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: { name: string() },
       });
 
       const postSchema = defineSchema({
-        table: "post",
+        table: 'post',
         fields: { title: string() },
       });
 
@@ -72,25 +72,25 @@ describe("MermaidGenerator", () => {
         models: { user: userSchema, post: postSchema },
       });
 
-      const diagram = generateMermaidDiagram(schema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(schema, { level: 'minimal' });
 
-      expect(diagram).toContain("user {");
-      expect(diagram).toContain("post {");
+      expect(diagram).toContain('user {');
+      expect(diagram).toContain('post {');
     });
   });
 
-  describe("Relationship Detection", () => {
-    it("should detect record field relationships", () => {
+  describe('Relationship Detection', () => {
+    it('should detect record field relationships', () => {
       const userSchema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: { name: string() },
       });
 
       const postSchema = defineSchema({
-        table: "post",
+        table: 'post',
         fields: {
           title: string(),
-          author: record("user"),
+          author: record('user'),
         },
       });
 
@@ -98,22 +98,22 @@ describe("MermaidGenerator", () => {
         models: { user: userSchema, post: postSchema },
       });
 
-      const diagram = generateMermaidDiagram(schema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(schema, { level: 'minimal' });
 
       expect(diagram).toMatch(/post.*user.*:.*"author"/);
     });
 
-    it("should detect array record relationships", () => {
+    it('should detect array record relationships', () => {
       const postSchema = defineSchema({
-        table: "post",
+        table: 'post',
         fields: {
           title: string(),
-          categories: array(record("category")),
+          categories: array(record('category')),
         },
       });
 
       const categorySchema = defineSchema({
-        table: "category",
+        table: 'category',
         fields: { name: string() },
       });
 
@@ -121,28 +121,28 @@ describe("MermaidGenerator", () => {
         models: { post: postSchema, category: categorySchema },
       });
 
-      const diagram = generateMermaidDiagram(schema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(schema, { level: 'minimal' });
 
       expect(diagram).toMatch(/post.*category.*:.*"categories"/);
     });
 
-    it("should handle explicit relations", () => {
+    it('should handle explicit relations', () => {
       const userSchema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: { name: string() },
       });
 
       const postSchema = defineSchema({
-        table: "post",
+        table: 'post',
         fields: { title: string() },
       });
 
       const likeRelation = defineRelation({
-        name: "like",
-        from: "user",
-        to: "post",
+        name: 'like',
+        from: 'user',
+        to: 'post',
         fields: {
-          createdAt: datetime().value("time::now()"),
+          createdAt: datetime().value('time::now()'),
         },
       });
 
@@ -151,17 +151,17 @@ describe("MermaidGenerator", () => {
         relations: { like: likeRelation },
       });
 
-      const diagram = generateMermaidDiagram(schema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(schema, { level: 'minimal' });
 
       expect(diagram).toMatch(/user.*post.*:.*"like"/);
     });
 
-    it("should handle self-referencing relationships", () => {
+    it('should handle self-referencing relationships', () => {
       const userSchema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: {
           name: string(),
-          followers: array(record("user")),
+          followers: array(record('user')),
         },
       });
 
@@ -169,32 +169,32 @@ describe("MermaidGenerator", () => {
         models: { user: userSchema },
       });
 
-      const diagram = generateMermaidDiagram(schema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(schema, { level: 'minimal' });
 
       expect(diagram).toMatch(/user.*user.*:.*"followers"/);
     });
 
-    it("should handle union type relationships", () => {
+    it('should handle union type relationships', () => {
       const notificationSchema = defineSchema({
-        table: "notification",
+        table: 'notification',
         fields: {
           message: string(),
-          context: record(["post", "comment", "user"]),
+          context: record(['post', 'comment', 'user']),
         },
       });
 
       const postSchema = defineSchema({
-        table: "post",
+        table: 'post',
         fields: { title: string() },
       });
 
       const commentSchema = defineSchema({
-        table: "comment",
+        table: 'comment',
         fields: { content: string() },
       });
 
       const userSchema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: { name: string() },
       });
 
@@ -207,7 +207,7 @@ describe("MermaidGenerator", () => {
         },
       });
 
-      const diagram = generateMermaidDiagram(schema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(schema, { level: 'minimal' });
 
       // Should create relationships for all union types
       expect(diagram).toMatch(/notification.*post.*:.*"context"/);
@@ -215,17 +215,17 @@ describe("MermaidGenerator", () => {
       expect(diagram).toMatch(/notification.*user.*:.*"context"/);
     });
 
-    it("should not duplicate relationships", () => {
+    it('should not duplicate relationships', () => {
       const postSchema = defineSchema({
-        table: "post",
+        table: 'post',
         fields: {
-          author: record("user"),
-          reviewer: record("user"),
+          author: record('user'),
+          reviewer: record('user'),
         },
       });
 
       const userSchema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: { name: string() },
       });
 
@@ -233,7 +233,7 @@ describe("MermaidGenerator", () => {
         models: { post: postSchema, user: userSchema },
       });
 
-      const diagram = generateMermaidDiagram(schema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(schema, { level: 'minimal' });
 
       // Count occurrences of relationships
       const matches = diagram.match(/post.*user/g);
@@ -242,10 +242,10 @@ describe("MermaidGenerator", () => {
     });
   });
 
-  describe("Field Type Simplification", () => {
-    it("should simplify basic types correctly", () => {
+  describe('Field Type Simplification', () => {
+    it('should simplify basic types correctly', () => {
       const schema = defineSchema({
-        table: "test",
+        table: 'test',
         fields: {
           str: string(),
           num: int(),
@@ -258,20 +258,20 @@ describe("MermaidGenerator", () => {
         models: { test: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'minimal' });
 
-      expect(diagram).toContain("string str");
-      expect(diagram).toContain("int num");
-      expect(diagram).toContain("bool flag");
-      expect(diagram).toContain("datetime time");
+      expect(diagram).toContain('string str');
+      expect(diagram).toContain('int num');
+      expect(diagram).toContain('bool flag');
+      expect(diagram).toContain('datetime time');
     });
 
-    it("should simplify option types", () => {
+    it('should simplify option types', () => {
       const schema = defineSchema({
-        table: "test",
+        table: 'test',
         fields: {
-          optionalStr: option("string"),
-          optionalInt: option("int"),
+          optionalStr: option('string'),
+          optionalInt: option('int'),
         },
       });
 
@@ -279,18 +279,18 @@ describe("MermaidGenerator", () => {
         models: { test: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'minimal' });
 
-      expect(diagram).toContain("string optionalStr");
-      expect(diagram).toContain("int optionalInt");
+      expect(diagram).toContain('string optionalStr');
+      expect(diagram).toContain('int optionalInt');
     });
 
-    it("should simplify array types", () => {
+    it('should simplify array types', () => {
       const schema = defineSchema({
-        table: "test",
+        table: 'test',
         fields: {
-          tags: array("string"),
-          scores: array("int"),
+          tags: array('string'),
+          scores: array('int'),
         },
       });
 
@@ -298,18 +298,18 @@ describe("MermaidGenerator", () => {
         models: { test: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'minimal' });
 
-      expect(diagram).toContain("array tags");
-      expect(diagram).toContain("array scores");
+      expect(diagram).toContain('array tags');
+      expect(diagram).toContain('array scores');
     });
 
-    it("should simplify record types", () => {
+    it('should simplify record types', () => {
       const schema = defineSchema({
-        table: "test",
+        table: 'test',
         fields: {
-          author: record("user"),
-          relatedItems: array(record("item")),
+          author: record('user'),
+          relatedItems: array(record('item')),
         },
       });
 
@@ -317,38 +317,38 @@ describe("MermaidGenerator", () => {
         models: { test: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'minimal' });
 
-      expect(diagram).toContain("record author");
-      expect(diagram).toContain("array relatedItems");
+      expect(diagram).toContain('record author');
+      expect(diagram).toContain('array relatedItems');
     });
   });
 
-  describe("Minimal Mode Annotations", () => {
-    it("should show unique constraints", () => {
+  describe('Minimal Mode Annotations', () => {
+    it('should show unique constraints', () => {
       const schema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: {
-          email: string().assert("$value != NONE"),
+          email: string().assert('$value != NONE'),
         },
-        comments: ["unique constraint on email"],
+        comments: ['unique constraint on email'],
       });
 
       const fullSchema = composeSchema({
         models: { user: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'minimal' });
 
       // Should not contain UK since we're not using a unique index
-      expect(diagram).toContain("string email");
+      expect(diagram).toContain('string email');
     });
 
-    it("should extract constraint summaries for length", () => {
+    it('should extract constraint summaries for length', () => {
       const schema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: {
-          username: string().assert("string::len($value) >= 3").assert("string::len($value) <= 20"),
+          username: string().assert('string::len($value) >= 3').assert('string::len($value) <= 20'),
         },
       });
 
@@ -356,16 +356,16 @@ describe("MermaidGenerator", () => {
         models: { user: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'minimal' });
 
       expect(diagram).toMatch(/username.*"3-20 chars"/);
     });
 
-    it("should extract constraint summaries for range", () => {
+    it('should extract constraint summaries for range', () => {
       const schema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: {
-          age: int().assert("$value >= 0").assert("$value <= 150"),
+          age: int().assert('$value >= 0').assert('$value <= 150'),
         },
       });
 
@@ -373,16 +373,16 @@ describe("MermaidGenerator", () => {
         models: { user: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'minimal' });
 
       expect(diagram).toMatch(/age.*"0-150"/);
     });
 
-    it("should detect email validation", () => {
+    it('should detect email validation', () => {
       const schema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: {
-          email: string().assert("string::is::email($value)"),
+          email: string().assert('string::is::email($value)'),
         },
       });
 
@@ -390,16 +390,16 @@ describe("MermaidGenerator", () => {
         models: { user: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'minimal' });
 
       expect(diagram).toMatch(/email.*"email"/);
     });
 
-    it("should detect pattern validation", () => {
+    it('should detect pattern validation', () => {
       const schema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: {
-          code: string().assert("$value ~ /^[A-Z]{3}$/"),
+          code: string().assert('$value ~ /^[A-Z]{3}$/'),
         },
       });
 
@@ -407,20 +407,20 @@ describe("MermaidGenerator", () => {
         models: { user: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'minimal' });
 
       expect(diagram).toMatch(/code.*"pattern"/);
     });
   });
 
-  describe("Detailed Mode Annotations", () => {
-    it("should show default values", () => {
+  describe('Detailed Mode Annotations', () => {
+    it('should show default values', () => {
       const schema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: {
           isActive: bool().default(true),
           tokens: int().default(0),
-          role: string().default("user"),
+          role: string().default('user'),
         },
       });
 
@@ -428,18 +428,18 @@ describe("MermaidGenerator", () => {
         models: { user: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "detailed" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'detailed' });
 
       expect(diagram).toMatch(/isActive.*default: true/);
       expect(diagram).toMatch(/tokens.*default: 0/);
       expect(diagram).toMatch(/role.*default: 'user'/);
     });
 
-    it("should show computed fields", () => {
+    it('should show computed fields', () => {
       const schema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: {
-          score: int().computed("array::len(votes.positive) - array::len(votes.negative)"),
+          score: int().computed('array::len(votes.positive) - array::len(votes.negative)'),
         },
       });
 
@@ -447,16 +447,16 @@ describe("MermaidGenerator", () => {
         models: { user: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "detailed" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'detailed' });
 
       expect(diagram).toMatch(/score.*computed/);
     });
 
-    it("should show value expressions", () => {
+    it('should show value expressions', () => {
       const schema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: {
-          createdAt: datetime().value("time::now()"),
+          createdAt: datetime().value('time::now()'),
         },
       });
 
@@ -464,14 +464,14 @@ describe("MermaidGenerator", () => {
         models: { user: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "detailed" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'detailed' });
 
       expect(diagram).toMatch(/createdAt.*value: time::now/);
     });
 
-    it("should show readonly fields", () => {
+    it('should show readonly fields', () => {
       const schema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: {
           id: string().readonly(),
         },
@@ -481,14 +481,14 @@ describe("MermaidGenerator", () => {
         models: { user: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "detailed" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'detailed' });
 
       expect(diagram).toMatch(/id.*readonly/);
     });
 
-    it("should show field comments", () => {
+    it('should show field comments', () => {
       const schema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: {
           email: string().comment("User's email address"),
         },
@@ -498,16 +498,16 @@ describe("MermaidGenerator", () => {
         models: { user: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "detailed" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'detailed' });
 
       expect(diagram).toMatch(/email.*User's email address/);
     });
 
-    it("should truncate long comments", () => {
+    it('should truncate long comments', () => {
       const longComment =
-        "This is a very long comment that should be truncated when displayed in the diagram";
+        'This is a very long comment that should be truncated when displayed in the diagram';
       const schema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: {
           field: string().comment(longComment),
         },
@@ -517,20 +517,20 @@ describe("MermaidGenerator", () => {
         models: { user: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "detailed" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'detailed' });
 
       // Comment should be truncated to 40 chars
       expect(diagram).toMatch(/\.\.\./);
     });
 
-    it("should combine multiple annotations", () => {
+    it('should combine multiple annotations', () => {
       const schema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: {
           email: string()
-            .default("user@example.com")
-            .assert("string::is::email($value)")
-            .comment("User email"),
+            .default('user@example.com')
+            .assert('string::is::email($value)')
+            .comment('User email'),
         },
       });
 
@@ -538,18 +538,18 @@ describe("MermaidGenerator", () => {
         models: { user: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "detailed" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'detailed' });
 
       expect(diagram).toMatch(/email.*default.*email.*User email/);
     });
   });
 
-  describe("Cardinality Inference", () => {
-    it("should use correct cardinality for optional fields", () => {
+  describe('Cardinality Inference', () => {
+    it('should use correct cardinality for optional fields', () => {
       const schema = defineSchema({
-        table: "post",
+        table: 'post',
         fields: {
-          author: option(record("user")),
+          author: option(record('user')),
         },
       });
 
@@ -557,17 +557,17 @@ describe("MermaidGenerator", () => {
         models: { post: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'minimal' });
 
       // Optional record should use }o--o|
       expect(diagram).toMatch(/post.*}o--o\|.*user/);
     });
 
-    it("should use correct cardinality for array fields", () => {
+    it('should use correct cardinality for array fields', () => {
       const schema = defineSchema({
-        table: "post",
+        table: 'post',
         fields: {
-          tags: array(record("tag")),
+          tags: array(record('tag')),
         },
       });
 
@@ -575,17 +575,17 @@ describe("MermaidGenerator", () => {
         models: { post: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'minimal' });
 
       // Array should indicate one-to-many
       expect(diagram).toMatch(/post.*\|\|--o\{.*tag/);
     });
 
-    it("should use correct cardinality for required fields", () => {
+    it('should use correct cardinality for required fields', () => {
       const schema = defineSchema({
-        table: "post",
+        table: 'post',
         fields: {
-          author: record("user"),
+          author: record('user'),
         },
       });
 
@@ -593,17 +593,17 @@ describe("MermaidGenerator", () => {
         models: { post: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'minimal' });
 
       // Required record should use }o--||
       expect(diagram).toMatch(/post.*}o--\|\|.*user/);
     });
   });
 
-  describe("Edge Cases", () => {
-    it("should handle empty tables", () => {
+  describe('Edge Cases', () => {
+    it('should handle empty tables', () => {
       const schema = defineSchema({
-        table: "empty",
+        table: 'empty',
         schemafull: false,
         fields: {},
       });
@@ -612,18 +612,18 @@ describe("MermaidGenerator", () => {
         models: { empty: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'minimal' });
 
-      expect(diagram).toContain("empty {");
-      expect(diagram).toContain("}");
+      expect(diagram).toContain('empty {');
+      expect(diagram).toContain('}');
     });
 
-    it("should handle nested field names with dots", () => {
+    it('should handle nested field names with dots', () => {
       const schema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: {
-          "votes.positive": array(record("user")).default([]),
-          "votes.negative": array(record("user")).default([]),
+          'votes.positive': array(record('user')).default([]),
+          'votes.negative': array(record('user')).default([]),
         },
       });
 
@@ -631,20 +631,20 @@ describe("MermaidGenerator", () => {
         models: { user: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'minimal' });
 
       // Field definitions use underscores (Mermaid parser limitation)
-      expect(diagram).toContain("array votes_positive");
-      expect(diagram).toContain("array votes_negative");
+      expect(diagram).toContain('array votes_positive');
+      expect(diagram).toContain('array votes_negative');
 
       // But relationship labels preserve dots (they support quotes)
       expect(diagram).toContain('"votes.positive"');
       expect(diagram).toContain('"votes.negative"');
     });
 
-    it("should handle generic record types", () => {
+    it('should handle generic record types', () => {
       const schema = defineSchema({
-        table: "report",
+        table: 'report',
         fields: {
           subject: record(), // Generic record - any table
         },
@@ -654,21 +654,21 @@ describe("MermaidGenerator", () => {
         models: { report: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'minimal' });
 
-      expect(diagram).toContain("record subject");
+      expect(diagram).toContain('record subject');
       // Should not create relationships for generic records
       expect(
-        diagram.split("\n").filter((line) => line.includes("report") && line.includes(":")),
+        diagram.split('\n').filter((line) => line.includes('report') && line.includes(':')),
       ).toHaveLength(0);
     });
 
-    it("should handle complex default values", () => {
+    it('should handle complex default values', () => {
       const schema = defineSchema({
-        table: "config",
+        table: 'config',
         fields: {
-          settings: object().default({ theme: "dark" }),
-          tags: array("string").default([]),
+          settings: object().default({ theme: 'dark' }),
+          tags: array('string').default([]),
         },
       });
 
@@ -676,16 +676,16 @@ describe("MermaidGenerator", () => {
         models: { config: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "detailed" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'detailed' });
 
       expect(diagram).toMatch(/settings.*default: {}/);
       expect(diagram).toMatch(/tags.*default: \[\]/);
     });
 
-    it("should truncate long default string values", () => {
-      const longDefault = "This is a very long default value that should be truncated";
+    it('should truncate long default string values', () => {
+      const longDefault = 'This is a very long default value that should be truncated';
       const schema = defineSchema({
-        table: "test",
+        table: 'test',
         fields: {
           description: string().default(longDefault),
         },
@@ -695,44 +695,44 @@ describe("MermaidGenerator", () => {
         models: { test: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "detailed" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'detailed' });
 
       expect(diagram).toMatch(/\.\.\./);
     });
   });
 
-  describe("Real-World Schema", () => {
-    it("should generate diagram for social platform schema", () => {
+  describe('Real-World Schema', () => {
+    it('should generate diagram for social platform schema', () => {
       // Simplified version of the social platform example
       const userSchema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: {
-          email: string().assert("string::is::email($value)"),
-          name: string().assert("$value = /^[\\w]{3,32}$/"),
-          followers: array(record("user")).default([]),
-          following: array(record("user")).default([]),
-          tokens: int().default(0).assert("$value >= 0").assert("$value <= 65536"),
+          email: string().assert('string::is::email($value)'),
+          name: string().assert('$value = /^[\\w]{3,32}$/'),
+          followers: array(record('user')).default([]),
+          following: array(record('user')).default([]),
+          tokens: int().default(0).assert('$value >= 0').assert('$value <= 65536'),
         },
       });
 
       const postSchema = defineSchema({
-        table: "post",
+        table: 'post',
         fields: {
-          user: record("user"),
-          title: string().assert("$value = /.{4,128}/"),
+          user: record('user'),
+          title: string().assert('$value = /.{4,128}/'),
           content: string(),
-          time: datetime().default("time::now()"),
-          comments: array(record("comment")).default([]),
+          time: datetime().default('time::now()'),
+          comments: array(record('comment')).default([]),
         },
       });
 
       const commentSchema = defineSchema({
-        table: "comment",
+        table: 'comment',
         fields: {
-          user: record("user"),
-          post: record("post"),
+          user: record('user'),
+          post: record('post'),
           content: string(),
-          time: datetime().default("time::now()"),
+          time: datetime().default('time::now()'),
         },
       });
 
@@ -744,12 +744,12 @@ describe("MermaidGenerator", () => {
         },
       });
 
-      const diagram = generateMermaidDiagram(schema, { level: "minimal" });
+      const diagram = generateMermaidDiagram(schema, { level: 'minimal' });
 
       // Should have all tables
-      expect(diagram).toContain("user {");
-      expect(diagram).toContain("post {");
-      expect(diagram).toContain("comment {");
+      expect(diagram).toContain('user {');
+      expect(diagram).toContain('post {');
+      expect(diagram).toContain('comment {');
 
       // Should have relationships
       expect(diagram).toMatch(/post.*user/);
@@ -760,24 +760,24 @@ describe("MermaidGenerator", () => {
       expect(diagram).toMatch(/tokens.*"0-65536"/);
     });
 
-    it("should generate detailed diagram with all annotations", () => {
+    it('should generate detailed diagram with all annotations', () => {
       const schema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: {
-          id: string().readonly().comment("Unique identifier"),
-          email: string().assert("string::is::email($value)").comment("User's email address"),
+          id: string().readonly().comment('Unique identifier'),
+          email: string().assert('string::is::email($value)').comment("User's email address"),
           name: string()
-            .assert("string::len($value) >= 3")
-            .assert("string::len($value) <= 50")
-            .comment("Display name"),
-          isActive: bool().default(true).comment("Account status"),
-          createdAt: datetime().value("time::now()").comment("Registration date"),
+            .assert('string::len($value) >= 3')
+            .assert('string::len($value) <= 50')
+            .comment('Display name'),
+          isActive: bool().default(true).comment('Account status'),
+          createdAt: datetime().value('time::now()').comment('Registration date'),
           tokens: int()
             .default(0)
-            .assert("$value >= 0")
-            .assert("$value <= 1000")
-            .comment("Available tokens"),
-          score: int().computed("array::len(votes) * 10"),
+            .assert('$value >= 0')
+            .assert('$value <= 1000')
+            .comment('Available tokens'),
+          score: int().computed('array::len(votes) * 10'),
         },
       });
 
@@ -785,7 +785,7 @@ describe("MermaidGenerator", () => {
         models: { user: schema },
       });
 
-      const diagram = generateMermaidDiagram(fullSchema, { level: "detailed" });
+      const diagram = generateMermaidDiagram(fullSchema, { level: 'detailed' });
 
       // Should have readonly
       expect(diagram).toMatch(/id.*readonly/);
@@ -811,10 +811,10 @@ describe("MermaidGenerator", () => {
     });
   });
 
-  describe("Options", () => {
-    it("should respect includeComments option", () => {
+  describe('Options', () => {
+    it('should respect includeComments option', () => {
       const schema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: {
           email: string().comment("User's email address"),
         },
@@ -826,27 +826,27 @@ describe("MermaidGenerator", () => {
 
       // With comments
       const diagramWithComments = generateMermaidDiagram(fullSchema, {
-        level: "detailed",
+        level: 'detailed',
         includeComments: true,
       });
       expect(diagramWithComments).toContain("User's email");
 
       // Without comments
       const diagramWithoutComments = generateMermaidDiagram(fullSchema, {
-        level: "detailed",
+        level: 'detailed',
         includeComments: false,
       });
       expect(diagramWithoutComments).not.toContain("User's email");
     });
 
-    it("should handle minimal vs detailed consistently", () => {
+    it('should handle minimal vs detailed consistently', () => {
       const schema = defineSchema({
-        table: "user",
+        table: 'user',
         fields: {
           email: string()
-            .default("user@example.com")
-            .assert("string::is::email($value)")
-            .comment("User email"),
+            .default('user@example.com')
+            .assert('string::is::email($value)')
+            .comment('User email'),
         },
       });
 
@@ -854,8 +854,8 @@ describe("MermaidGenerator", () => {
         models: { user: schema },
       });
 
-      const minimalDiagram = generateMermaidDiagram(fullSchema, { level: "minimal" });
-      const detailedDiagram = generateMermaidDiagram(fullSchema, { level: "detailed" });
+      const minimalDiagram = generateMermaidDiagram(fullSchema, { level: 'minimal' });
+      const detailedDiagram = generateMermaidDiagram(fullSchema, { level: 'detailed' });
 
       // Minimal should be shorter
       expect(minimalDiagram.length).toBeLessThan(detailedDiagram.length);

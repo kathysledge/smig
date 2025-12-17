@@ -6,8 +6,8 @@
  * authentication, query execution, and schema introspection.
  */
 
-import { RecordId, Surreal } from "surrealdb";
-import type { DatabaseConfig, Migration, MigrationStatus } from "../types/schema";
+import { RecordId, Surreal } from 'surrealdb';
+import type { DatabaseConfig, Migration, MigrationStatus } from '../types/schema';
 
 /**
  * High-level client wrapper for SurrealDB database operations.
@@ -146,7 +146,7 @@ export class SurrealClient {
    */
   async executeQuery(query: string): Promise<unknown> {
     if (!this.connected) {
-      throw new Error("Not connected to SurrealDB");
+      throw new Error('Not connected to SurrealDB');
     }
 
     try {
@@ -167,7 +167,7 @@ export class SurrealClient {
    */
   async create(table: string, data?: unknown): Promise<unknown> {
     if (!this.connected) {
-      throw new Error("Not connected to SurrealDB");
+      throw new Error('Not connected to SurrealDB');
     }
 
     try {
@@ -186,7 +186,7 @@ export class SurrealClient {
    */
   async select(target: string): Promise<unknown> {
     if (!this.connected) {
-      throw new Error("Not connected to SurrealDB");
+      throw new Error('Not connected to SurrealDB');
     }
 
     try {
@@ -217,13 +217,13 @@ export class SurrealClient {
    */
   async delete(target: string): Promise<unknown> {
     if (!this.connected) {
-      throw new Error("Not connected to SurrealDB");
+      throw new Error('Not connected to SurrealDB');
     }
 
     try {
       // If target contains a colon, it's a record ID that needs to be parsed
-      if (target.includes(":")) {
-        const [table, id] = target.split(":", 2);
+      if (target.includes(':')) {
+        const [table, id] = target.split(':', 2);
         const recordId = new RecordId(table, id);
         return await this.client.delete(recordId);
       } else {
@@ -300,7 +300,7 @@ export class SurrealClient {
       ORDER BY name;
     `;
 
-    const result = await this.executeQuery(query.replace("$table", `'${tableName}'`));
+    const result = await this.executeQuery(query.replace('$table', `'${tableName}'`));
     // biome-ignore lint/suspicious/noExplicitAny: Query results are dynamically typed from database
     return (result as any[])[0]?.result || [];
   }
@@ -325,7 +325,7 @@ export class SurrealClient {
       ORDER BY name;
     `;
 
-    const result = await this.executeQuery(query.replace("$table", `'${tableName}'`));
+    const result = await this.executeQuery(query.replace('$table', `'${tableName}'`));
     // biome-ignore lint/suspicious/noExplicitAny: Query results are dynamically typed from database
     return (result as any[])[0]?.result || [];
   }
@@ -348,7 +348,7 @@ export class SurrealClient {
       ORDER BY name;
     `;
 
-    const result = await this.executeQuery(query.replace("$table", `'${tableName}'`));
+    const result = await this.executeQuery(query.replace('$table', `'${tableName}'`));
     // biome-ignore lint/suspicious/noExplicitAny: Query results are dynamically typed from database
     return (result as any[])[0]?.result || [];
   }
@@ -447,7 +447,7 @@ export class SurrealClient {
       downChecksum: migration.downChecksum,
     };
 
-    await this.create("_migrations", migrationData);
+    await this.create('_migrations', migrationData);
   }
 
   /**
@@ -475,7 +475,7 @@ export class SurrealClient {
     // biome-ignore lint/suspicious/noExplicitAny: Query results are dynamically typed from database
     const resultArray = result as any[];
     if (!result || !resultArray[0] || !resultArray[0].result) {
-      return "";
+      return '';
     }
 
     const tables = resultArray[0].result;
@@ -484,12 +484,12 @@ export class SurrealClient {
     for (const table of tables) {
       const lines = [
         `-- Table: ${table.name}`,
-        `DEFINE TABLE ${table.name} ${table.schemafull ? "SCHEMAFULL" : "SCHEMALESS"};`,
+        `DEFINE TABLE ${table.name} ${table.schemafull ? 'SCHEMAFULL' : 'SCHEMALESS'};`,
       ];
-      tableGroups.push(lines.join("\n"));
+      tableGroups.push(lines.join('\n'));
     }
 
-    return tableGroups.join("\n\n");
+    return tableGroups.join('\n\n');
   }
 
   /**
@@ -502,7 +502,7 @@ export class SurrealClient {
    */
   async healthCheck(): Promise<boolean> {
     try {
-      await this.executeQuery("SELECT * FROM _migrations LIMIT 1;");
+      await this.executeQuery('SELECT * FROM _migrations LIMIT 1;');
       return true;
     } catch (_error) {
       return false;

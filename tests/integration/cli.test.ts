@@ -1,36 +1,36 @@
-import { exec } from "node:child_process";
-import * as fs from "node:fs";
-import * as path from "node:path";
-import { promisify } from "node:util";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { cleanupTestFiles, createTestSchema, TEST_DATABASES } from "./setup";
+import { exec } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { promisify } from 'node:util';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupTestFiles, createTestSchema, TEST_DATABASES } from './setup';
 
 const execAsync = promisify(exec);
 
-describe("CLI Integration Tests", () => {
-  const CLI_PATH = path.join(process.cwd(), "dist", "cli.js");
-  const TEST_CONFIG_PATH = path.join(process.cwd(), "smig.config.js");
+describe('CLI Integration Tests', () => {
+  const CLI_PATH = path.join(process.cwd(), 'dist', 'cli.js');
+  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.js');
 
   beforeEach(() => {
     // Clean up any existing test files
     cleanupTestFiles([
-      "tests/integration/fixtures/test-*.js",
-      "smig-debug-*.txt",
-      "smig.config.js",
+      'tests/integration/fixtures/test-*.js',
+      'smig-debug-*.txt',
+      'smig.config.js',
     ]);
   });
 
   afterEach(() => {
     // Clean up test files after each test
     cleanupTestFiles([
-      "tests/integration/fixtures/test-*.js",
-      "smig-debug-*.txt",
-      "smig.config.js",
+      'tests/integration/fixtures/test-*.js',
+      'smig-debug-*.txt',
+      'smig.config.js',
     ]);
   });
 
-  describe("Configuration System", () => {
-    it("should load configuration from smig.config.js with multiple environments", async () => {
+  describe('Configuration System', () => {
+    it('should load configuration from smig.config.js with multiple environments', async () => {
       // Create test config file
       const configContent = `
 export default {
@@ -57,13 +57,13 @@ export default {
       // Test config command shows available environments
       const { stdout } = await execAsync(`node ${CLI_PATH} config`);
 
-      expect(stdout).toContain("🌍 Available Environments:");
-      expect(stdout).toContain("test_env1");
-      expect(stdout).toContain("test_env2");
+      expect(stdout).toContain('🌍 Available Environments:');
+      expect(stdout).toContain('test_env1');
+      expect(stdout).toContain('test_env2');
       expect(stdout).toContain(TEST_DATABASES.db1.url);
     });
 
-    it("should use specific environment when --env flag is provided", async () => {
+    it('should use specific environment when --env flag is provided', async () => {
       // Create test config file
       const configContent = `
 export default {
@@ -86,11 +86,11 @@ export default {
       // Test config command with specific environment
       const { stdout } = await execAsync(`node ${CLI_PATH} config --env production`);
 
-      expect(stdout).toContain("production_db");
+      expect(stdout).toContain('production_db');
       expect(stdout).toContain(TEST_DATABASES.db2.url);
     });
 
-    it("should throw error for non-existent environment", async () => {
+    it('should throw error for non-existent environment', async () => {
       // Create test config file
       const configContent = `
 export default {
@@ -109,8 +109,8 @@ export default {
     });
   });
 
-  describe("Schema Generation and Migration", () => {
-    it("should generate migration for new table", async () => {
+  describe('Schema Generation and Migration', () => {
+    it('should generate migration for new table', async () => {
       // Create test schema
       const schemaContent = `
 import { defineSchema, composeSchema, string, int, datetime } from '../../../dist/schema/concise-schema.js';
@@ -148,12 +148,12 @@ export default {
       // Generate migration
       const { stdout } = await execAsync(`node ${CLI_PATH} generate`);
 
-      expect(stdout).toContain("Generated SurrealQL Diff:");
-      expect(stdout).toContain("Migration diff for");
+      expect(stdout).toContain('Generated SurrealQL Diff:');
+      expect(stdout).toContain('Migration diff for');
       expect(stdout).toMatch(/DEFINE|REMOVE/);
     });
 
-    it("should detect no changes when schema matches database", async () => {
+    it('should detect no changes when schema matches database', async () => {
       // Create minimal schema
       const schemaContent = `
 import { composeSchema } from '../../../dist/schema/concise-schema.js';
@@ -181,10 +181,10 @@ export default {
       // Generate migration (should detect no changes)
       const { stdout } = await execAsync(`node ${CLI_PATH} generate`);
 
-      expect(stdout).toContain("No changes detected");
+      expect(stdout).toContain('No changes detected');
     });
 
-    it("should apply migration and track it in _migrations table", async () => {
+    it('should apply migration and track it in _migrations table', async () => {
       // Create test schema
       const schemaContent = `
 import { defineSchema, composeSchema, string, datetime } from '../../../dist/schema/concise-schema.js';
@@ -224,34 +224,34 @@ export default {
       // The migrate command should either succeed or indicate no changes needed
       // Both are valid outcomes for this test
       const validOutcomes = [
-        "Migration applied successfully",
-        "Database schema is up to date",
-        "No changes detected",
+        'Migration applied successfully',
+        'Database schema is up to date',
+        'No changes detected',
       ];
 
       const hasValidOutcome = validOutcomes.some((outcome) => stdout.includes(outcome));
 
-      if (!hasValidOutcome && stdout.trim() === "") {
+      if (!hasValidOutcome && stdout.trim() === '') {
         // If output is empty, that's also acceptable as it might mean no changes
-        console.log("Migration completed with empty output - assuming no changes needed");
+        console.log('Migration completed with empty output - assuming no changes needed');
       } else if (!hasValidOutcome) {
-        console.log("Unexpected migration output:", stdout);
+        console.log('Unexpected migration output:', stdout);
         expect(hasValidOutcome).toBe(true);
       }
 
       // Check migration status (only if migration was actually applied)
-      if (stdout.includes("Migration applied successfully")) {
+      if (stdout.includes('Migration applied successfully')) {
         const { stdout: statusOutput } = await execAsync(`node ${CLI_PATH} status`);
-        expect(statusOutput).toContain("Applied migrations:");
-        expect(statusOutput).toContain("Add article table");
+        expect(statusOutput).toContain('Applied migrations:');
+        expect(statusOutput).toContain('Add article table');
       } else {
-        console.log("Skipping status check since no migration was applied");
+        console.log('Skipping status check since no migration was applied');
       }
     });
   });
 
-  describe("Migration Status and Rollback", () => {
-    it("should show migration status", async () => {
+  describe('Migration Status and Rollback', () => {
+    it('should show migration status', async () => {
       // Create minimal config
       const configContent = `
 export default {
@@ -271,17 +271,17 @@ export default {
 import { composeSchema } from '../../../dist/schema/concise-schema.js';
 export default composeSchema({ models: {}, relations: {} });
       `,
-        "empty-schema.js",
+        'empty-schema.js',
       );
 
       // Check status
       const { stdout } = await execAsync(`node ${CLI_PATH} status`);
 
-      expect(stdout).toContain("Migration Status");
+      expect(stdout).toContain('Migration Status');
       expect(stdout).toMatch(/Applied migrations: \d+/);
     });
 
-    it("should perform rollback with confirmation", async () => {
+    it('should perform rollback with confirmation', async () => {
       // This test would require more complex setup with actual migrations
       // For now, we'll test that the rollback command exists and requires confirmation
 
@@ -301,7 +301,7 @@ export default {
 import { composeSchema } from '../../../dist/schema/concise-schema.js';
 export default composeSchema({ models: {}, relations: {} });
       `,
-        "empty-schema.js",
+        'empty-schema.js',
       );
 
       // Test rollback command (this will likely fail due to no migrations, but should show proper error)
@@ -310,13 +310,13 @@ export default composeSchema({ models: {}, relations: {} });
         // biome-ignore lint/suspicious/noExplicitAny: Catch block error needs flexible typing
       } catch (error: any) {
         // Expect specific error about no migrations to rollback
-        expect(error.stdout || error.stderr).toContain("migration");
+        expect(error.stdout || error.stderr).toContain('migration');
       }
     });
   });
 
-  describe("Environment Variables Integration", () => {
-    it("should use environment variables when config file is not present", async () => {
+  describe('Environment Variables Integration', () => {
+    it('should use environment variables when config file is not present', async () => {
       // Set environment variables
       const env = {
         ...process.env,
@@ -325,7 +325,7 @@ export default composeSchema({ models: {}, relations: {} });
         SMIG_PASSWORD: TEST_DATABASES.db1.password,
         SMIG_NAMESPACE: TEST_DATABASES.db1.namespace,
         SMIG_DATABASE: TEST_DATABASES.db1.database,
-        SMIG_SCHEMA: "./tests/integration/fixtures/env-schema.js",
+        SMIG_SCHEMA: './tests/integration/fixtures/env-schema.js',
       };
 
       // Create schema file
@@ -334,7 +334,7 @@ export default composeSchema({ models: {}, relations: {} });
 import { composeSchema } from '../../../dist/schema/concise-schema.js';
 export default composeSchema({ models: {}, relations: {} });
       `,
-        "env-schema.js",
+        'env-schema.js',
       );
 
       // Test config command with environment variables
@@ -345,8 +345,8 @@ export default composeSchema({ models: {}, relations: {} });
     });
   });
 
-  describe("Debug Logging", () => {
-    it("should create debug log file when --debug flag is used", async () => {
+  describe('Debug Logging', () => {
+    it('should create debug log file when --debug flag is used', async () => {
       const configContent = `
 export default {
   url: '${TEST_DATABASES.db1.url}',
@@ -364,7 +364,7 @@ export default {
 import { composeSchema } from '../../../dist/schema/concise-schema.js';
 export default composeSchema({ models: {}, relations: {} });
       `,
-        "debug-schema.js",
+        'debug-schema.js',
       );
 
       // Run command with debug flag
@@ -373,29 +373,29 @@ export default composeSchema({ models: {}, relations: {} });
       // Check that debug log file was created
       const debugFiles = fs
         .readdirSync(process.cwd())
-        .filter((file) => file.startsWith("smig-debug-") && file.endsWith(".txt"));
+        .filter((file) => file.startsWith('smig-debug-') && file.endsWith('.txt'));
 
       expect(debugFiles.length).toBeGreaterThan(0);
 
       // Check debug file content
-      const debugContent = fs.readFileSync(debugFiles[0], "utf8");
-      expect(debugContent).toContain("=== SMIG Debug Log");
+      const debugContent = fs.readFileSync(debugFiles[0], 'utf8');
+      expect(debugContent).toContain('=== SMIG Debug Log');
     });
   });
 
-  describe("Additional CLI Features", () => {
-    it("should display help information correctly", async () => {
+  describe('Additional CLI Features', () => {
+    it('should display help information correctly', async () => {
       const { stdout } = await execAsync(`node ${CLI_PATH} --help`);
 
-      expect(stdout).toContain("Automatic SurrealDB migrations with a concise DSL");
-      expect(stdout).toContain("migrate");
-      expect(stdout).toContain("generate");
-      expect(stdout).toContain("status");
-      expect(stdout).toContain("rollback");
-      expect(stdout).toContain("config");
+      expect(stdout).toContain('Automatic SurrealDB migrations with a concise DSL');
+      expect(stdout).toContain('migrate');
+      expect(stdout).toContain('generate');
+      expect(stdout).toContain('status');
+      expect(stdout).toContain('rollback');
+      expect(stdout).toContain('config');
     });
 
-    it("should handle version flag correctly", async () => {
+    it('should handle version flag correctly', async () => {
       const { stdout } = await execAsync(`node ${CLI_PATH} --version`);
 
       expect(stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/);

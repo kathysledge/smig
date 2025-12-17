@@ -8,7 +8,7 @@ import {
   index,
   option,
   string,
-} from "smig";
+} from 'smig';
 
 /**
  * Simple Blog Schema Example
@@ -27,53 +27,53 @@ import {
 
 // User model - represents blog authors
 const userSchema = defineSchema({
-  table: "user",
+  table: 'user',
   schemafull: true,
   fields: {
     name: string()
-      .assert("$value != NONE")
-      .assert("string::len($value) >= 1 AND string::len($value) <= 100"),
-    email: string().assert("$value ~ /^[^@]+@[^@]+\\.[^@]+$/"), // Email validation
-    bio: option("string"), // Optional biography
+      .assert('$value != NONE')
+      .assert('string::len($value) >= 1 AND string::len($value) <= 100'),
+    email: string().assert('$value ~ /^[^@]+@[^@]+\\.[^@]+$/'), // Email validation
+    bio: option('string'), // Optional biography
     createdAt: cf.timestamp(),
   },
   indexes: {
-    emailIndex: index(["email"]).unique(), // Unique email constraint
+    emailIndex: index(['email']).unique(), // Unique email constraint
   },
 });
 
 // Post model - represents blog posts
 const postSchema = defineSchema({
-  table: "post",
+  table: 'post',
   schemafull: true,
   fields: {
     title: string()
-      .assert("$value != NONE")
-      .assert("string::len($value) >= 1 AND string::len($value) <= 200"),
-    content: string().assert("$value != NONE"),
-    author: cf.owner("user"), // Foreign key to user
-    publishedAt: option("datetime"), // Null when draft
+      .assert('$value != NONE')
+      .assert('string::len($value) >= 1 AND string::len($value) <= 200'),
+    content: string().assert('$value != NONE'),
+    author: cf.owner('user'), // Foreign key to user
+    publishedAt: option('datetime'), // Null when draft
     createdAt: cf.timestamp(),
     updatedAt: cf.emptyTimestamp(), // Updated manually
   },
   indexes: {
-    authorIndex: index(["author"]), // Fast lookups by author
-    publishedIndex: index(["publishedAt"]), // Fast lookups by publication date
-    recentPosts: ci.createdAt("post"), // Index for recent posts
+    authorIndex: index(['author']), // Fast lookups by author
+    publishedIndex: index(['publishedAt']), // Fast lookups by publication date
+    recentPosts: ci.createdAt('post'), // Index for recent posts
   },
   events: {
     // Automatically update the updatedAt timestamp
-    updateTimestamp: event("post_updated_at")
+    updateTimestamp: event('post_updated_at')
       .onUpdate()
-      .thenDo("UPDATE $after.id SET updatedAt = time::now()"),
+      .thenDo('UPDATE $after.id SET updatedAt = time::now()'),
   },
 });
 
 // Like relation - represents users liking posts
 const likeRelation = defineRelation({
-  name: "like",
-  from: "user",
-  to: "post",
+  name: 'like',
+  from: 'user',
+  to: 'post',
   fields: {
     createdAt: cf.timestamp(),
   },

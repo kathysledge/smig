@@ -15,12 +15,12 @@
  * @module mermaid-generator
  */
 
-import type { SurrealDBSchema, SurrealField, SurrealRelation, SurrealTable } from "../types/schema";
+import type { SurrealDBSchema, SurrealField, SurrealRelation, SurrealTable } from '../types/schema';
 
 /**
  * Diagram detail level options
  */
-export type DiagramLevel = "minimal" | "detailed";
+export type DiagramLevel = 'minimal' | 'detailed';
 
 /**
  * Options for diagram generation
@@ -52,7 +52,7 @@ export class MermaidGenerator {
    * @returns Mermaid diagram syntax as a string
    */
   generate(): string {
-    const lines: string[] = ["erDiagram"];
+    const lines: string[] = ['erDiagram'];
 
     // Generate relationships first (they appear at the top in Mermaid)
     const relationships = this.generateRelationships();
@@ -63,11 +63,11 @@ export class MermaidGenerator {
     // Generate table definitions
     const tables = this.generateTables();
     if (tables.length > 0) {
-      lines.push("");
+      lines.push('');
       lines.push(...tables);
     }
 
-    return lines.join("\n");
+    return lines.join('\n');
   }
 
   /**
@@ -107,14 +107,14 @@ export class MermaidGenerator {
           const relationKey = `${table.name}-${field.name}-${recordType}`;
           if (!processedRelationships.has(relationKey)) {
             // Determine cardinality based on field type
-            const isArray = field.type.includes("array");
-            const isOptional = field.type.includes("option") || field.optional;
+            const isArray = field.type.includes('array');
+            const isOptional = field.type.includes('option') || field.optional;
 
-            let cardinality = "";
+            let cardinality = '';
             if (isArray) {
-              cardinality = isOptional ? "||--o{" : "||--o{";
+              cardinality = isOptional ? '||--o{' : '||--o{';
             } else {
-              cardinality = isOptional ? "}o--o|" : "}o--||";
+              cardinality = isOptional ? '}o--o|' : '}o--||';
             }
 
             const labelName = this.getRelationshipLabel(field.name);
@@ -133,13 +133,13 @@ export class MermaidGenerator {
    */
   private inferCardinality(relation: SurrealRelation): string {
     // Check if relation has array fields that might indicate many-to-many
-    const hasArrays = relation.fields.some((f) => f.type.includes("array"));
+    const hasArrays = relation.fields.some((f) => f.type.includes('array'));
 
     // Default to one-to-many
     if (hasArrays) {
-      return "||--o{";
+      return '||--o{';
     }
-    return "}o--||";
+    return '}o--||';
   }
 
   /**
@@ -154,9 +154,9 @@ export class MermaidGenerator {
     if (recordMatch) {
       const innerType = recordMatch[1];
       // Split on | for union types
-      const types = innerType.split("|").map((t) => t.trim());
+      const types = innerType.split('|').map((t) => t.trim());
       recordTypes.push(...types);
-    } else if (type === "record") {
+    } else if (type === 'record') {
       // Generic record - no specific type to extract
       return [];
     }
@@ -173,14 +173,14 @@ export class MermaidGenerator {
     for (const table of this.schema.tables) {
       lines.push(`    ${table.name} {`);
 
-      if (this.options.level === "minimal") {
+      if (this.options.level === 'minimal') {
         lines.push(...this.generateMinimalFields(table));
       } else {
         lines.push(...this.generateDetailedFields(table));
       }
 
-      lines.push("    }");
-      lines.push("");
+      lines.push('    }');
+      lines.push('');
     }
 
     return lines;
@@ -233,7 +233,7 @@ export class MermaidGenerator {
    * in this context, unlike in relationship labels.
    */
   private sanitizeFieldName(name: string): string {
-    return name.replace(/\./g, "_");
+    return name.replace(/\./g, '_');
   }
 
   /**
@@ -253,7 +253,7 @@ export class MermaidGenerator {
    */
   private simplifyType(type: string): string {
     // Extract base type from complex types
-    if (type.startsWith("option<")) {
+    if (type.startsWith('option<')) {
       // Extract inner type from option<...>
       const match = type.match(/option<(.+)>/);
       if (match) {
@@ -261,27 +261,27 @@ export class MermaidGenerator {
       }
     }
 
-    if (type.startsWith("array<")) {
-      return "array";
+    if (type.startsWith('array<')) {
+      return 'array';
     }
 
-    if (type.startsWith("record<")) {
-      return "record";
+    if (type.startsWith('record<')) {
+      return 'record';
     }
 
     // Map to simple display types
     const typeMap: Record<string, string> = {
-      datetime: "datetime",
-      int: "int",
-      float: "number",
-      bool: "bool",
-      string: "string",
-      object: "object",
-      uuid: "string",
-      decimal: "number",
-      duration: "string",
-      geometry: "geometry",
-      any: "any",
+      datetime: 'datetime',
+      int: 'int',
+      float: 'number',
+      bool: 'bool',
+      string: 'string',
+      object: 'object',
+      uuid: 'string',
+      decimal: 'number',
+      duration: 'string',
+      geometry: 'geometry',
+      any: 'any',
     };
 
     return typeMap[type] || type;
@@ -294,13 +294,13 @@ export class MermaidGenerator {
     const annotations: string[] = [];
 
     // Check if field is unique via assert or comment
-    if (field.assert?.includes("UNIQUE") || field.comment?.toLowerCase().includes("unique")) {
-      annotations.push("UK");
+    if (field.assert?.includes('UNIQUE') || field.comment?.toLowerCase().includes('unique')) {
+      annotations.push('UK');
     }
 
     // Check if this looks like a primary key
-    if (field.name === "id" || field.comment?.toLowerCase().includes("primary")) {
-      annotations.push("PK");
+    if (field.name === 'id' || field.comment?.toLowerCase().includes('primary')) {
+      annotations.push('PK');
     }
 
     // Add simplified constraint info
@@ -311,7 +311,7 @@ export class MermaidGenerator {
       }
     }
 
-    return annotations.length > 0 ? annotations.join(" ") : "";
+    return annotations.length > 0 ? annotations.join(' ') : '';
   }
 
   /**
@@ -321,11 +321,11 @@ export class MermaidGenerator {
     const annotations: string[] = [];
 
     // Unique/primary indicators
-    if (field.assert?.includes("UNIQUE") || field.comment?.toLowerCase().includes("unique")) {
-      annotations.push("UK");
+    if (field.assert?.includes('UNIQUE') || field.comment?.toLowerCase().includes('unique')) {
+      annotations.push('UK');
     }
-    if (field.name === "id" || field.comment?.toLowerCase().includes("primary")) {
-      annotations.push("PK");
+    if (field.name === 'id' || field.comment?.toLowerCase().includes('primary')) {
+      annotations.push('PK');
     }
 
     // Default values
@@ -337,19 +337,19 @@ export class MermaidGenerator {
     }
 
     // Computed fields
-    if (field.value?.includes("<future>")) {
-      annotations.push("computed");
+    if (field.value?.includes('<future>')) {
+      annotations.push('computed');
     }
 
     // Value expressions (non-computed)
-    if (field.value && !field.value.includes("<future>")) {
+    if (field.value && !field.value.includes('<future>')) {
       const valueStr = this.truncate(field.value, 30);
       annotations.push(`value: ${valueStr}`);
     }
 
     // Readonly
     if (field.readonly) {
-      annotations.push("readonly");
+      annotations.push('readonly');
     }
 
     // Validation constraints
@@ -366,7 +366,7 @@ export class MermaidGenerator {
       annotations.push(comment);
     }
 
-    return annotations.length > 0 ? `"${annotations.join("; ")}"` : "";
+    return annotations.length > 0 ? `"${annotations.join('; ')}"` : '';
   }
 
   /**
@@ -375,22 +375,22 @@ export class MermaidGenerator {
    * the outer double quotes in the annotation string
    */
   private formatDefaultValue(value: unknown): string {
-    if (typeof value === "string") {
+    if (typeof value === 'string') {
       if (value.length > 20) {
         return `'${value.substring(0, 17)}...'`;
       }
       return `'${value}'`;
     }
-    if (typeof value === "boolean" || typeof value === "number") {
+    if (typeof value === 'boolean' || typeof value === 'number') {
       return String(value);
     }
     if (Array.isArray(value)) {
-      return "[]";
+      return '[]';
     }
-    if (typeof value === "object" && value !== null) {
-      return "{}";
+    if (typeof value === 'object' && value !== null) {
+      return '{}';
     }
-    return "";
+    return '';
   }
 
   /**
@@ -429,16 +429,16 @@ export class MermaidGenerator {
     }
 
     // Email validation
-    if (assert.includes("string::is::email")) {
-      constraints.push("email");
+    if (assert.includes('string::is::email')) {
+      constraints.push('email');
     }
 
     // Pattern validation (simplified)
-    if (assert.includes("~") && assert.includes("/")) {
-      constraints.push("pattern");
+    if (assert.includes('~') && assert.includes('/')) {
+      constraints.push('pattern');
     }
 
-    return constraints.join(", ");
+    return constraints.join(', ');
   }
 
   /**

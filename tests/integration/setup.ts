@@ -1,14 +1,14 @@
 // Integration test setup for smig
 
-import { exec } from "node:child_process";
-import { promisify } from "node:util";
-import { config } from "dotenv";
-import { afterAll, beforeAll } from "vitest";
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
+import { config } from 'dotenv';
+import { afterAll, beforeAll } from 'vitest';
 
 const execAsync = promisify(exec);
 
 // Load integration test environment variables
-config({ path: ".env.integration", quiet: true });
+config({ path: '.env.integration', quiet: true });
 
 // biome-ignore lint/suspicious/noExplicitAny: Process handles need flexible typing
 let surrealDbProcess: any;
@@ -25,21 +25,21 @@ let db2ProcessGlobal: any = null;
  * - Test database on port 8002 (namespace: test, database: test2)
  */
 async function startSurrealDB() {
-  console.log("🚀 Starting SurrealDB instances for integration tests...");
+  console.log('🚀 Starting SurrealDB instances for integration tests...');
 
   try {
     // Check if SurrealDB is available
-    await execAsync("surreal version");
-    console.log("✅ SurrealDB CLI found");
+    await execAsync('surreal version');
+    console.log('✅ SurrealDB CLI found');
   } catch (_error) {
-    console.warn("⚠️  SurrealDB CLI not found. Please install SurrealDB:");
+    console.warn('⚠️  SurrealDB CLI not found. Please install SurrealDB:');
     console.warn('   curl --proto "=https" --tlsv1.2 -sSf https://install.surrealdb.com | sh');
-    console.warn("   Or use Docker: docker run --rm -p 8000:8000 surrealdb/surrealdb:latest start");
-    throw new Error("SurrealDB CLI not available");
+    console.warn('   Or use Docker: docker run --rm -p 8000:8000 surrealdb/surrealdb:latest start');
+    throw new Error('SurrealDB CLI not available');
   }
 
   // Clean up any leftover test processes from previous runs
-  console.log("🧹 Cleaning up any leftover test processes...");
+  console.log('🧹 Cleaning up any leftover test processes...');
   try {
     await execAsync('pkill -f "surreal.*800[12]" 2>/dev/null || true');
     await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for cleanup
@@ -48,16 +48,16 @@ async function startSurrealDB() {
   }
 
   // Start first test database (port 8001)
-  console.log("Starting SurrealDB test instance 1 on port 8001...");
+  console.log('Starting SurrealDB test instance 1 on port 8001...');
   db1ProcessGlobal = exec(
-    "surreal start --log debug --user root --pass root memory --bind 0.0.0.0:8001",
+    'surreal start --log debug --user root --pass root memory --bind 0.0.0.0:8001',
   );
 
   // Monitor process startup for errors
-  db1ProcessGlobal.stderr?.on("data", (data) => {
+  db1ProcessGlobal.stderr?.on('data', (data) => {
     const errorMsg = data.toString().trim();
-    if (errorMsg.includes("ERROR") || errorMsg.includes("error")) {
-      console.log("[DB1 ERROR]", errorMsg);
+    if (errorMsg.includes('ERROR') || errorMsg.includes('error')) {
+      console.log('[DB1 ERROR]', errorMsg);
     }
   });
 
@@ -65,16 +65,16 @@ async function startSurrealDB() {
   await new Promise((resolve) => setTimeout(resolve, 500));
 
   // Start second test database (port 8002)
-  console.log("Starting SurrealDB test instance 2 on port 8002...");
+  console.log('Starting SurrealDB test instance 2 on port 8002...');
   db2ProcessGlobal = exec(
-    "surreal start --log debug --user root --pass root memory --bind 0.0.0.0:8002",
+    'surreal start --log debug --user root --pass root memory --bind 0.0.0.0:8002',
   );
 
   // Monitor process startup for errors
-  db2ProcessGlobal.stderr?.on("data", (data) => {
+  db2ProcessGlobal.stderr?.on('data', (data) => {
     const errorMsg = data.toString().trim();
-    if (errorMsg.includes("ERROR") || errorMsg.includes("error")) {
-      console.log("[DB2 ERROR]", errorMsg);
+    if (errorMsg.includes('ERROR') || errorMsg.includes('error')) {
+      console.log('[DB2 ERROR]', errorMsg);
     }
   });
 
@@ -83,7 +83,7 @@ async function startSurrealDB() {
 
   // Test connectivity
   try {
-    console.log("Testing database connectivity...");
+    console.log('Testing database connectivity...');
 
     // You could add actual connectivity tests here using the SurrealDB client
     // const db1 = new Surreal();
@@ -91,9 +91,9 @@ async function startSurrealDB() {
     // await db1.signin({ username: 'root', password: 'root' });
     // await db1.close();
 
-    console.log("✅ Integration test databases are ready");
+    console.log('✅ Integration test databases are ready');
   } catch (error) {
-    console.error("❌ Failed to connect to test databases:", error);
+    console.error('❌ Failed to connect to test databases:', error);
     throw error;
   }
 
@@ -104,7 +104,7 @@ async function startSurrealDB() {
  * Stop SurrealDB instances
  */
 async function stopSurrealDB() {
-  console.log("🛑 Stopping SurrealDB test instances...");
+  console.log('🛑 Stopping SurrealDB test instances...');
 
   const killPromises: Promise<void>[] = [];
 
@@ -118,36 +118,36 @@ async function stopSurrealDB() {
           let processExited = false;
 
           // Listen for process exit
-          db1ProcessGlobal.once("exit", () => {
+          db1ProcessGlobal.once('exit', () => {
             processExited = true;
             resolve();
           });
 
           // Send SIGTERM
           try {
-            db1ProcessGlobal.kill("SIGTERM");
+            db1ProcessGlobal.kill('SIGTERM');
           } catch (killError) {
-            console.warn("Error sending SIGTERM to process 1:", killError);
+            console.warn('Error sending SIGTERM to process 1:', killError);
           }
 
           // Give it time to gracefully shut down, then force kill if needed
           setTimeout(() => {
             if (!processExited && db1ProcessGlobal && db1ProcessGlobal.pid) {
-              console.log("Force killing SurrealDB process 1");
+              console.log('Force killing SurrealDB process 1');
               try {
-                db1ProcessGlobal.kill("SIGKILL");
+                db1ProcessGlobal.kill('SIGKILL');
                 // Give it a moment for SIGKILL to take effect
                 setTimeout(() => {
                   resolve();
                 }, 500);
               } catch (killError) {
-                console.warn("Error sending SIGKILL to process 1:", killError);
+                console.warn('Error sending SIGKILL to process 1:', killError);
                 resolve();
               }
             }
           }, 2000);
         } catch (error) {
-          console.warn("Error killing db1 process:", error);
+          console.warn('Error killing db1 process:', error);
           resolve();
         }
       }),
@@ -164,36 +164,36 @@ async function stopSurrealDB() {
           let processExited = false;
 
           // Listen for process exit
-          db2ProcessGlobal.once("exit", () => {
+          db2ProcessGlobal.once('exit', () => {
             processExited = true;
             resolve();
           });
 
           // Send SIGTERM
           try {
-            db2ProcessGlobal.kill("SIGTERM");
+            db2ProcessGlobal.kill('SIGTERM');
           } catch (killError) {
-            console.warn("Error sending SIGTERM to process 2:", killError);
+            console.warn('Error sending SIGTERM to process 2:', killError);
           }
 
           // Give it time to gracefully shut down, then force kill if needed
           setTimeout(() => {
             if (!processExited && db2ProcessGlobal && db2ProcessGlobal.pid) {
-              console.log("Force killing SurrealDB process 2");
+              console.log('Force killing SurrealDB process 2');
               try {
-                db2ProcessGlobal.kill("SIGKILL");
+                db2ProcessGlobal.kill('SIGKILL');
                 // Give it a moment for SIGKILL to take effect
                 setTimeout(() => {
                   resolve();
                 }, 500);
               } catch (killError) {
-                console.warn("Error sending SIGKILL to process 2:", killError);
+                console.warn('Error sending SIGKILL to process 2:', killError);
                 resolve();
               }
             }
           }, 2000);
         } catch (error) {
-          console.warn("Error killing db2 process:", error);
+          console.warn('Error killing db2 process:', error);
           resolve();
         }
       }),
@@ -202,12 +202,12 @@ async function stopSurrealDB() {
 
   // Fallback: use pkill if we don't have process references
   if (killPromises.length === 0) {
-    console.log("No process references found, attempting pkill fallback...");
+    console.log('No process references found, attempting pkill fallback...');
     try {
       await execAsync('pkill -f "surreal.*800[12]" 2>/dev/null || true');
     } catch (_error) {
       // pkill failures are expected if no processes are found
-      console.log("pkill completed (processes may not have been running)");
+      console.log('pkill completed (processes may not have been running)');
     }
   } else {
     // Wait for all processes to be killed
@@ -221,31 +221,31 @@ async function stopSurrealDB() {
   db1ProcessGlobal = null;
   db2ProcessGlobal = null;
 
-  console.log("✅ SurrealDB test instances stopped");
+  console.log('✅ SurrealDB test instances stopped');
 }
 
 // Global setup and teardown for integration tests
 beforeAll(async () => {
-  console.log("🧪 Setting up integration test environment...");
+  console.log('🧪 Setting up integration test environment...');
 
   // Only start databases if we're running integration tests
-  if (process.env.CI !== "true") {
+  if (process.env.CI !== 'true') {
     try {
       surrealDbProcess = await startSurrealDB();
     } catch (error) {
-      console.error("Failed to start test databases:", error);
-      console.log("Integration tests will be skipped.");
+      console.error('Failed to start test databases:', error);
+      console.log('Integration tests will be skipped.');
       process.exit(1);
     }
   } else {
-    console.log("CI environment detected - assuming external databases are provided");
+    console.log('CI environment detected - assuming external databases are provided');
   }
 }, 30000); // 30 second timeout for database startup
 
 afterAll(async () => {
-  console.log("🧹 Cleaning up integration test environment...");
+  console.log('🧹 Cleaning up integration test environment...');
 
-  if (surrealDbProcess && process.env.CI !== "true") {
+  if (surrealDbProcess && process.env.CI !== 'true') {
     await stopSurrealDB();
   }
 }, 10000); // 10 second timeout for cleanup
@@ -253,27 +253,27 @@ afterAll(async () => {
 // Export test database configurations
 export const TEST_DATABASES = {
   db1: {
-    url: "ws://localhost:8001",
-    username: "root",
-    password: "root",
-    namespace: "test",
-    database: "test1",
+    url: 'ws://localhost:8001',
+    username: 'root',
+    password: 'root',
+    namespace: 'test',
+    database: 'test1',
   },
   db2: {
-    url: "ws://localhost:8002",
-    username: "root",
-    password: "root",
-    namespace: "test",
-    database: "test2",
+    url: 'ws://localhost:8002',
+    username: 'root',
+    password: 'root',
+    namespace: 'test',
+    database: 'test2',
   },
 };
 
 // Helper function to create test schema files
-export function createTestSchema(content: string, filename = "test-schema.js"): string {
-  const fs = require("node:fs");
-  const path = require("node:path");
+export function createTestSchema(content: string, filename = 'test-schema.js'): string {
+  const fs = require('node:fs');
+  const path = require('node:path');
 
-  const schemaPath = path.join(process.cwd(), "tests", "integration", "fixtures", filename);
+  const schemaPath = path.join(process.cwd(), 'tests', 'integration', 'fixtures', filename);
 
   // Ensure fixtures directory exists
   const fixturesDir = path.dirname(schemaPath);
@@ -287,9 +287,9 @@ export function createTestSchema(content: string, filename = "test-schema.js"): 
 
 // Helper function to clean up test files
 export function cleanupTestFiles(patterns: string[]) {
-  const fs = require("node:fs");
-  const path = require("node:path");
-  const glob = require("glob");
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const glob = require('glob');
 
   patterns.forEach((pattern) => {
     const files = glob.sync(pattern, { cwd: process.cwd() });

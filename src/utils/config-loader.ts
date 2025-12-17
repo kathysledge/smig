@@ -1,7 +1,7 @@
-import { existsSync } from "node:fs";
-import { join } from "node:path";
-import * as dotenv from "dotenv";
-import { debugLog } from "./debug-logger.js";
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import * as dotenv from 'dotenv';
+import { debugLog } from './debug-logger.js';
 
 /**
  * Error thrown when a user attempts to use an environment that doesn't exist in their configuration file.
@@ -12,9 +12,9 @@ import { debugLog } from "./debug-logger.js";
 export class EnvironmentNotFoundError extends Error {
   constructor(environment: string, availableEnvironments: string[]) {
     const availableList =
-      availableEnvironments.length > 0 ? availableEnvironments.join(", ") : "none defined";
+      availableEnvironments.length > 0 ? availableEnvironments.join(', ') : 'none defined';
     super(`Environment '${environment}' not found. Available environments: ${availableList}`);
-    this.name = "EnvironmentNotFoundError";
+    this.name = 'EnvironmentNotFoundError';
   }
 }
 
@@ -36,7 +36,7 @@ function ensureEnvLoaded(): void {
     return;
   }
 
-  const envPath = join(process.cwd(), ".env");
+  const envPath = join(process.cwd(), '.env');
   if (existsSync(envPath)) {
     debugLog(`Loading .env file: ${envPath}`);
     dotenv.config({ path: envPath, quiet: true });
@@ -117,12 +117,12 @@ export interface ConfigOptions {
  * Default configuration values
  */
 export const DEFAULT_CONFIG: SmigConfig = {
-  schema: "./schema.js",
-  url: "ws://localhost:8000",
-  username: "root",
-  password: "root",
-  namespace: "test",
-  database: "test",
+  schema: './schema.js',
+  url: 'ws://localhost:8000',
+  username: 'root',
+  password: 'root',
+  namespace: 'test',
+  database: 'test',
 };
 
 /**
@@ -152,7 +152,7 @@ function loadEnvConfig(): Partial<SmigConfig> {
   if (process.env.SMIG_NAMESPACE) envConfig.namespace = process.env.SMIG_NAMESPACE;
   if (process.env.SMIG_DATABASE) envConfig.database = process.env.SMIG_DATABASE;
 
-  debugLog("Loaded environment config:", envConfig);
+  debugLog('Loaded environment config:', envConfig);
   return envConfig;
 }
 
@@ -174,10 +174,10 @@ function loadEnvConfig(): Partial<SmigConfig> {
 async function loadConfigFileWithEnvironments(
   environment?: string,
 ): Promise<{ config: Partial<SmigConfig>; availableEnvironments: string[] }> {
-  const configPath = join(process.cwd(), "smig.config.js");
+  const configPath = join(process.cwd(), 'smig.config.js');
 
   if (!existsSync(configPath)) {
-    debugLog("No smig.config.js found");
+    debugLog('No smig.config.js found');
     return { config: {}, availableEnvironments: [] };
   }
 
@@ -192,7 +192,7 @@ async function loadConfigFileWithEnvironments(
     let configModule: unknown;
     try {
       // Try ES module import first (using pathToFileURL for proper URL formatting)
-      const { pathToFileURL } = await import("node:url");
+      const { pathToFileURL } = await import('node:url');
       // Add cache-busting timestamp to ensure fresh imports in tests
       const configUrl = `${pathToFileURL(configPath).href}?t=${Date.now()}`;
       configModule = await import(configUrl);
@@ -205,7 +205,7 @@ async function loadConfigFileWithEnvironments(
     // biome-ignore lint/suspicious/noExplicitAny: Dynamic config module loading requires flexible typing
     const config: SmigConfigFile = (configModule as any).default || configModule;
 
-    debugLog("Raw config file content:", config);
+    debugLog('Raw config file content:', config);
 
     // Capture available environments before potentially modifying config
     const availableEnvironments = config.environments ? Object.keys(config.environments) : [];
@@ -229,7 +229,7 @@ async function loadConfigFileWithEnvironments(
       delete config.environments;
     }
 
-    debugLog("Processed config file:", config);
+    debugLog('Processed config file:', config);
     return { config, availableEnvironments };
   } catch (error) {
     // If this is an environment validation error, re-throw it to stop execution
@@ -257,7 +257,7 @@ async function loadConfigFileWithEnvironments(
 export async function loadConfig(
   options: ConfigOptions = {},
 ): Promise<SmigConfig & { availableEnvironments?: string[] }> {
-  debugLog("Loading configuration with options:", options);
+  debugLog('Loading configuration with options:', options);
 
   // Ensure .env is loaded first
   ensureEnvLoaded();
@@ -286,7 +286,7 @@ export async function loadConfig(
 
   config = { ...config, ...cliConfig };
 
-  debugLog("Final merged configuration:", config);
+  debugLog('Final merged configuration:', config);
   return { ...config, availableEnvironments };
 }
 
@@ -302,11 +302,11 @@ export async function loadConfig(
  * @throws {Error} If any required field is missing, URL is invalid, or schema file doesn't exist
  */
 export function validateConfig(config: SmigConfig): void {
-  const required = ["schema", "url", "username", "password", "namespace", "database"];
+  const required = ['schema', 'url', 'username', 'password', 'namespace', 'database'];
   const missing = required.filter((key) => !config[key as keyof SmigConfig]);
 
   if (missing.length > 0) {
-    throw new Error(`Missing required configuration: ${missing.join(", ")}`);
+    throw new Error(`Missing required configuration: ${missing.join(', ')}`);
   }
 
   // Validate URL format
@@ -318,9 +318,9 @@ export function validateConfig(config: SmigConfig): void {
 
   // Check if schema file exists (but only if it looks like a file path, not a module)
   if (
-    config.schema.startsWith("./") ||
-    config.schema.startsWith("../") ||
-    config.schema.startsWith("/")
+    config.schema.startsWith('./') ||
+    config.schema.startsWith('../') ||
+    config.schema.startsWith('/')
   ) {
     const schemaPath = join(process.cwd(), config.schema);
     if (!existsSync(schemaPath)) {

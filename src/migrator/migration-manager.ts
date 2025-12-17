@@ -7,10 +7,10 @@
  * solution for managing database schema evolution over time.
  */
 
-import { createHash } from "node:crypto";
-import * as path from "node:path";
-import * as fs from "fs-extra";
-import { SurrealClient } from "../database/surreal-client";
+import { createHash } from 'node:crypto';
+import * as path from 'node:path';
+import * as fs from 'fs-extra';
+import { SurrealClient } from '../database/surreal-client';
 import type {
   DatabaseConfig,
   Migration,
@@ -19,8 +19,8 @@ import type {
   SurrealDBSchema,
   SurrealFunction,
   SurrealScope,
-} from "../types/schema";
-import { debugLog, debugLogSchema } from "../utils/debug-logger";
+} from '../types/schema';
+import { debugLog, debugLogSchema } from '../utils/debug-logger';
 
 /**
  * Main class for managing SurrealDB database migrations.
@@ -136,7 +136,7 @@ export class MigrationManager {
   private async createMigrationsTable(): Promise<void> {
     try {
       // Check if the table already exists by trying to query it
-      await this.client.executeQuery("SELECT * FROM _migrations LIMIT 1");
+      await this.client.executeQuery('SELECT * FROM _migrations LIMIT 1');
       // If we get here, the table exists, so we don't need to create it
       return;
     } catch (_error) {
@@ -201,8 +201,8 @@ export class MigrationManager {
       const hasSchemaChanges = await this.hasChanges(schema);
 
       if (!hasSchemaChanges) {
-        debugLog("No changes detected - skipping migration");
-        throw new Error("No changes detected. Database schema is already up to date.");
+        debugLog('No changes detected - skipping migration');
+        throw new Error('No changes detected. Database schema is already up to date.');
       }
 
       const diff = await this.generateDiff(schema);
@@ -256,15 +256,15 @@ export class MigrationManager {
    * ```
    */
   async rollback(migrationId?: string): Promise<void> {
-    debugLog(`Starting rollback process. Migration ID: ${migrationId || "latest"}`);
+    debugLog(`Starting rollback process. Migration ID: ${migrationId || 'latest'}`);
     const migrations = await this.getAppliedMigrations();
     debugLog(`Found ${migrations.length} applied migrations for rollback`);
 
     if (migrations.length === 0) {
-      throw new Error("No migrations to rollback");
+      throw new Error('No migrations to rollback');
     }
 
-    debugLog(`Available migration IDs: ${migrations.map((m) => m.id).join(", ")}`);
+    debugLog(`Available migration IDs: ${migrations.map((m) => m.id).join(', ')}`);
 
     const migrationToRollback = migrationId
       ? migrations.find((m) => String(m.id) === String(migrationId))
@@ -272,10 +272,10 @@ export class MigrationManager {
 
     if (!migrationToRollback) {
       debugLog(
-        `Migration not found. Requested: ${migrationId}, Available: [${migrations.map((m) => m.id).join(", ")}]`,
+        `Migration not found. Requested: ${migrationId}, Available: [${migrations.map((m) => m.id).join(', ')}]`,
       );
       throw new Error(
-        `Migration ${migrationId} not found. Available migrations: ${migrations.map((m) => m.id).join(", ")}`,
+        `Migration ${migrationId} not found. Available migrations: ${migrations.map((m) => m.id).join(', ')}`,
       );
     }
 
@@ -346,7 +346,7 @@ export class MigrationManager {
    * ```
    */
   async status(): Promise<MigrationStatus[]> {
-    debugLog("Getting migration status...");
+    debugLog('Getting migration status...');
     const appliedMigrations = await this.getAppliedMigrations();
     debugLog(`Status: Found ${appliedMigrations.length} applied migrations`);
 
@@ -355,7 +355,7 @@ export class MigrationManager {
       migration,
     }));
 
-    debugLog("Migration status result:", status);
+    debugLog('Migration status result:', status);
     return status;
   }
 
@@ -385,15 +385,15 @@ export class MigrationManager {
     const currentSchema = await this.getCurrentDatabaseSchema();
 
     // Log schema representations for debugging
-    debugLogSchema("Current Database Schema", currentSchema);
-    debugLogSchema("New Schema Definition", schema);
+    debugLogSchema('Current Database Schema', currentSchema);
+    debugLogSchema('New Schema Definition', schema);
 
     debugLog(
-      "Current schema tables:",
+      'Current schema tables:',
       currentSchema.tables.map((t) => t.name),
     );
     debugLog(
-      "New schema tables:",
+      'New schema tables:',
       schema.tables.map((t) => t.name),
     );
 
@@ -615,7 +615,7 @@ export class MigrationManager {
     }> = [];
 
     upChanges.push(`-- Migration diff for ${new Date().toISOString()}`);
-    upChanges.push("");
+    upChanges.push('');
 
     // Get current database schema (virtualized to match TypeScript format)
     const currentSchema = await this.getCurrentDatabaseSchema();
@@ -633,7 +633,7 @@ export class MigrationManager {
       if (!currentTable) {
         // New table
         upChanges.push(`-- New table: ${newTable.name}`);
-        const schemaMode = newTable.schemafull === false ? "SCHEMALESS" : "SCHEMAFULL";
+        const schemaMode = newTable.schemafull === false ? 'SCHEMALESS' : 'SCHEMAFULL';
         upChanges.push(`DEFINE TABLE ${newTable.name} ${schemaMode};`);
 
         // Add fields
@@ -650,13 +650,13 @@ export class MigrationManager {
         for (const event of newTable.events) {
           upChanges.push(this.generateEventDefinition(newTable.name, event));
         }
-        upChanges.push("");
+        upChanges.push('');
 
         // Track for rollback
         changeLog.push({
-          type: "table",
+          type: 'table',
           table: newTable.name,
-          operation: "create",
+          operation: 'create',
           details: {
             fields: newTable.fields,
             indexes: newTable.indexes,
@@ -682,9 +682,9 @@ export class MigrationManager {
         // Track changes for rollback
         if (fieldChanges.length > 0 || indexChanges.length > 0 || eventChanges.length > 0) {
           changeLog.push({
-            type: "table",
+            type: 'table',
             table: newTable.name,
-            operation: "modify",
+            operation: 'modify',
             details: { fieldChanges, indexChanges, eventChanges, currentTable },
           });
         }
@@ -697,13 +697,13 @@ export class MigrationManager {
       if (!stillExists) {
         upChanges.push(`-- Removed table: ${currentTable.name}`);
         upChanges.push(`REMOVE TABLE ${currentTable.name};`);
-        upChanges.push("");
+        upChanges.push('');
 
         // Track for rollback
         changeLog.push({
-          type: "table",
+          type: 'table',
           table: currentTable.name,
-          operation: "remove",
+          operation: 'remove',
           details: { currentTable },
         });
       }
@@ -716,7 +716,7 @@ export class MigrationManager {
       if (!currentRelation) {
         // New relation
         upChanges.push(`-- New relation: ${newRelation.name}`);
-        const schemaMode = newRelation.schemafull === false ? "SCHEMALESS" : "SCHEMAFULL";
+        const schemaMode = newRelation.schemafull === false ? 'SCHEMALESS' : 'SCHEMAFULL';
         upChanges.push(`DEFINE TABLE ${newRelation.name} ${schemaMode};`);
 
         // Add fields
@@ -733,13 +733,13 @@ export class MigrationManager {
         for (const event of newRelation.events) {
           upChanges.push(this.generateEventDefinition(newRelation.name, event));
         }
-        upChanges.push("");
+        upChanges.push('');
 
         // Track for rollback
         changeLog.push({
-          type: "relation",
+          type: 'relation',
           table: newRelation.name,
-          operation: "create",
+          operation: 'create',
           details: {
             fields: newRelation.fields,
             indexes: newRelation.indexes,
@@ -759,7 +759,7 @@ export class MigrationManager {
           // If from/to changed, we need to recreate the relation entirely
           upChanges.push(`-- Recreating relation: ${newRelation.name} (from/to changed)`);
           upChanges.push(`REMOVE TABLE ${newRelation.name};`);
-          const schemaMode = newRelation.schemafull === false ? "SCHEMALESS" : "SCHEMAFULL";
+          const schemaMode = newRelation.schemafull === false ? 'SCHEMALESS' : 'SCHEMAFULL';
           upChanges.push(`DEFINE TABLE ${newRelation.name} ${schemaMode};`);
 
           // Add all fields
@@ -776,13 +776,13 @@ export class MigrationManager {
           for (const event of newRelation.events) {
             upChanges.push(this.generateEventDefinition(newRelation.name, event));
           }
-          upChanges.push("");
+          upChanges.push('');
 
           // Track for rollback - recreation means we need to restore the old relation
           changeLog.push({
-            type: "relation",
+            type: 'relation',
             table: newRelation.name,
-            operation: "recreate",
+            operation: 'recreate',
             details: {
               oldRelation: currentRelation,
               newRelation: newRelation,
@@ -802,9 +802,9 @@ export class MigrationManager {
           // Track changes for rollback
           if (fieldChanges.length > 0 || indexChanges.length > 0 || eventChanges.length > 0) {
             changeLog.push({
-              type: "relation",
+              type: 'relation',
               table: newRelation.name,
-              operation: "modify",
+              operation: 'modify',
               details: {
                 fieldChanges,
                 indexChanges,
@@ -823,13 +823,13 @@ export class MigrationManager {
       if (!stillExists) {
         upChanges.push(`-- Removed relation: ${currentRelation.name}`);
         upChanges.push(`REMOVE TABLE ${currentRelation.name};`);
-        upChanges.push("");
+        upChanges.push('');
 
         // Track for rollback
         changeLog.push({
-          type: "relation",
+          type: 'relation',
           table: currentRelation.name,
-          operation: "remove",
+          operation: 'remove',
           details: { currentRelation },
         });
       }
@@ -845,13 +845,13 @@ export class MigrationManager {
         // New function
         upChanges.push(`-- New function: ${newFunction.name}`);
         upChanges.push(this.generateFunctionDefinition(newFunction));
-        upChanges.push("");
+        upChanges.push('');
 
         // Track for rollback
         changeLog.push({
-          type: "function",
+          type: 'function',
           table: newFunction.name,
-          operation: "create",
+          operation: 'create',
           details: { func: newFunction },
         });
       } else {
@@ -860,13 +860,13 @@ export class MigrationManager {
         if (funcModified) {
           upChanges.push(`-- Modified function: ${newFunction.name}`);
           upChanges.push(this.generateFunctionDefinition(newFunction, true)); // true = use OVERWRITE
-          upChanges.push("");
+          upChanges.push('');
 
           // Track for rollback
           changeLog.push({
-            type: "function",
+            type: 'function',
             table: newFunction.name,
-            operation: "modify",
+            operation: 'modify',
             details: { currentFunction, newFunction },
           });
         }
@@ -879,13 +879,13 @@ export class MigrationManager {
       if (!stillExists) {
         upChanges.push(`-- Removed function: ${currentFunction.name}`);
         upChanges.push(`REMOVE FUNCTION ${currentFunction.name};`);
-        upChanges.push("");
+        upChanges.push('');
 
         // Track for rollback
         changeLog.push({
-          type: "function",
+          type: 'function',
           table: currentFunction.name,
-          operation: "remove",
+          operation: 'remove',
           details: { currentFunction },
         });
       }
@@ -899,13 +899,13 @@ export class MigrationManager {
         // New scope
         upChanges.push(`-- New scope: ${newScope.name}`);
         upChanges.push(this.generateScopeDefinition(newScope));
-        upChanges.push("");
+        upChanges.push('');
 
         // Track for rollback
         changeLog.push({
-          type: "scope",
+          type: 'scope',
           table: newScope.name,
-          operation: "create",
+          operation: 'create',
           details: { scope: newScope },
         });
       } else {
@@ -914,13 +914,13 @@ export class MigrationManager {
         if (scopeModified) {
           upChanges.push(`-- Modified scope: ${newScope.name}`);
           upChanges.push(this.generateScopeDefinition(newScope, true)); // true = use OVERWRITE
-          upChanges.push("");
+          upChanges.push('');
 
           // Track for rollback
           changeLog.push({
-            type: "scope",
+            type: 'scope',
             table: newScope.name,
-            operation: "modify",
+            operation: 'modify',
             details: { currentScope, newScope },
           });
         }
@@ -933,13 +933,13 @@ export class MigrationManager {
       if (!stillExists) {
         upChanges.push(`-- Removed scope: ${currentScope.name}`);
         upChanges.push(`REMOVE ACCESS ${currentScope.name} ON DATABASE;`);
-        upChanges.push("");
+        upChanges.push('');
 
         // Track for rollback
         changeLog.push({
-          type: "scope",
+          type: 'scope',
           table: currentScope.name,
-          operation: "remove",
+          operation: 'remove',
           details: { currentScope },
         });
       }
@@ -955,13 +955,13 @@ export class MigrationManager {
         // New analyzer
         upChanges.push(`-- New analyzer: ${newAnalyzer.name}`);
         upChanges.push(this.generateAnalyzerDefinition(newAnalyzer));
-        upChanges.push("");
+        upChanges.push('');
 
         // Track for rollback
         changeLog.push({
-          type: "analyzer",
+          type: 'analyzer',
           table: newAnalyzer.name,
-          operation: "create",
+          operation: 'create',
           details: { analyzer: newAnalyzer },
         });
       } else {
@@ -970,13 +970,13 @@ export class MigrationManager {
         if (analyzerModified) {
           upChanges.push(`-- Modified analyzer: ${newAnalyzer.name}`);
           upChanges.push(this.generateAnalyzerDefinition(newAnalyzer, true)); // true = use OVERWRITE
-          upChanges.push("");
+          upChanges.push('');
 
           // Track for rollback
           changeLog.push({
-            type: "analyzer",
+            type: 'analyzer',
             table: newAnalyzer.name,
-            operation: "modify",
+            operation: 'modify',
             details: { currentAnalyzer, newAnalyzer },
           });
         }
@@ -989,51 +989,51 @@ export class MigrationManager {
       if (!stillExists) {
         upChanges.push(`-- Removed analyzer: ${currentAnalyzer.name}`);
         upChanges.push(`REMOVE ANALYZER ${currentAnalyzer.name};`);
-        upChanges.push("");
+        upChanges.push('');
 
         // Track for rollback
         changeLog.push({
-          type: "analyzer",
+          type: 'analyzer',
           table: currentAnalyzer.name,
-          operation: "remove",
+          operation: 'remove',
           details: { currentAnalyzer },
         });
       }
     }
 
     // Generate rollback migration (reverse order of changes)
-    downChanges.push("-- Rollback migration");
-    downChanges.push("");
+    downChanges.push('-- Rollback migration');
+    downChanges.push('');
 
     // Process changes in reverse order for rollback
     for (let i = changeLog.length - 1; i >= 0; i--) {
       const change = changeLog[i];
 
       switch (change.operation) {
-        case "create":
+        case 'create':
           // Rollback create = remove
-          if (change.type === "table" || change.type === "relation") {
+          if (change.type === 'table' || change.type === 'relation') {
             downChanges.push(`-- Rollback: Remove ${change.type} ${change.table}`);
             downChanges.push(`REMOVE TABLE ${change.table};`);
-            downChanges.push("");
-          } else if (change.type === "function") {
+            downChanges.push('');
+          } else if (change.type === 'function') {
             downChanges.push(`-- Rollback: Remove function ${change.table}`);
             downChanges.push(`REMOVE FUNCTION ${change.table};`);
-            downChanges.push("");
-          } else if (change.type === "scope") {
+            downChanges.push('');
+          } else if (change.type === 'scope') {
             downChanges.push(`-- Rollback: Remove scope ${change.table}`);
             downChanges.push(`REMOVE ACCESS ${change.table} ON DATABASE;`);
-            downChanges.push("");
-          } else if (change.type === "analyzer") {
+            downChanges.push('');
+          } else if (change.type === 'analyzer') {
             downChanges.push(`-- Rollback: Remove analyzer ${change.table}`);
             downChanges.push(`REMOVE ANALYZER ${change.table};`);
-            downChanges.push("");
+            downChanges.push('');
           }
           break;
 
-        case "remove":
+        case 'remove':
           // Rollback remove = recreate
-          if (change.type === "table" || change.type === "relation") {
+          if (change.type === 'table' || change.type === 'relation') {
             const currentTable = change.details.currentTable;
 
             // Check if currentTable exists before proceeding
@@ -1045,7 +1045,7 @@ export class MigrationManager {
             }
 
             downChanges.push(`-- Rollback: Recreate ${change.type} ${change.table}`);
-            const schemaMode = currentTable.schemafull === false ? "SCHEMALESS" : "SCHEMAFULL";
+            const schemaMode = currentTable.schemafull === false ? 'SCHEMALESS' : 'SCHEMAFULL';
             downChanges.push(`DEFINE TABLE ${change.table} ${schemaMode};`);
 
             // Recreate fields
@@ -1068,34 +1068,34 @@ export class MigrationManager {
                 downChanges.push(this.generateEventDefinition(change.table, event));
               }
             }
-            downChanges.push("");
-          } else if (change.type === "function") {
+            downChanges.push('');
+          } else if (change.type === 'function') {
             const func = change.details.currentFunction;
             if (func) {
               downChanges.push(`-- Rollback: Recreate function ${change.table}`);
               downChanges.push(this.generateFunctionDefinition(func));
-              downChanges.push("");
+              downChanges.push('');
             }
-          } else if (change.type === "scope") {
+          } else if (change.type === 'scope') {
             const scope = change.details.currentScope;
             if (scope) {
               downChanges.push(`-- Rollback: Recreate scope ${change.table}`);
               downChanges.push(this.generateScopeDefinition(scope));
-              downChanges.push("");
+              downChanges.push('');
             }
-          } else if (change.type === "analyzer") {
+          } else if (change.type === 'analyzer') {
             const analyzer = change.details.currentAnalyzer;
             if (analyzer) {
               downChanges.push(`-- Rollback: Recreate analyzer ${change.table}`);
               downChanges.push(this.generateAnalyzerDefinition(analyzer));
-              downChanges.push("");
+              downChanges.push('');
             }
           }
           break;
 
-        case "modify":
+        case 'modify':
           // Rollback modifications - restore original state
-          if (change.type === "table" || change.type === "relation") {
+          if (change.type === 'table' || change.type === 'relation') {
             const currentTable = change.details.currentTable || change.details.currentRelation;
 
             // Check if currentTable exists before proceeding
@@ -1112,7 +1112,7 @@ export class MigrationManager {
 
             // Rollback field changes
             for (const changeLine of change.details.fieldChanges) {
-              if (changeLine.includes("DEFINE FIELD OVERWRITE")) {
+              if (changeLine.includes('DEFINE FIELD OVERWRITE')) {
                 // Extract field name and restore original definition
                 // Updated regex to support field names with dots (e.g., "emails.address")
                 const fieldMatch = changeLine.match(/DEFINE FIELD OVERWRITE ([^\s]+) ON TABLE/);
@@ -1126,7 +1126,7 @@ export class MigrationManager {
                     downChanges.push(this.generateFieldDefinition(change.table, originalField));
                   }
                 }
-              } else if (changeLine.includes("DEFINE FIELD")) {
+              } else if (changeLine.includes('DEFINE FIELD')) {
                 // New field added - remove it
                 // Updated regex to support field names with dots (e.g., "emails.address")
                 const fieldMatch = changeLine.match(/DEFINE FIELD ([^\s]+) ON TABLE/);
@@ -1135,7 +1135,7 @@ export class MigrationManager {
                   downChanges.push(`-- Remove field ${fieldName}`);
                   downChanges.push(`REMOVE FIELD ${fieldName} ON TABLE ${change.table};`);
                 }
-              } else if (changeLine.includes("REMOVE FIELD")) {
+              } else if (changeLine.includes('REMOVE FIELD')) {
                 // Field removed - restore it
                 // Updated regex to support field names with dots (e.g., "emails.address")
                 const fieldMatch = changeLine.match(/REMOVE FIELD ([^\s]+) ON TABLE/);
@@ -1154,7 +1154,7 @@ export class MigrationManager {
 
             // Rollback index changes
             for (const changeLine of change.details.indexChanges) {
-              if (changeLine.includes("DEFINE INDEX")) {
+              if (changeLine.includes('DEFINE INDEX')) {
                 // New index added - remove it
                 const indexMatch = changeLine.match(/DEFINE INDEX (\w+) ON TABLE/);
                 if (indexMatch) {
@@ -1162,7 +1162,7 @@ export class MigrationManager {
                   downChanges.push(`-- Remove index ${indexName}`);
                   downChanges.push(`REMOVE INDEX ${indexName} ON TABLE ${change.table};`);
                 }
-              } else if (changeLine.includes("REMOVE INDEX")) {
+              } else if (changeLine.includes('REMOVE INDEX')) {
                 // Index removed - restore it
                 const indexMatch = changeLine.match(/REMOVE INDEX (\w+) ON TABLE/);
                 if (indexMatch) {
@@ -1180,7 +1180,7 @@ export class MigrationManager {
 
             // Rollback event changes
             for (const changeLine of change.details.eventChanges) {
-              if (changeLine.includes("DEFINE EVENT")) {
+              if (changeLine.includes('DEFINE EVENT')) {
                 // New event added - remove it
                 const eventMatch = changeLine.match(/DEFINE EVENT (\w+) ON TABLE/);
                 if (eventMatch) {
@@ -1188,7 +1188,7 @@ export class MigrationManager {
                   downChanges.push(`-- Remove event ${eventName}`);
                   downChanges.push(`REMOVE EVENT ${eventName} ON TABLE ${change.table};`);
                 }
-              } else if (changeLine.includes("REMOVE EVENT")) {
+              } else if (changeLine.includes('REMOVE EVENT')) {
                 // Event removed - restore it
                 const eventMatch = changeLine.match(/REMOVE EVENT (\w+) ON TABLE/);
                 if (eventMatch) {
@@ -1203,41 +1203,41 @@ export class MigrationManager {
                 }
               }
             }
-            downChanges.push("");
-          } else if (change.type === "function") {
+            downChanges.push('');
+          } else if (change.type === 'function') {
             // Rollback function modification - restore original function
             const currentFunction = change.details.currentFunction;
             if (currentFunction) {
               downChanges.push(`-- Rollback: Restore function ${change.table} to original state`);
               downChanges.push(this.generateFunctionDefinition(currentFunction));
-              downChanges.push("");
+              downChanges.push('');
             }
-          } else if (change.type === "scope") {
+          } else if (change.type === 'scope') {
             // Rollback scope modification - restore original scope
             const currentScope = change.details.currentScope;
             if (currentScope) {
               downChanges.push(`-- Rollback: Restore scope ${change.table} to original state`);
               downChanges.push(this.generateScopeDefinition(currentScope));
-              downChanges.push("");
+              downChanges.push('');
             }
-          } else if (change.type === "analyzer") {
+          } else if (change.type === 'analyzer') {
             // Rollback analyzer modification - restore original analyzer
             const currentAnalyzer = change.details.currentAnalyzer;
             if (currentAnalyzer) {
               downChanges.push(`-- Rollback: Restore analyzer ${change.table} to original state`);
               downChanges.push(this.generateAnalyzerDefinition(currentAnalyzer));
-              downChanges.push("");
+              downChanges.push('');
             }
           }
           break;
 
-        case "recreate":
+        case 'recreate':
           // Rollback recreation - restore the original relation
-          if (change.type === "relation") {
+          if (change.type === 'relation') {
             const oldRelation = change.details.oldRelation;
             downChanges.push(`-- Rollback: Restore original ${change.type} ${change.table}`);
             downChanges.push(`REMOVE TABLE ${change.table};`);
-            const schemaMode = oldRelation.schemafull === false ? "SCHEMALESS" : "SCHEMAFULL";
+            const schemaMode = oldRelation.schemafull === false ? 'SCHEMALESS' : 'SCHEMAFULL';
             downChanges.push(`DEFINE TABLE ${change.table} ${schemaMode};`);
 
             // Restore original fields
@@ -1254,15 +1254,15 @@ export class MigrationManager {
             for (const event of oldRelation.events) {
               downChanges.push(this.generateEventDefinition(change.table, event));
             }
-            downChanges.push("");
+            downChanges.push('');
           }
           break;
       }
     }
 
     return {
-      up: upChanges.join("\n").trim(),
-      down: downChanges.join("\n").trim(),
+      up: upChanges.join('\n').trim(),
+      down: downChanges.join('\n').trim(),
     };
   }
 
@@ -1275,20 +1275,20 @@ export class MigrationManager {
    * @returns Array of migration objects sorted by appliedAt timestamp (ascending)
    */
   private async getAppliedMigrations(): Promise<Migration[]> {
-    debugLog("Querying _migrations table using SDK...");
-    const migrationsResult = await this.client.select("_migrations");
-    debugLog("Raw migration query result:", migrationsResult);
+    debugLog('Querying _migrations table using SDK...');
+    const migrationsResult = await this.client.select('_migrations');
+    debugLog('Raw migration query result:', migrationsResult);
 
     // Type assertion for database results
     const migrations = migrationsResult as Record<string, unknown>[];
 
     if (!migrations || migrations.length === 0) {
-      debugLog("No migrations found");
+      debugLog('No migrations found');
       return [];
     }
 
     debugLog(
-      "Found migrations:",
+      'Found migrations:',
       migrations.map((m: Record<string, unknown>) => ({
         id: m.id,
         appliedAt: m.appliedAt,
@@ -1331,7 +1331,7 @@ export class MigrationManager {
    * @returns The SurrealDB-generated record ID
    */
   private async recordMigration(migration: Migration): Promise<string> {
-    debugLog(`Recording migration with message: ${migration.message || "No message"}`);
+    debugLog(`Recording migration with message: ${migration.message || 'No message'}`);
 
     const migrationData = {
       appliedAt: new Date(),
@@ -1342,7 +1342,7 @@ export class MigrationManager {
       downChecksum: migration.downChecksum,
     };
 
-    const resultRaw = await this.client.create("_migrations", migrationData);
+    const resultRaw = await this.client.create('_migrations', migrationData);
 
     // Type assertion for database results
     const result = resultRaw as Record<string, unknown> | Record<string, unknown>[];
@@ -1365,13 +1365,13 @@ export class MigrationManager {
    * @returns A complete SurrealDBSchema object representing the current database state
    */
   private async getCurrentDatabaseSchema(): Promise<SurrealDBSchema> {
-    debugLog("Using SurrealDB native schema queries...");
+    debugLog('Using SurrealDB native schema queries...');
 
     // Use SurrealDB's INFO command to get database information
-    debugLog("Getting database info...");
-    const infoQuery = "INFO FOR DB;";
+    debugLog('Getting database info...');
+    const infoQuery = 'INFO FOR DB;';
     const infoResultRaw = await this.client.executeQuery(infoQuery);
-    debugLog("Database info result:", infoResultRaw);
+    debugLog('Database info result:', infoResultRaw);
 
     // Type assertion for database query results
     const infoResult = infoResultRaw as Record<string, unknown>[];
@@ -1382,15 +1382,15 @@ export class MigrationManager {
       tableNames.push(...Object.keys(infoResult[0].tables as Record<string, unknown>));
     }
 
-    debugLog("Found tables in database:", tableNames);
+    debugLog('Found tables in database:', tableNames);
 
     const virtualizedTables = [];
     const virtualizedRelations = [];
 
     for (const tableName of tableNames) {
       // Skip the migrations table
-      if (tableName === "_migrations") {
-        debugLog("Skipping _migrations table");
+      if (tableName === '_migrations') {
+        debugLog('Skipping _migrations table');
         continue;
       }
 
@@ -1435,11 +1435,11 @@ export class MigrationManager {
     }
 
     debugLog(
-      "Virtualized tables:",
+      'Virtualized tables:',
       virtualizedTables.map((t) => (t as Record<string, unknown>).name),
     );
     debugLog(
-      "Virtualized relations:",
+      'Virtualized relations:',
       virtualizedRelations.map((r) => (r as Record<string, unknown>).name),
     );
 
@@ -1536,7 +1536,7 @@ export class MigrationManager {
         infoResult.fields as Record<string, unknown>,
       )) {
         // Skip array wildcard fields (e.g., followers[*]) - these are auto-generated by SurrealDB
-        if (fieldName.includes("[*]")) {
+        if (fieldName.includes('[*]')) {
           continue;
         }
 
@@ -1644,7 +1644,7 @@ export class MigrationManager {
 
   private extractFieldType(fieldDef: string): string {
     const typeMatch = fieldDef.match(MigrationManager.FIELD_PATTERNS.type);
-    return typeMatch ? typeMatch[1].trim() : "string";
+    return typeMatch ? typeMatch[1].trim() : 'string';
   }
 
   private isFieldOptional(fieldDef: string): boolean {
@@ -1674,12 +1674,12 @@ export class MigrationManager {
 
   private extractFieldValue(fieldDef: string): string | null {
     // Check if there's a VALUE clause
-    const valueIndex = fieldDef.indexOf("VALUE ");
+    const valueIndex = fieldDef.indexOf('VALUE ');
     if (valueIndex === -1) return null;
 
     // Start after "VALUE "
     const start = valueIndex + 6;
-    let value = "";
+    let value = '';
     let braceDepth = 0;
     let inFuture = false;
 
@@ -1688,14 +1688,14 @@ export class MigrationManager {
       const char = fieldDef[i];
 
       // Check if we're starting a <future> block
-      if (!inFuture && fieldDef.substring(i, i + 8) === "<future>") {
+      if (!inFuture && fieldDef.substring(i, i + 8) === '<future>') {
         inFuture = true;
       }
 
       // Track brace depth
-      if (char === "{") {
+      if (char === '{') {
         braceDepth++;
-      } else if (char === "}") {
+      } else if (char === '}') {
         braceDepth--;
         // If we close all braces in a future block, we're done with the value
         if (inFuture && braceDepth === 0) {
@@ -1744,30 +1744,30 @@ export class MigrationManager {
         return [];
       }
       // Remove UNIQUE and other keywords that might be at the end
-      const columnsStr = fallbackMatch[1].replace(/\s+UNIQUE\s*$/, "").trim();
+      const columnsStr = fallbackMatch[1].replace(/\s+UNIQUE\s*$/, '').trim();
       return columnsStr
-        .split(",")
+        .split(',')
         .map((col) => col.trim())
         .filter((col) => col.length > 0);
     }
     return fieldsMatch[1]
-      .split(",")
+      .split(',')
       .map((col) => col.trim())
       .filter((col) => col.length > 0);
   }
 
   private isIndexUnique(indexDef: string): boolean {
-    return indexDef.includes("UNIQUE");
+    return indexDef.includes('UNIQUE');
   }
 
   private extractEventWhen(eventDef: string): string {
     const whenMatch = eventDef.match(/WHEN\s+([^;]+)/);
-    return whenMatch ? whenMatch[1].trim() : "";
+    return whenMatch ? whenMatch[1].trim() : '';
   }
 
   private extractEventThen(eventDef: string): string {
     const thenMatch = eventDef.match(/THEN\s+([^;]+)/);
-    return thenMatch ? thenMatch[1].trim() : "";
+    return thenMatch ? thenMatch[1].trim() : '';
   }
 
   /**
@@ -1792,14 +1792,14 @@ export class MigrationManager {
     const paramMatch = funcDef.match(/\((.*?)\)/);
     if (paramMatch?.[1].trim()) {
       const paramStr = paramMatch[1];
-      const paramParts = paramStr.split(",");
+      const paramParts = paramStr.split(',');
       for (const part of paramParts) {
         const trimmed = part.trim();
         if (trimmed) {
           // Format: $name: type
-          const colonIndex = trimmed.indexOf(":");
+          const colonIndex = trimmed.indexOf(':');
           if (colonIndex > 0) {
-            const paramName = trimmed.substring(0, colonIndex).trim().replace("$", "");
+            const paramName = trimmed.substring(0, colonIndex).trim().replace('$', '');
             const paramType = trimmed.substring(colonIndex + 1).trim();
             parameters.push({ name: paramName, type: paramType });
           }
@@ -1815,7 +1815,7 @@ export class MigrationManager {
     }
 
     // Parse body - everything between { and }
-    let body = "";
+    let body = '';
     const bodyMatch = funcDef.match(/\{(.*)\}/s);
     if (bodyMatch) {
       body = bodyMatch[1].trim();
@@ -1893,7 +1893,7 @@ export class MigrationManager {
     const tokenizerMatch = analyzerDef.match(/TOKENIZERS\s+([^F]+?)(?:\s+FILTERS|$)/);
     if (tokenizerMatch) {
       const tokenizerStr = tokenizerMatch[1].trim();
-      tokenizers.push(...tokenizerStr.split(",").map((t) => t.trim()));
+      tokenizers.push(...tokenizerStr.split(',').map((t) => t.trim()));
     }
 
     // Parse filters
@@ -1901,7 +1901,7 @@ export class MigrationManager {
     const filterMatch = analyzerDef.match(/FILTERS\s+(.+?)$/);
     if (filterMatch) {
       const filterStr = filterMatch[1].trim();
-      filters.push(...filterStr.split(",").map((f) => f.trim()));
+      filters.push(...filterStr.split(',').map((f) => f.trim()));
     }
 
     return {
@@ -1931,7 +1931,7 @@ export class MigrationManager {
     }
 
     // Compare body (normalize whitespace for comparison)
-    const normalizeBody = (body: string) => body?.replace(/\s+/g, " ").trim() || "";
+    const normalizeBody = (body: string) => body?.replace(/\s+/g, ' ').trim() || '';
     if (normalizeBody(currentFunc.body) !== normalizeBody(newFunc.body)) {
       return true;
     }
@@ -1956,17 +1956,17 @@ export class MigrationManager {
       const num = Number.parseInt(value, 10);
       // Convert to days
       switch (unit) {
-        case "s":
+        case 's':
           return num / 86400; // seconds to days
-        case "m":
+        case 'm':
           return num / 1440; // minutes to days
-        case "h":
+        case 'h':
           return num / 24; // hours to days
-        case "d":
+        case 'd':
           return num; // days
-        case "w":
+        case 'w':
           return num * 7; // weeks to days
-        case "y":
+        case 'y':
           return num * 365; // years to days
         default:
           return null;
@@ -1981,7 +1981,7 @@ export class MigrationManager {
     }
 
     // Compare SIGNUP query (normalize whitespace for comparison)
-    const normalizeQuery = (query: string | null) => query?.replace(/\s+/g, " ").trim() || null;
+    const normalizeQuery = (query: string | null) => query?.replace(/\s+/g, ' ').trim() || null;
     if (normalizeQuery(currentScope.signup) !== normalizeQuery(newScope.signup)) {
       return true;
     }
@@ -2042,8 +2042,8 @@ export class MigrationManager {
     tableInfo: any,
   ): boolean {
     // First check if the table has the standard relation fields
-    const hasInField = tableInfo.fields?.some((f: Record<string, unknown>) => f.name === "in");
-    const hasOutField = tableInfo.fields?.some((f: Record<string, unknown>) => f.name === "out");
+    const hasInField = tableInfo.fields?.some((f: Record<string, unknown>) => f.name === 'in');
+    const hasOutField = tableInfo.fields?.some((f: Record<string, unknown>) => f.name === 'out');
 
     // If it has both 'in' and 'out' fields, it's likely a relation
     if (hasInField && hasOutField) {
@@ -2053,10 +2053,10 @@ export class MigrationManager {
 
     // Fallback to heuristic for edge cases
     const heuristicMatch =
-      tableName.includes("_") ||
-      tableName === "like" ||
-      tableName === "follow" ||
-      tableName === "bookmark";
+      tableName.includes('_') ||
+      tableName === 'like' ||
+      tableName === 'follow' ||
+      tableName === 'bookmark';
 
     if (heuristicMatch) {
       debugLog(`Table ${tableName} identified as relation (heuristic match)`);
@@ -2076,8 +2076,8 @@ export class MigrationManager {
     from: string;
     to: string;
   } {
-    const inField = tableInfo.fields?.find((f: Record<string, unknown>) => f.name === "in");
-    const outField = tableInfo.fields?.find((f: Record<string, unknown>) => f.name === "out");
+    const inField = tableInfo.fields?.find((f: Record<string, unknown>) => f.name === 'in');
+    const outField = tableInfo.fields?.find((f: Record<string, unknown>) => f.name === 'out');
 
     // Extract table names from record types (e.g., "record<user>" -> "user")
     const extractTableFromRecordType = (fieldType: string): string | null => {
@@ -2097,8 +2097,8 @@ export class MigrationManager {
     });
 
     return {
-      from: fromTable || "unknown",
-      to: toTable || "unknown",
+      from: fromTable || 'unknown',
+      to: toTable || 'unknown',
     };
   }
 
@@ -2120,12 +2120,12 @@ export class MigrationManager {
     if (Array.isArray(value)) {
       return JSON.stringify(value);
     }
-    if (typeof value === "object" && value !== null) {
+    if (typeof value === 'object' && value !== null) {
       return JSON.stringify(value);
     }
-    if (typeof value === "string") {
+    if (typeof value === 'string') {
       // Check if it's already a SurrealQL expression (contains functions, variables, etc.)
-      if (value.includes("(") || value.startsWith("$") || value.includes("::")) {
+      if (value.includes('(') || value.startsWith('$') || value.includes('::')) {
         return value;
       }
       // Otherwise, it's a literal string that needs quotes
@@ -2154,7 +2154,7 @@ export class MigrationManager {
       definition += ` DEFAULT ${this.serializeDefaultValue(field.default)}`;
     }
 
-    definition += ";";
+    definition += ';';
     return definition;
   }
 
@@ -2173,14 +2173,14 @@ export class MigrationManager {
     // biome-ignore lint/suspicious/noExplicitAny: Dynamic index definitions from schema introspection
     index: any,
   ): string {
-    const indexName = index.name || `${tableName}_${index.columns.join("_")}`;
-    let definition = `DEFINE INDEX ${indexName} ON TABLE ${tableName} COLUMNS ${index.columns.join(", ")}`;
+    const indexName = index.name || `${tableName}_${index.columns.join('_')}`;
+    let definition = `DEFINE INDEX ${indexName} ON TABLE ${tableName} COLUMNS ${index.columns.join(', ')}`;
 
     if (index.unique) {
-      definition += " UNIQUE";
+      definition += ' UNIQUE';
     }
 
-    definition += ";";
+    definition += ';';
     return definition;
   }
 
@@ -2201,7 +2201,7 @@ export class MigrationManager {
     event: any,
   ): string {
     // Check if the then action contains multiple statements or control flow (FOR, IF, etc.)
-    const hasMultipleStatements = event.thenStatement.includes(";");
+    const hasMultipleStatements = event.thenStatement.includes(';');
     const hasControlFlow = /\b(FOR|IF|LET)\b/.test(event.thenStatement);
 
     if (hasMultipleStatements || hasControlFlow) {
@@ -2228,16 +2228,16 @@ export class MigrationManager {
     func: any,
     overwrite = false,
   ): string {
-    let definition = `DEFINE FUNCTION ${overwrite ? "OVERWRITE " : ""}${func.name}`;
+    let definition = `DEFINE FUNCTION ${overwrite ? 'OVERWRITE ' : ''}${func.name}`;
 
     // Add parameters
     if (func.parameters && func.parameters.length > 0) {
       const params = func.parameters
         .map((p: { name: string; type: string }) => `$${p.name}: ${p.type}`)
-        .join(", ");
+        .join(', ');
       definition += `(${params})`;
     } else {
-      definition += "()";
+      definition += '()';
     }
 
     // Add return type if specified
@@ -2267,7 +2267,7 @@ export class MigrationManager {
     scope: any,
     overwrite = false,
   ): string {
-    let definition = `DEFINE ACCESS ${overwrite ? "OVERWRITE " : ""}${scope.name} ON DATABASE TYPE RECORD`;
+    let definition = `DEFINE ACCESS ${overwrite ? 'OVERWRITE ' : ''}${scope.name} ON DATABASE TYPE RECORD`;
 
     // Add SIGNUP logic
     if (scope.signup) {
@@ -2301,16 +2301,16 @@ export class MigrationManager {
     analyzer: any,
     overwrite = false,
   ): string {
-    let definition = `DEFINE ANALYZER ${overwrite ? "OVERWRITE " : ""}${analyzer.name}`;
+    let definition = `DEFINE ANALYZER ${overwrite ? 'OVERWRITE ' : ''}${analyzer.name}`;
 
     // Add tokenizers
     if (analyzer.tokenizers && analyzer.tokenizers.length > 0) {
-      definition += ` TOKENIZERS ${analyzer.tokenizers.join(", ")}`;
+      definition += ` TOKENIZERS ${analyzer.tokenizers.join(', ')}`;
     }
 
     // Add filters
     if (analyzer.filters && analyzer.filters.length > 0) {
-      definition += ` FILTERS ${analyzer.filters.join(", ")}`;
+      definition += ` FILTERS ${analyzer.filters.join(', ')}`;
     }
 
     return `${definition};`;
@@ -2346,14 +2346,14 @@ export class MigrationManager {
     // Filter out auto-generated relation fields for relation tables
     const filteredNewFields = this.isRelationTable(newTable.name, newTable)
       ? newFields.filter(
-          (f: Record<string, unknown>) => f?.name && f.name !== "in" && f.name !== "out",
+          (f: Record<string, unknown>) => f?.name && f.name !== 'in' && f.name !== 'out',
         )
       : newFields;
 
     const filteredCurrentFields =
       currentTable && this.isRelationTable(currentTable.name, currentTable)
         ? currentFields.filter(
-            (f: Record<string, unknown>) => f?.name && f.name !== "in" && f.name !== "out",
+            (f: Record<string, unknown>) => f?.name && f.name !== 'in' && f.name !== 'out',
           )
         : currentFields;
 
@@ -2438,20 +2438,20 @@ export class MigrationManager {
     // Handle permissions: null/undefined in TypeScript schema means "FULL" (default)
     const newPermissions =
       newField.permissions === null || newField.permissions === undefined
-        ? "FULL"
+        ? 'FULL'
         : newField.permissions;
     const currentPermissions =
       currentField.permissions === null || currentField.permissions === undefined
-        ? "FULL"
+        ? 'FULL'
         : currentField.permissions;
 
     // Normalize default values for comparison
     // The database returns defaults as strings, but our schema may have arrays, objects, etc.
     const normalizeDefault = (value: unknown): string => {
-      if (value === null || value === undefined) return "";
-      if (typeof value === "string") return value;
+      if (value === null || value === undefined) return '';
+      if (typeof value === 'string') return value;
       if (Array.isArray(value)) return JSON.stringify(value);
-      if (typeof value === "object") return JSON.stringify(value);
+      if (typeof value === 'object') return JSON.stringify(value);
       return String(value);
     };
 
@@ -2473,8 +2473,8 @@ export class MigrationManager {
       if (
         comment === null ||
         comment === undefined ||
-        comment === "null" ||
-        comment === "undefined"
+        comment === 'null' ||
+        comment === 'undefined'
       ) {
         return null;
       }
@@ -2485,14 +2485,14 @@ export class MigrationManager {
 
     // Normalize value and assert (whitespace differences shouldn't trigger changes)
     const normalizeWhitespace = (value: unknown): string => {
-      if (value === null || value === undefined) return "";
-      let normalized = String(value).replace(/\s+/g, " ").trim();
+      if (value === null || value === undefined) return '';
+      let normalized = String(value).replace(/\s+/g, ' ').trim();
       // Remove parentheses around SELECT statements that SurrealDB adds automatically
       // e.g., "RETURN (SELECT ...)" -> "RETURN SELECT ..."
-      normalized = normalized.replace(/RETURN\s+\(\s*SELECT\s+/g, "RETURN SELECT ");
-      normalized = normalized.replace(/\)\s*;?\s*\}/g, " }");
+      normalized = normalized.replace(/RETURN\s+\(\s*SELECT\s+/g, 'RETURN SELECT ');
+      normalized = normalized.replace(/\)\s*;?\s*\}/g, ' }');
       // Remove trailing semicolons before closing braces (SurrealDB may omit them)
-      normalized = normalized.replace(/;\s*\}/g, " }");
+      normalized = normalized.replace(/;\s*\}/g, ' }');
       return normalized.trim();
     };
     const newValue = normalizeWhitespace(newField.value);
@@ -2657,7 +2657,7 @@ export class MigrationManager {
       );
       if (!currentIndex) {
         changes.push(
-          `-- New index: ${newIndex.name || newIndex.columns.join("_")} on table ${newTable.name}`,
+          `-- New index: ${newIndex.name || newIndex.columns.join('_')} on table ${newTable.name}`,
         );
         changes.push(this.generateIndexDefinition(newTable.name, newIndex));
       }
@@ -2769,8 +2769,8 @@ export class MigrationManager {
    * @param algorithm - The hash algorithm to use (default: "sha256")
    * @returns Checksum string in format "algorithm.hash"
    */
-  private calculateChecksum(content: string, algorithm: string = "sha256"): string {
-    const hash = createHash(algorithm).update(content).digest("hex");
+  private calculateChecksum(content: string, algorithm: string = 'sha256'): string {
+    const hash = createHash(algorithm).update(content).digest('hex');
     return `${algorithm}.${hash}`;
   }
 
@@ -2786,7 +2786,7 @@ export class MigrationManager {
    * @throws {Error} If the checksum format is invalid
    */
   private parseChecksum(checksum: string): { algorithm: string; hash: string } {
-    const parts = checksum.split(".");
+    const parts = checksum.split('.');
     if (parts.length !== 2) {
       throw new Error(`Invalid checksum format: ${checksum}. Expected format: algorithm.hash`);
     }
@@ -2886,7 +2886,7 @@ export async function loadSchemaFromFile(filePath: string): Promise<SurrealDBSch
   }
 
   const ext = path.extname(filePath);
-  if (ext !== ".js") {
+  if (ext !== '.js') {
     throw new Error(`Unsupported file type: ${ext}. Only .js files are supported.`);
   }
 

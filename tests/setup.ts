@@ -1,12 +1,12 @@
 // Test setup file for Vitest
-import { config } from "dotenv";
-import { vi } from "vitest";
+import { config } from 'dotenv';
+import { vi } from 'vitest';
 
 // Load environment variables for tests
-config({ path: ".env.test", quiet: true });
+config({ path: '.env.test', quiet: true });
 
 // Mock console methods to reduce noise in tests
-vi.stubGlobal("console", {
+vi.stubGlobal('console', {
   ...console,
   log: vi.fn(),
   warn: vi.fn(),
@@ -14,13 +14,13 @@ vi.stubGlobal("console", {
 });
 
 // Mock external dependencies for unit tests
-vi.mock("fs", () => ({
+vi.mock('fs', () => ({
   existsSync: vi.fn(),
   writeFileSync: vi.fn(),
   readFileSync: vi.fn(),
 }));
 
-vi.mock("fs/promises", () => ({
+vi.mock('fs/promises', () => ({
   writeFile: vi.fn(),
   readFile: vi.fn(),
   appendFile: vi.fn(),

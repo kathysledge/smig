@@ -4,7 +4,7 @@ import {
   composeSchema,
   defineSchema,
   string,
-} from "smig";
+} from 'smig';
 
 /**
  * Minimal Example Schema
@@ -19,12 +19,12 @@ import {
 
 // A simple task/todo schema
 const taskSchema = defineSchema({
-  table: "task",
+  table: 'task',
   schemafull: true,
   fields: {
     title: string()
-      .assert("$value != NONE")
-      .assert("string::len($value) >= 1 AND string::len($value) <= 200"),
+      .assert('$value != NONE')
+      .assert('string::len($value) >= 1 AND string::len($value) <= 200'),
     description: string(),
     completed: bool().default(false),
     createdAt: cf.timestamp(), // Automatically set to current time
