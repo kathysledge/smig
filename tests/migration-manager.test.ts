@@ -116,7 +116,6 @@ describe('MigrationManager', () => {
         tables: [
           {
             name: 'user',
-            schemafull: true,
             fields: [{ name: 'name', type: 'string', optional: false }],
             indexes: [],
             events: [],
@@ -171,7 +170,6 @@ describe('MigrationManager', () => {
         models: {
           user: defineSchema({
             table: 'user',
-            schemafull: true,
             fields: {
               name: string().required(),
             },
@@ -197,7 +195,6 @@ describe('MigrationManager', () => {
         models: {
           user: defineSchema({
             table: 'user',
-            schemafull: true,
             fields: {
               name: string().required(),
               email: string().unique(),
@@ -271,7 +268,6 @@ describe('MigrationManager', () => {
         models: {
           user: defineSchema({
             table: 'user',
-            schemafull: true,
             fields: {
               name: string().required(),
               'emails.address': string(), // New sub-field name

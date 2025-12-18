@@ -55,7 +55,7 @@ const relevanceSearch = analyzer('relevanceSearch')
 // ------------------------------
 const confirmation = defineSchema({
   table: 'confirmation',
-  schemafull: false, // SCHEMALESS
+  schemaless: true,
   fields: {},
 });
 
@@ -64,7 +64,7 @@ const confirmation = defineSchema({
 // ------------------------------
 const passwordReset = defineSchema({
   table: 'passwordReset',
-  schemafull: false, // SCHEMALESS
+  schemaless: true,
   fields: {},
 });
 
@@ -73,7 +73,7 @@ const passwordReset = defineSchema({
 // ------------------------------
 const user = defineSchema({
   table: 'user',
-  schemafull: false, // SCHEMALESS
+  schemaless: true,
   permissions: {
     select: 'id = $auth.id',
     update: 'id = $auth.id',
@@ -117,7 +117,7 @@ const user = defineSchema({
 // ------------------------------
 const topic = defineSchema({
   table: 'topic',
-  schemafull: false, // SCHEMALESS
+  schemaless: true,
   fields: {
     posts: array(record('post')).default([]),
     threads: array(record('thread')).default([]),
@@ -157,7 +157,7 @@ const topic = defineSchema({
 // ------------------------------
 const post = defineSchema({
   table: 'post',
-  schemafull: false, // SCHEMALESS
+  schemaless: true,
   fields: {
     user: record('user'),
     title: string().assert('$value = /.{4,128}/'),
@@ -199,7 +199,7 @@ const post = defineSchema({
 // ------------------------------
 const draft = defineSchema({
   table: 'draft',
-  schemafull: false, // SCHEMALESS
+  schemaless: true,
   fields: {
     user: record('user'),
     title: string().assert('$value = /.{4,128}/'),
@@ -216,7 +216,7 @@ const draft = defineSchema({
 // ------------------------------
 const pin = defineSchema({
   table: 'pin',
-  schemafull: false, // SCHEMALESS
+  schemaless: true,
   fields: {
     post: record('post'),
     user: record('user'),
@@ -230,7 +230,7 @@ const pin = defineSchema({
 // ------------------------------
 const thread = defineSchema({
   table: 'thread',
-  schemafull: false, // SCHEMALESS
+  schemaless: true,
   fields: {
     user: record('user'),
     content: string().assert('$value = /.{4,512}/'),
@@ -269,7 +269,7 @@ const thread = defineSchema({
 // ------------------------------
 const comment = defineSchema({
   table: 'comment',
-  schemafull: false, // SCHEMALESS
+  schemaless: true,
   fields: {
     user: record('user'),
     post: record('post'),
@@ -305,7 +305,7 @@ const comment = defineSchema({
 // ------------------------------
 const image = defineSchema({
   table: 'image',
-  schemafull: false, // SCHEMALESS
+  schemaless: true,
   fields: {
     user: record('user'),
     type: string(),
@@ -329,7 +329,7 @@ const image = defineSchema({
 // ------------------------------
 const notification = defineSchema({
   table: 'notification',
-  schemafull: false, // SCHEMALESS
+  schemaless: true,
   fields: {
     recipient: record('user'),
     // Union type - context can be post, comment, or user
@@ -345,7 +345,7 @@ const notification = defineSchema({
 // ------------------------------
 const feedback = defineSchema({
   table: 'feedback',
-  schemafull: false, // SCHEMALESS
+  schemaless: true,
   fields: {
     user: record('user'),
     time: datetime().default('time::now()'),
@@ -359,7 +359,7 @@ const feedback = defineSchema({
 // ------------------------------
 const report = defineSchema({
   table: 'report',
-  schemafull: false, // SCHEMALESS
+  schemaless: true,
   fields: {
     reporter: record('user'),
     // Generic record - can reference any table
@@ -373,7 +373,7 @@ const report = defineSchema({
 // ------------------------------
 const error = defineSchema({
   table: 'error',
-  schemafull: false, // SCHEMALESS
+  schemaless: true,
   fields: {},
 });
 

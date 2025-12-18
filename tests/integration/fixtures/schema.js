@@ -13,7 +13,6 @@ import {
 
 const userModel = defineSchema({
   table: 'user',
-  schemafull: true,
   fields: {
     name: string().required(),
     email: string().required(),
@@ -26,7 +25,6 @@ const userModel = defineSchema({
 
 const postModel = defineSchema({
   table: 'post',
-  schemafull: true,
   fields: {
     title: string().required(),
     content: string().required(),

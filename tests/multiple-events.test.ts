@@ -91,7 +91,6 @@ describe('Multiple Statements in Events', () => {
     it('should work in a full schema definition', () => {
       const postSchema = defineSchema({
         table: 'post',
-        schemafull: true,
         fields: {
           title: string().required(),
           content: string().required(),
@@ -216,7 +215,6 @@ describe('Multiple Statements in Events', () => {
     it('should compose schema with multiple complex events', () => {
       const userSchema = defineSchema({
         table: 'user',
-        schemafull: true,
         fields: {
           name: string().required(),
           email: string().required(),
@@ -240,7 +238,6 @@ describe('Multiple Statements in Events', () => {
 
       const followSchema = defineSchema({
         table: 'follow',
-        schemafull: true,
         fields: {
           follower: record('user').required(),
           following: record('user').required(),

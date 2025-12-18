@@ -33,7 +33,6 @@ import {
 // User model - social media user profile
 const userSchema = defineSchema({
   table: 'user',
-  schemafull: true,
   fields: {
     id_uuid: uuid().default('rand::uuid::v7()'),
     username: string()
@@ -89,7 +88,6 @@ const userSchema = defineSchema({
 // Post model - social media posts
 const postSchema = defineSchema({
   table: 'post',
-  schemafull: true,
   fields: {
     id_uuid: uuid().default('rand::uuid::v7()'),
     content: string()
@@ -144,7 +142,6 @@ const postSchema = defineSchema({
 // Comment model - replies and comments on posts
 const commentSchema = defineSchema({
   table: 'comment',
-  schemafull: true,
   fields: {
     id_uuid: uuid().default('rand::uuid::v7()'),
     content: string()
@@ -210,7 +207,6 @@ const blockRelation = defineRelation({
 // Notification model - system notifications
 const notificationSchema = defineSchema({
   table: 'notification',
-  schemafull: true,
   fields: {
     id_uuid: uuid().default('rand::uuid::v7()'),
     recipient: cf.owner('user'),

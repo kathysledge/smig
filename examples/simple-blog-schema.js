@@ -28,7 +28,6 @@ import {
 // User model - represents blog authors
 const userSchema = defineSchema({
   table: 'user',
-  schemafull: true,
   fields: {
     name: string()
       .assert('$value != NONE')
@@ -45,7 +44,6 @@ const userSchema = defineSchema({
 // Post model - represents blog posts
 const postSchema = defineSchema({
   table: 'post',
-  schemafull: true,
   fields: {
     title: string()
       .assert('$value != NONE')

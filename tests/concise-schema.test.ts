@@ -145,7 +145,6 @@ describe('Concise Schema System', () => {
     it('should create a basic schema', () => {
       const schema = defineSchema({
         table: 'user',
-        schemafull: true,
         comments: ['User table'],
         fields: {
           // SurrealDB will auto-generate IDs, no need for manual ID field

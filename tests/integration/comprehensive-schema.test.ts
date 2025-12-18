@@ -126,7 +126,6 @@ const contentAnalyzer = analyzer('content_analyzer')
 // Tests all basic field types and modifiers
 const comprehensiveUser = defineSchema({
   table: 'comprehensive_user',
-  schemafull: true,
   fields: {
     // String with email validation (using SurrealDB v3 function)
     // Note: DELETE permissions not allowed on fields in SurrealDB v3
@@ -227,7 +226,6 @@ const comprehensiveUser = defineSchema({
 // Tests record references, arrays, and more complex fields
 const comprehensivePost = defineSchema({
   table: 'comprehensive_post',
-  schemafull: true,
   fields: {
     title: string()
       .assert('$value != NONE')
@@ -287,7 +285,6 @@ const comprehensivePost = defineSchema({
 // Tests union types and nested structures
 const comprehensiveComment = defineSchema({
   table: 'comprehensive_comment',
-  schemafull: true,
   fields: {
     content: string().assert('$value != NONE'),
     author: record('comprehensive_user').required(),
@@ -315,7 +312,6 @@ const comprehensiveComment = defineSchema({
 // Tests enum validation
 const notification = defineSchema({
   table: 'notification',
-  schemafull: true,
   fields: {
     recipient: record('comprehensive_user').required(),
     message: string().assert('$value != NONE'),
@@ -332,7 +328,6 @@ const notification = defineSchema({
 // For event logging
 const auditLog = defineSchema({
   table: 'audit_log',
-  schemafull: true,
   fields: {
     user: record('comprehensive_user').required(),
     action: string().required(),
@@ -469,7 +464,6 @@ const contentAnalyzer = analyzer('content_analyzer')
 // --- MODIFIED TABLE: comprehensive_user ---
 const comprehensiveUser = defineSchema({
   table: 'comprehensive_user',
-  schemafull: true,
   fields: {
     email: string()
       .assert('string::is_email($value)')
@@ -540,7 +534,6 @@ const comprehensiveUser = defineSchema({
 // --- SAME TABLE: comprehensive_post ---
 const comprehensivePost = defineSchema({
   table: 'comprehensive_post',
-  schemafull: true,
   fields: {
     title: string()
       .assert('$value != NONE')
@@ -590,7 +583,6 @@ const comprehensivePost = defineSchema({
 // --- SAME TABLE: comprehensive_comment ---
 const comprehensiveComment = defineSchema({
   table: 'comprehensive_comment',
-  schemafull: true,
   fields: {
     content: string().assert('$value != NONE'),
     author: record('comprehensive_user').required(),
@@ -614,7 +606,6 @@ const comprehensiveComment = defineSchema({
 // --- SAME TABLE: notification ---
 const notification = defineSchema({
   table: 'notification',
-  schemafull: true,
   fields: {
     recipient: record('comprehensive_user').required(),
     message: string().assert('$value != NONE'),
@@ -630,7 +621,6 @@ const notification = defineSchema({
 // --- SAME TABLE: audit_log ---
 const auditLog = defineSchema({
   table: 'audit_log',
-  schemafull: true,
   fields: {
     user: record('comprehensive_user').required(),
     action: string().required(),
