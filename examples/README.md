@@ -92,7 +92,7 @@ A full-featured social platform demonstrating advanced **smig** capabilities.
 - Full-text search analyzers with `analyzer()` builder
 - Custom database functions with `fn()` builder
 - Union type records for polymorphic references
-- Computed fields with `<future>` syntax
+- Computed fields with `.computed()` method
 - Complex voting systems with nested fields
 - Topic-based content organization
 - Thread and comment hierarchies
@@ -133,6 +133,11 @@ smig migrate --schema examples/social-platform-schema.js
 
 ## Key features demonstrated
 
+> **SurrealDB 3 compatibility**: These examples use SurrealDB 3 syntax. Key differences from v2:
+> - Regex validation: `string::matches($value, /regex/)` instead of `$value ~ /regex/`
+> - Function names: `string::is_email()` instead of `string::is::email()`
+> - Computed fields: `{ expression }` instead of `<future> { expression }`
+
 ### Field types & validation
 ```javascript
 // Basic types
@@ -151,10 +156,10 @@ settings: option('object'), // Optional JSON data
 // Validation with stacked assertions (combined with AND)
 email: string()
   .assert('$value != NONE')
-  .assert('$value ~ /^[^@]+@[^@]+\\.[^@]+$/'),
+  .assert('string::is_email($value)'),
 
 username: string()
-  .assert('$value ~ /^[a-zA-Z0-9_]{3,20}$/'),
+  .assert('string::matches($value, /^[a-zA-Z0-9_]{3,20}$/)'),
 
 content: string()
   .assert('$value != NONE')

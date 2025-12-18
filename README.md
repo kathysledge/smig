@@ -267,15 +267,14 @@ Build robust data validation with composable assertions. Multiple `.assert()` ca
 ```javascript
 fields: {
   email: string()
-    .assert('$value ~ /^[^@]+@[^@]+\\.[^@]+$/'), // Regex validation
+    .assert('string::is_email($value)'), // Built-in email validation
 
   age: int()
     .assert('$value >= 0')
     .assert('$value <= 150'), // Multiple asserts are combined with AND
 
   username: string()
-    .assert('string::len($value) >= 3')
-    .assert('string::len($value) <= 20'), // Composable validation logic
+    .assert('string::matches($value, /^[a-zA-Z0-9_]{3,20}$/)'), // Regex validation
 
   price: decimal()
     .assert('$value > 0'), // Must be positive
@@ -284,6 +283,8 @@ fields: {
     .assert('$value INSIDE ["active", "inactive", "pending"]'), // Enum-like
 }
 ```
+
+> **SurrealDB 3 note**: Use `string::matches($value, /regex/)` for regex validation instead of the older `$value ~ /regex/` syntax. Function names use underscores (e.g., `string::is_email`) instead of double colons.
 
 ### Common Field Patterns
 
@@ -978,7 +979,7 @@ fields: {
 |--------|-------------|---------|
 | `.default(value)` | Set default value | `bool().default(true)` |
 | `.value(expression)` | Set SurrealQL value | `datetime().value('time::now()')` |
-| `.computed(expression)` | Set computed field with `<future>` | `int().computed('array::len(items)')` |
+| `.computed(expression)` | Set computed field | `int().computed('array::len(items)')` |
 | `.assert(condition)` | Add validation | `string().assert('$value != ""')` |
 | `.required()` | Require non-null value | `string().required()` |
 
@@ -1049,9 +1050,14 @@ npx smig migrate --schema examples/simple-blog-schema.js
 
 ### Does **smig** work with SurrealDB 3?
 
-Not yet, but we're actively working on it! SurrealDB 3 requires a new JavaScript library for connectivity, and we're currently implementing support for it. Once that's complete, we'll also add support for the new `ALTER FIELD` syntax that SurrealDB 3 introduces, which will provide even more flexibility for schema changes.
+Yes! Version 1.x of **smig** fully supports SurrealDB 3. Key syntax changes handled automatically:
 
-For now, **smig** works with SurrealDB 2.x using the `DEFINE OVERWRITE` method for field modifications.
+- **Regex assertions**: Use `string::matches($value, /regex/)` instead of `$value ~ /regex/`
+- **Computed fields**: Use `{ expression }` instead of `<future> { expression }`
+- **Function names**: Use underscores like `string::is_email()` instead of `string::is::email()`
+- **Field permissions**: `DELETE` permission is only available on tables, not individual fields
+
+For SurrealDB 2.x compatibility, use **smig** version 0.x.
 
 ### Why don't my tables need an ID field?
 

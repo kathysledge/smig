@@ -11,19 +11,23 @@ The testing strategy is designed to ensure reliability, correctness, and robustn
 - **Configuration Tests**: Test multi-environment configuration loading
 - **End-to-End Tests**: Test complete migration workflows
 
+> **SurrealDB 3 compatibility**: All tests are designed to work with SurrealDB 3.x. The integration tests automatically handle the syntax differences between SurrealDB 2 and 3, including regex operators, function naming, and computed field syntax.
+
 ## Test Structure
 
 ```
 tests/
-├── README.md                 # This file
-├── setup.ts                  # Unit test setup (Vitest)
-├── *.test.ts                 # Unit tests
-├── integration/              # Integration tests (separate suite)
-│   ├── setup.ts             # Integration test setup
-│   ├── cli.test.ts          # CLI command testing
-│   ├── config.test.ts       # Configuration system testing
-│   └── fixtures/            # Test schemas and data
-└── coverage/                # Test coverage reports
+├── README.md                        # This file
+├── setup.ts                         # Unit test setup (Vitest)
+├── *.test.ts                        # Unit tests
+├── integration/                     # Integration tests (separate suite)
+│   ├── setup.ts                    # Integration test setup
+│   ├── cli.test.ts                 # CLI command testing
+│   ├── config.test.ts              # Configuration system testing
+│   ├── example-schemas.test.ts     # Example schema migration cycles
+│   ├── comprehensive-schema.test.ts # Full entity coverage testing
+│   └── fixtures/                   # Test schemas and data
+└── coverage/                        # Test coverage reports
 ```
 
 ## Running Tests
@@ -164,6 +168,17 @@ const TEST_DATABASES = {
 - Configuration precedence testing
 - Environment detection and validation
 - Real database connectivity validation
+
+#### ✅ **Example Schemas** (`integration/example-schemas.test.ts`)
+- Migration cycle testing for all example schemas
+- Idempotency verification (no phantom changes after migration)
+- Rollback testing
+- Validates all examples work with SurrealDB 3
+
+#### ✅ **Comprehensive Schema** (`integration/comprehensive-schema.test.ts`)
+- Full entity coverage (all field types, indexes, events, functions, scopes, analyzers)
+- Schema modification detection between versions
+- Tests every DSL feature in combination
 
 ### Test Isolation
 
