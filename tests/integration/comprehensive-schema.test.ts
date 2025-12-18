@@ -128,10 +128,11 @@ const comprehensiveUser = defineSchema({
   table: 'comprehensive_user',
   schemafull: true,
   fields: {
-    // String with validation
+    // String with email validation (using SurrealDB v3 function)
+    // Note: DELETE permissions not allowed on fields in SurrealDB v3
     email: string()
-      .assert('$value ~ /^[^@]+@[^@]+\\\\.[^@]+$/')
-      .permissions('FOR select WHERE true FOR create, update, delete WHERE $auth.id = id'),
+      .assert('string::is_email($value)')
+      .permissions('FOR select WHERE true FOR create, update WHERE $auth.id = id'),
 
     // String with length constraints
     username: string()
@@ -471,8 +472,8 @@ const comprehensiveUser = defineSchema({
   schemafull: true,
   fields: {
     email: string()
-      .assert('$value ~ /^[^@]+@[^@]+\\\\.[^@]+$/')
-      .permissions('FOR select WHERE true FOR create, update, delete WHERE $auth.id = id'),
+      .assert('string::is_email($value)')
+      .permissions('FOR select WHERE true FOR create, update WHERE $auth.id = id'),
 
     username: string()
       .assert('$value != NONE')

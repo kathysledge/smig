@@ -36,8 +36,12 @@ const userSchema = defineSchema({
   schemafull: true,
   fields: {
     id_uuid: uuid().default('rand::uuid::v7()'),
-    username: string().assert('$value ~ /^[a-zA-Z0-9_]{3,20}$/'), // Alphanumeric and underscore, 3-20 chars
-    email: string().assert('$value ~ /^[^@]+@[^@]+\\.[^@]+$/'), // Email validation
+    username: string()
+      .assert('$value != NONE')
+      .assert('string::len($value) >= 3')
+      .assert('string::len($value) <= 20')
+      .assert('string::is_alphanum($value)'), // SurrealDB v3: use built-in validator
+    email: string().assert('string::is_email($value)'), // Email validation (SurrealDB v3)
     firstName: string().assert('$value != NONE'),
     lastName: string().assert('$value != NONE'),
     bio: option('string'), // Optional biography

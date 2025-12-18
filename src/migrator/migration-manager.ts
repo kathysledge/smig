@@ -1687,24 +1687,28 @@ export class MigrationManager {
     for (let i = start; i < fieldDef.length; i++) {
       const char = fieldDef[i];
 
-      // Check if we're starting a <future> block
+      // Check if we're starting a <future> block (SurrealDB v2 syntax)
       if (!inFuture && fieldDef.substring(i, i + 8) === '<future>') {
         inFuture = true;
       }
 
-      // Track brace depth
+      // Track brace depth - also handle SurrealDB v3 computed fields { }
       if (char === '{') {
         braceDepth++;
+        // If this is the first brace at the start of value, it's a computed expression
+        if (braceDepth === 1 && value.trim() === '') {
+          inFuture = true; // Treat { } blocks like <future> blocks for parsing
+        }
       } else if (char === '}') {
         braceDepth--;
-        // If we close all braces in a future block, we're done with the value
+        // If we close all braces in a future/computed block, we're done with the value
         if (inFuture && braceDepth === 0) {
           value += char;
           break;
         }
       }
 
-      // If not in a future block and we hit a keyword, stop
+      // If not in a future/computed block and we hit a keyword, stop
       if (braceDepth === 0 && !inFuture) {
         const remaining = fieldDef.substring(i);
         if (/^\s+(ASSERT|DEFAULT|PERMISSIONS|COMMENT|FLEX(?:IBLE)?)\s/.test(remaining)) {
@@ -1930,8 +1934,30 @@ export class MigrationManager {
       return true;
     }
 
-    // Compare body (normalize whitespace for comparison)
-    const normalizeBody = (body: string) => body?.replace(/\s+/g, ' ').trim() || '';
+    // Compare body (normalize whitespace and unnecessary parentheses for comparison)
+    const normalizeBody = (body: string) => {
+      if (!body) return '';
+      let normalized = body.replace(/\s+/g, ' ').trim();
+      // Remove trailing semicolons (SurrealDB may omit or add them)
+      normalized = normalized.replace(/;\s*$/, '');
+      // Normalize parentheses around arithmetic expressions like (time::now() - $time)
+      // that SurrealDB may return without parens
+      let prev = '';
+      while (prev !== normalized) {
+        prev = normalized;
+        // Remove parens around function call minus variable: (func::call() - $var)
+        normalized = normalized.replace(
+          /\(([a-zA-Z_:]+\([^()]*\)\s*[-+*/]\s*\$[a-zA-Z_]+)\)/g,
+          '$1',
+        );
+        // Remove parens around arithmetic with two function calls
+        normalized = normalized.replace(
+          /\(([a-zA-Z_:]+\([^()]*\)\s*[-+*/]\s*[a-zA-Z_:]+\([^()]*\))\)/g,
+          '$1',
+        );
+      }
+      return normalized;
+    };
     if (normalizeBody(currentFunc.body) !== normalizeBody(newFunc.body)) {
       return true;
     }
@@ -2417,6 +2443,22 @@ export class MigrationManager {
     // Check for removed fields
     for (const currentField of filteredCurrentFields) {
       if (!currentField || !currentField.name) continue;
+
+      // Skip auto-generated array element fields (e.g., tags.* for array field tags)
+      // SurrealDB automatically creates these when you define an array<T> field
+      const fieldName = String(currentField.name);
+      if (fieldName.endsWith('.*')) {
+        // Check if the parent field (e.g., "tags") exists in the schema as an array
+        const parentFieldName = fieldName.slice(0, -2); // Remove ".*"
+        const parentField = filteredNewFields.find(
+          (f: Record<string, unknown>) => f && f.name === parentFieldName,
+        );
+        if (parentField && String(parentField.type || '').startsWith('array')) {
+          // This is an auto-generated array element field, skip it
+          continue;
+        }
+      }
+
       const stillExists = filteredNewFields.find(
         (f: Record<string, unknown>) => f && f.name === currentField.name,
       );
@@ -2461,8 +2503,10 @@ export class MigrationManager {
     // Handle permissions: null/undefined in TypeScript schema means "FULL" (default)
     // Also normalize permission strings for comparison (whitespace, case, syntax differences)
     const normalizePermissions = (perm: unknown): string => {
-      if (perm === null || perm === undefined) return 'FULL';
+      if (perm === null || perm === undefined || perm === '') return 'FULL';
       let normalized = String(perm).replace(/\s+/g, ' ').trim().toUpperCase();
+      // FULL is the default - normalize to FULL
+      if (normalized === 'FULL' || normalized === '' || normalized === 'NONE') return 'FULL';
       // SurrealDB drops DELETE from field permissions (deprecated)
       // Remove DELETE and surrounding commas from comparison
       // Handle: ", DELETE", "DELETE,", ", DELETE,", "DELETE WHERE", ", DELETE WHERE"
@@ -2553,15 +2597,72 @@ export class MigrationManager {
       // Normalize duration values - SurrealDB normalizes 7d to 1w, etc.
       // Convert weeks to days for consistent comparison (1w = 7d)
       normalized = normalized.replace(/\b(\d+)w\b/g, (_, num) => `${parseInt(num, 10) * 7}d`);
+
+      // Iteratively remove all unnecessary parentheses in assert/value expressions
+      // Keep looping until no more changes are made
+      let prevNormalized = '';
+      while (prevNormalized !== normalized) {
+        prevNormalized = normalized;
+
+        // Remove parens around: ($value OPERATOR VALUE) followed by AND/OR
+        // e.g., "($value != NONE) AND" -> "$value != NONE AND"
+        normalized = normalized.replace(
+          /\((\$[a-zA-Z_][a-zA-Z0-9_.]*\s*[!=<>]+\s*[A-Z0-9_]+)\)\s*(AND|OR)/gi,
+          '$1 $2',
+        );
+
+        // Remove parens around: ($value OPERATOR VALUE) at end of expression (after AND/OR)
+        // e.g., "AND ($value <= 100)" -> "AND $value <= 100"
+        normalized = normalized.replace(
+          /(AND|OR)\s+\((\$[a-zA-Z_][a-zA-Z0-9_.]*\s*[!=<>]+\s*[A-Z0-9_]+)\)$/gi,
+          '$1 $2',
+        );
+
+        // Remove parens around ($value >= 0) or ($value <= 65536) standalone numeric comparisons
+        normalized = normalized.replace(/\((\$[a-zA-Z_][a-zA-Z0-9_.]*\s*[<>=!]+\s*\d+)\)/gi, '$1');
+
+        // Remove parens around function calls: (func::name($arg) OPERATOR VALUE)
+        // e.g., "(string::len($value) >= 3)" -> "string::len($value) >= 3"
+        normalized = normalized.replace(/\(([a-zA-Z_:]+\([^()]+\)\s*[!=<>]+\s*\d+)\)/g, '$1');
+
+        // Remove parens around standalone function calls: (string::is_alphanum($value))
+        normalized = normalized.replace(/\(([a-zA-Z_:]+\([^()]+\))\)/g, '$1');
+
+        // Remove parens around type casts: (<type> expr) -> <type> expr
+        // e.g., "(<float> array::len(x) / 2)" -> "<float> array::len(x) / 2"
+        normalized = normalized.replace(/\((<[a-zA-Z]+>\s+[^()]+(?:\([^()]*\)[^()]*)*)\)/g, '$1');
+
+        // Remove parens around expressions with AND/OR inside (handles nested function parens)
+        // Match: (expr AND expr) where expr can have one level of nested parens
+        normalized = normalized.replace(
+          /\(([^()]*(?:\([^()]*\)[^()]*)*\s+(?:AND|OR)\s+[^()]*(?:\([^()]*\)[^()]*)*)\)/gi,
+          '$1',
+        );
+      }
+
       return normalized.trim();
     };
+
+    // Normalize type for comparison - SurrealDB returns `none | X` for option<X>
+    const normalizeType = (type: unknown): string => {
+      if (type === null || type === undefined) return '';
+      let normalized = String(type).replace(/\s+/g, ' ').trim();
+      // SurrealDB v3 returns "none | X" for option<X> - normalize to option<X>
+      normalized = normalized.replace(/^none\s*\|\s*(.+)$/, 'option<$1>');
+      // Also handle "X | none" format
+      normalized = normalized.replace(/^(.+?)\s*\|\s*none$/, 'option<$1>');
+      return normalized;
+    };
+
     const newValue = normalizeWhitespace(newField.value);
     const currentValue = normalizeWhitespace(currentField.value);
     const newAssert = normalizeWhitespace(newField.assert);
     const currentAssert = normalizeWhitespace(currentField.assert);
+    const newType = normalizeType(newField.type);
+    const currentType = normalizeType(currentField.type);
 
     const hasChanges =
-      newField.type !== currentField.type ||
+      newType !== currentType ||
       newReadonly !== currentReadonly ||
       newFlexible !== currentFlexible ||
       newIfNotExists !== currentIfNotExists ||
@@ -2577,9 +2678,7 @@ export class MigrationManager {
       // Debug: Show what changed
       debugLog(`Field ${newField.name} in table ${tableName} has changes:`);
       debugLog(`  Comparison details:`);
-      debugLog(
-        `    type: "${currentField.type}" vs "${newField.type}" = ${newField.type !== currentField.type}`,
-      );
+      debugLog(`    type: "${currentType}" vs "${newType}" = ${newType !== currentType}`);
       debugLog(
         `    readonly: ${currentReadonly} vs ${newReadonly} = ${newReadonly !== currentReadonly}`,
       );
@@ -2610,8 +2709,8 @@ export class MigrationManager {
       debugLog(
         `    comment: "${currentComment}" vs "${newComment}" = ${newComment !== currentComment}`,
       );
-      if (newField.type !== currentField.type) {
-        debugLog(`  - type: "${currentField.type}" -> "${newField.type}"`);
+      if (newType !== currentType) {
+        debugLog(`  - type: "${currentType}" -> "${newType}"`);
       }
       if (newField.assert !== currentField.assert) {
         debugLog(`  - assert: "${currentField.assert}" -> "${newField.assert}"`);

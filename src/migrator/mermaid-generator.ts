@@ -336,13 +336,16 @@ export class MermaidGenerator {
       }
     }
 
-    // Computed fields
-    if (field.value?.includes('<future>')) {
+    // Computed fields - check for both <future> (v2) and { } (v3) syntax
+    const isComputed =
+      field.value?.includes('<future>') ||
+      (field.value?.startsWith('{') && field.value?.endsWith('}'));
+    if (isComputed) {
       annotations.push('computed');
     }
 
     // Value expressions (non-computed)
-    if (field.value && !field.value.includes('<future>')) {
+    if (field.value && !isComputed) {
       const valueStr = this.truncate(field.value, 30);
       annotations.push(`value: ${valueStr}`);
     }

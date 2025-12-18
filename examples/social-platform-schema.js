@@ -81,8 +81,11 @@ const user = defineSchema({
     delete: 'roles CONTAINS "admin"',
   },
   fields: {
-    email: string().assert('string::is::email($value)'),
-    name: string().assert('$value = /^[\\w]{3,32}$/'),
+    email: string().assert('string::is_email($value)'), // SurrealDB v3 uses underscores
+    name: string()
+      .assert('$value != NONE')
+      .assert('string::len($value) >= 3')
+      .assert('string::len($value) <= 32'), // SurrealDB v3: use length validation
     link: option('string'),
     description: option('string'),
     topics: array(record('topic')).default([]),

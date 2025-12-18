@@ -249,7 +249,7 @@ describe('New Schema Features', () => {
   });
 
   describe('Computed Fields', () => {
-    it('should create a computed field with future syntax', () => {
+    it('should create a computed field with braces syntax', () => {
       const score = int().computed(`
         array::len(votes.positive) - 
         (<float> array::len(votes.misleading) / 2) - 
@@ -257,7 +257,8 @@ describe('New Schema Features', () => {
       `);
 
       const built = score.build();
-      expect(built.value).toContain('<future>');
+      // SurrealDB v3: computed fields use { } instead of <future> { }
+      expect(built.value).toMatch(/^\{.*\}$/s);
       expect(built.value).toContain('array::len(votes.positive)');
     });
 
@@ -268,7 +269,8 @@ describe('New Schema Features', () => {
       `);
 
       const built = followers.build();
-      expect(built.value).toContain('<future>');
+      // SurrealDB v3: computed fields use { } instead of <future> { }
+      expect(built.value).toMatch(/^\{.*\}$/s);
       expect(built.value).toContain('LET $id = id');
     });
 
@@ -276,11 +278,11 @@ describe('New Schema Features', () => {
       // value() is for simple expressions
       const createdAt = string().value('time::now()');
       expect(createdAt.build().value).toBe('time::now()');
-      expect(createdAt.build().value).not.toContain('<future>');
+      expect(createdAt.build().value).not.toMatch(/^\{.*\}$/s);
 
-      // computed() wraps in <future> { }
+      // computed() wraps in { } for deferred evaluation (SurrealDB v3)
       const score = int().computed('array::len(votes)');
-      expect(score.build().value).toContain('<future>');
+      expect(score.build().value).toMatch(/^\{.*\}$/s);
     });
 
     it('should work with any() type for dynamic computed fields', () => {
@@ -291,7 +293,8 @@ describe('New Schema Features', () => {
 
       const built = followers.build();
       expect(built.type).toBe('any');
-      expect(built.value).toContain('<future>');
+      // SurrealDB v3: computed fields use { } instead of <future> { }
+      expect(built.value).toMatch(/^\{.*\}$/s);
       expect(built.value).toContain('SELECT VALUE id FROM user');
     });
   });
@@ -391,7 +394,8 @@ describe('New Schema Features', () => {
     it('should handle nested fields with computed values', () => {
       const score = string().computed('array::len(votes.positive)');
       const built = score.build();
-      expect(built.value).toContain('<future>');
+      // SurrealDB v3: computed fields use { } instead of <future> { }
+      expect(built.value).toMatch(/^\{.*\}$/s);
       expect(built.value).toContain('array::len(votes.positive)');
     });
 
@@ -399,7 +403,8 @@ describe('New Schema Features', () => {
       const field = int().computed('array::len(items)').assert('$value >= 0');
 
       const built = field.build();
-      expect(built.value).toContain('<future>');
+      // SurrealDB v3: computed fields use { } instead of <future> { }
+      expect(built.value).toMatch(/^\{.*\}$/s);
       expect(built.assert).toBe('$value >= 0');
     });
 

@@ -3,10 +3,16 @@ import { SurrealClient } from '../src/database/surreal-client';
 import type { Migration } from '../src/types/schema';
 
 // Mock the surrealdb module
+// For SDK v2, query() returns a Query object with .collect() method
+const createMockQuery = (result: unknown) => ({
+  collect: vi.fn().mockResolvedValue(result),
+});
+
 const mockSurrealDB = {
   connect: vi.fn(),
   close: vi.fn(),
-  query: vi.fn(),
+  // Return object with collect method instead of direct result
+  query: vi.fn((_q: string) => createMockQuery([])),
   create: vi.fn(),
   select: vi.fn(),
   delete: vi.fn(),
@@ -94,7 +100,8 @@ describe('SurrealClient', () => {
   describe('Query Execution', () => {
     it('should execute SQL queries', async () => {
       const mockResult = [{ success: true }];
-      mockSurrealDB.query.mockResolvedValue(mockResult);
+      // SDK v2: query() returns Query object with .collect() method
+      mockSurrealDB.query.mockReturnValue(createMockQuery(mockResult));
 
       const result = await client.executeQuery('SELECT * FROM user');
 
@@ -103,7 +110,10 @@ describe('SurrealClient', () => {
     });
 
     it('should handle query errors', async () => {
-      mockSurrealDB.query.mockRejectedValue(new Error('Query failed'));
+      // SDK v2: Query object's collect() method can reject
+      mockSurrealDB.query.mockReturnValue({
+        collect: vi.fn().mockRejectedValue(new Error('Query failed')),
+      });
 
       await expect(client.executeQuery('INVALID SQL')).rejects.toThrow('Query failed');
     });
@@ -114,7 +124,8 @@ describe('SurrealClient', () => {
   describe('Schema Information', () => {
     it('should get current schema string', async () => {
       const mockSchemaString = 'DEFINE TABLE user SCHEMAFULL;';
-      mockSurrealDB.query.mockResolvedValue(mockSchemaString);
+      // SDK v2: query() returns Query object with .collect() method
+      mockSurrealDB.query.mockReturnValue(createMockQuery(mockSchemaString));
 
       const schema = await client.getCurrentSchema();
 
@@ -123,53 +134,55 @@ describe('SurrealClient', () => {
   });
 
   describe('SDK Methods', () => {
-    it('should create records using SDK', async () => {
-      const mockRecord = { id: 'user:123', name: 'John' };
-      mockSurrealDB.create.mockResolvedValue(mockRecord);
+    it('should create records using INSERT query', async () => {
+      const mockRecord = { id: 'user:123', name: 'John', email: 'john@example.com' };
+      // SDK v2: create uses INSERT query with .collect()
+      mockSurrealDB.query.mockReturnValue(createMockQuery([[mockRecord]]));
 
       const data = { name: 'John', email: 'john@example.com' };
       const result = await client.create('user', data);
 
-      expect(mockSurrealDB.create).toHaveBeenCalledWith('user', data);
+      expect(mockSurrealDB.query).toHaveBeenCalled();
       expect(result).toEqual(mockRecord);
     });
 
-    it('should select records using SDK', async () => {
+    it('should select records using SELECT query', async () => {
       const mockRecords = [
         { id: 'user:1', name: 'John' },
         { id: 'user:2', name: 'Jane' },
       ];
-      mockSurrealDB.select.mockResolvedValue(mockRecords);
+      // SDK v2: select uses SELECT query with .collect()
+      mockSurrealDB.query.mockReturnValue(createMockQuery([mockRecords]));
 
       const result = await client.select('user');
 
-      expect(mockSurrealDB.select).toHaveBeenCalledWith('user');
+      expect(mockSurrealDB.query).toHaveBeenCalled();
       expect(result).toEqual(mockRecords);
     });
 
-    it('should delete records by string ID using SDK', async () => {
-      const { RecordId } = await import('surrealdb');
-      mockSurrealDB.delete.mockResolvedValue(true);
+    it('should delete records using DELETE query', async () => {
+      const mockDeletedRecords = [{ id: '_migrations:abc123' }];
+      // SDK v2: delete uses DELETE query with .collect()
+      mockSurrealDB.query.mockReturnValue(createMockQuery([mockDeletedRecords]));
 
       await client.delete('_migrations:abc123');
 
-      expect(RecordId).toHaveBeenCalledWith('_migrations', 'abc123');
-      expect(mockSurrealDB.delete).toHaveBeenCalled();
+      expect(mockSurrealDB.query).toHaveBeenCalled();
     });
 
-    it('should handle malformed record IDs', async () => {
-      // This test verifies that delete works even with simple table names
-      mockSurrealDB.delete.mockResolvedValue(true);
+    it('should handle table name delete', async () => {
+      // This test verifies that delete works with simple table names
+      mockSurrealDB.query.mockReturnValue(createMockQuery([[]]));
 
       const result = await client.delete('invalid_id');
-      expect(result).toBe(true);
-      expect(mockSurrealDB.delete).toHaveBeenCalledWith('invalid_id');
+      expect(result).toEqual([]);
     });
   });
 
   describe('Health Check', () => {
     it('should perform health check', async () => {
-      mockSurrealDB.query.mockResolvedValue([{ status: 'OK' }]);
+      // SDK v2: query() returns Query object with .collect() method
+      mockSurrealDB.query.mockReturnValue(createMockQuery([{ status: 'OK' }]));
 
       const isHealthy = await client.healthCheck();
 
@@ -189,7 +202,8 @@ describe('SurrealClient', () => {
         message: 'Test migration',
       };
 
-      mockSurrealDB.query.mockResolvedValue([]);
+      // SDK v2: query() returns Query object with .collect() method
+      mockSurrealDB.query.mockReturnValue(createMockQuery([[]]));
 
       await client.applyMigration(migration);
 
@@ -207,7 +221,8 @@ describe('SurrealClient', () => {
         downChecksum: 'sha256.def456',
       };
 
-      mockSurrealDB.query.mockResolvedValue([]);
+      // SDK v2: query() returns Query object with .collect() method
+      mockSurrealDB.query.mockReturnValue(createMockQuery([[]]));
 
       await client.rollbackMigration(migration);
 

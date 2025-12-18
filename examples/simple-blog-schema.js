@@ -33,7 +33,7 @@ const userSchema = defineSchema({
     name: string()
       .assert('$value != NONE')
       .assert('string::len($value) >= 1 AND string::len($value) <= 100'),
-    email: string().assert('$value ~ /^[^@]+@[^@]+\\.[^@]+$/'), // Email validation
+    email: string().assert('string::is_email($value)'), // Email validation (SurrealDB v3)
     bio: option('string'), // Optional biography
     createdAt: cf.timestamp(),
   },

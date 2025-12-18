@@ -6,7 +6,7 @@
  * authentication, query execution, and schema introspection.
  */
 
-import { RecordId, Surreal } from 'surrealdb';
+import { Surreal } from 'surrealdb';
 import type { DatabaseConfig, Migration, MigrationStatus } from '../types/schema';
 
 /**
@@ -150,7 +150,10 @@ export class SurrealClient {
     }
 
     try {
-      const result = await this.client.query(query);
+      // SurrealDB SDK v2 returns a Query object that needs .collect() to get results
+      // biome-ignore lint/suspicious/noExplicitAny: SDK v2 Query type is not properly exported
+      const queryResult = this.client.query(query) as any;
+      const result = await queryResult.collect();
       return result;
     } catch (error) {
       throw new Error(`Query execution failed: ${error}`);
@@ -158,7 +161,10 @@ export class SurrealClient {
   }
 
   /**
-   * Creates a new record in the specified table using the SurrealDB SDK.
+   * Creates a new record in the specified table using INSERT query.
+   *
+   * Uses INSERT INTO ... RETURN * for SurrealDB v3 compatibility, as the SDK's
+   * create method has issues with data serialization in v3.
    *
    * @param table - The table name
    * @param data - The data to insert
@@ -171,14 +177,50 @@ export class SurrealClient {
     }
 
     try {
-      return await this.client.create(table, data);
+      // Use INSERT query for SurrealDB v3 compatibility
+      // The SDK's create method has serialization issues with v3
+      const dataObj = data as Record<string, unknown>;
+      const fields = Object.entries(dataObj)
+        .map(([key, value]) => {
+          if (value instanceof Date) {
+            return `${key}: <datetime>'${value.toISOString()}'`;
+          }
+          if (typeof value === 'string') {
+            // Escape single quotes in strings
+            const escaped = value.replace(/'/g, "\\'");
+            return `${key}: '${escaped}'`;
+          }
+          if (value === undefined || value === null) {
+            return `${key}: NONE`;
+          }
+          return `${key}: ${JSON.stringify(value)}`;
+        })
+        .join(', ');
+
+      const query = `INSERT INTO ${table} { ${fields} } RETURN *`;
+      // SurrealDB SDK v2 returns a Query object that needs .collect() to get results
+      // biome-ignore lint/suspicious/noExplicitAny: SDK v2 Query type is not properly exported
+      const queryResult = this.client.query(query) as any;
+      const result = await queryResult.collect();
+
+      // Extract the created record from the result
+      // SDK v2 returns nested arrays: [[record]]
+      // biome-ignore lint/suspicious/noExplicitAny: Query results are dynamically typed
+      const resultArray = result as any[];
+      if (resultArray && resultArray.length > 0 && Array.isArray(resultArray[0])) {
+        return resultArray[0][0];
+      }
+      return resultArray?.[0];
     } catch (error) {
       throw new Error(`Create operation failed: ${error}`);
     }
   }
 
   /**
-   * Selects records from the specified table using the SurrealDB SDK.
+   * Selects records from the specified table using a raw query.
+   *
+   * Uses SELECT query for SurrealDB v3 compatibility with
+   * underscore-prefixed table names like _migrations.
    *
    * @param target - The table name or record ID
    * @returns The selected records
@@ -190,14 +232,29 @@ export class SurrealClient {
     }
 
     try {
-      return await this.client.select(target);
+      // Use raw SELECT query for SurrealDB v3 compatibility
+      const query = `SELECT * FROM ${target}`;
+      // SurrealDB SDK v2 returns a Query object that needs .collect() to get results
+      // biome-ignore lint/suspicious/noExplicitAny: SDK v2 Query type is not properly exported
+      const queryResult = this.client.query(query) as any;
+      const result = await queryResult.collect();
+
+      // Extract records from the result - SDK v2 returns nested arrays: [[records]]
+      // biome-ignore lint/suspicious/noExplicitAny: Query results are dynamically typed
+      const resultArray = result as any[];
+      if (resultArray && resultArray.length > 0 && Array.isArray(resultArray[0])) {
+        return resultArray[0];
+      }
+      return [];
     } catch (error) {
       throw new Error(`Select operation failed: ${error}`);
     }
   }
 
   /**
-   * Deletes records from the specified table using the SurrealDB SDK.
+   * Deletes records from the specified table using a raw query.
+   *
+   * Uses DELETE query for SurrealDB v3 compatibility.
    *
    * @param target - The table name or record ID (format: "table:id" or just "table")
    * @returns The deleted records
@@ -221,15 +278,20 @@ export class SurrealClient {
     }
 
     try {
-      // If target contains a colon, it's a record ID that needs to be parsed
-      if (target.includes(':')) {
-        const [table, id] = target.split(':', 2);
-        const recordId = new RecordId(table, id);
-        return await this.client.delete(recordId);
-      } else {
-        // It's a table name, delete all records from the table
-        return await this.client.delete(target);
+      // Use raw DELETE query for SurrealDB v3 compatibility
+      const query = `DELETE ${target} RETURN BEFORE`;
+      // SurrealDB SDK v2 returns a Query object that needs .collect() to get results
+      // biome-ignore lint/suspicious/noExplicitAny: SDK v2 Query type is not properly exported
+      const queryResult = this.client.query(query) as any;
+      const result = await queryResult.collect();
+
+      // SDK v2 returns nested arrays: [[records]]
+      // biome-ignore lint/suspicious/noExplicitAny: Query results are dynamically typed
+      const resultArray = result as any[];
+      if (resultArray && resultArray.length > 0 && Array.isArray(resultArray[0])) {
+        return resultArray[0];
       }
+      return [];
     } catch (error) {
       throw new Error(`Delete operation failed: ${error}`);
     }

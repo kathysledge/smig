@@ -173,11 +173,14 @@ class SurrealQLFieldBase {
   }
 
   /**
-   * Sets a computed field using SurrealDB's <future> {  } syntax.
+   * Sets a computed field that is evaluated on read.
    *
    * Computed fields are evaluated on read and can reference other fields,
    * perform calculations, or execute queries. This is ideal for derived
    * data that changes based on other field values.
+   *
+   * Note: SurrealDB v3 no longer uses the <future> syntax. The expression
+   * is wrapped in braces for deferred evaluation.
    *
    * @param expression - SurrealQL expression for the computed value
    * @returns The field instance for method chaining
@@ -200,7 +203,8 @@ class SurrealQLFieldBase {
    */
   computed(expression: string) {
     const processed = processSurrealQL(expression);
-    this.field.value = `<future> { ${processed} }`;
+    // SurrealDB v3 uses { } for deferred evaluation instead of <future> { }
+    this.field.value = `{ ${processed} }`;
     return this;
   }
 
@@ -683,7 +687,8 @@ export class SurrealQLAny {
   }
   computed(expression: string) {
     const processed = processSurrealQL(expression);
-    this.field.value = `<future> { ${processed} }`;
+    // SurrealDB v3 uses { } for deferred evaluation instead of <future> { }
+    this.field.value = `{ ${processed} }`;
     return this;
   }
   assert(condition: string) {

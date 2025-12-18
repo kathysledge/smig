@@ -9,7 +9,7 @@
     "smig": "dist/cli.js"
   },
   "scripts": {
-    "build": "vite build && tsc --emitDeclarationOnly --declaration --outDir dist && node scripts/post-build.js",
+    "build": "vite build && tsc --emitDeclarationOnly --declaration --skipLibCheck --outDir dist && node scripts/post-build.js",
     "dev": "tsx src/cli.ts",
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.ts",
