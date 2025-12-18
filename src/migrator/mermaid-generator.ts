@@ -431,13 +431,13 @@ export class MermaidGenerator {
       }
     }
 
-    // Email validation
-    if (assert.includes('string::is::email')) {
+    // Email validation (supports both v2 and v3 syntax)
+    if (assert.includes('string::is_email') || assert.includes('string::is::email')) {
       constraints.push('email');
     }
 
-    // Pattern validation (simplified)
-    if (assert.includes('~') && assert.includes('/')) {
+    // Pattern validation (simplified) - supports both ~ and string::matches
+    if ((assert.includes('~') && assert.includes('/')) || assert.includes('string::matches')) {
       constraints.push('pattern');
     }
 

@@ -110,7 +110,7 @@ function processSurrealQL(input: string): string {
  * ```typescript
  * const userEmail = string()
  *   .required()
- *   .assert('$value ~ /^[^@]+@[^@]+\\.[^@]+$/')
+ *   .assert('string::is_email($value)')
  *   .comment('User email address with validation');
  *
  * const userId = string()
@@ -227,8 +227,8 @@ class SurrealQLFieldBase {
    *   .assert('$value != NONE')
    *   .assert('string::len($value) >= 3')
    *   .assert('string::len($value) <= 50')
-   *   .assert('$value ~ /^[a-zA-Z0-9_]+$/');
-   * // Results in: ($value != NONE) AND (string::len($value) >= 3) AND (string::len($value) <= 50) AND ($value ~ /^[a-zA-Z0-9_]+$/)
+   *   .assert('string::is_alphanum($value)');
+   * // Results in: ($value != NONE) AND (string::len($value) >= 3) AND (string::len($value) <= 50) AND (string::is_alphanum($value))
    * ```
    */
   assert(condition: string) {
@@ -384,7 +384,7 @@ class SurrealQLFieldBase {
  *
  * // Email validation
  * const email = string()
- *   .assert('$value ~ /^[^@]+@[^@]+\\.[^@]+$/')
+ *   .assert('string::is_email($value)')
  *   .comment('User email address');
  *
  * // Length-constrained string
@@ -402,8 +402,8 @@ export class SurrealQLString extends SurrealQLFieldBase {
 
   // Note: Removed email(), url(), regex(), length() methods to prevent accidental assertion overrides
   // Use assert() method directly for validation:
-  // .assert('$value ~ /^[^@]+@[^@]+\\.[^@]+$/') for email
-  // .assert('$value ~ /^https?:\\/\\/.+/') for url
+  // .assert('string::is_email($value)') for email
+  // .assert('string::is_url($value)') for url
   // .assert('string::len($value) >= 1 AND string::len($value) <= 200') for length
 }
 
@@ -1488,7 +1488,7 @@ export class SurrealQLAnalyzer {
  *   table: 'user',
  *   fields: {
  *     id_uuid: uuid().default('rand::uuid::v7()'),
- *     email: string().assert('$value ~ /^[^@]+@[^@]+\\.[^@]+$/').unique(),
+ *     email: string().assert('string::is_email($value)').unique(),
  *     name: string().required(),
  *     isActive: bool().default(true),
  *     createdAt: datetime().value('time::now()'),
@@ -1640,7 +1640,7 @@ export function defineRelation(config: {
  *
  * const emailField = string()
  *   .unique()
- *   .assert('$value ~ /^[^@]+@[^@]+\\.[^@]+$/');
+ *   .assert('string::is_email($value)');
  * ```
  */
 export const string = () => new SurrealQLString();

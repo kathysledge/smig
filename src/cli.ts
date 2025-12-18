@@ -577,7 +577,6 @@ program
 // User model - represents application users
 const userModel = defineSchema({
   table: 'user',
-  schemafull: true,
   fields: {
     name: string(),
     email: string(),
@@ -592,7 +591,6 @@ const userModel = defineSchema({
 // Post model - represents blog posts
 const postModel = defineSchema({
   table: 'post',
-  schemafull: true,
   fields: {
     title: string(),
     content: string(),

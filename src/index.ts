@@ -34,7 +34,7 @@
  *   table: 'user',
  *   fields: {
  *     email: string()
- *       .assert('$value ~ /^[^@]+@[^@]+\\\\.[^@]+$/')
+ *       .assert('string::is_email($value)')
  *       .unique(),
  *     name: string().required(),
  *     age: option('int')
