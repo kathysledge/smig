@@ -5,7 +5,7 @@
 
 ### SurrealDB schema management with automatic migrations
 
-[![npm version 1.0.0-alpha.1](https://badge.fury.io/js/smig.svg?version=1.0.0-alpha.1)](https://badge.fury.io/js/smig)
+[![npm version 0.5.0](https://badge.fury.io/js/smig.svg?version=0.5.0)](https://badge.fury.io/js/smig)
 [![License: ISC](https://img.shields.io/badge/License-ISC-violet.svg)](https://opensource.org/license/isc-license-txt)
 
 > [!NOTE]
