@@ -1049,9 +1049,19 @@ npx smig migrate --schema examples/simple-blog-schema.js
 
 ### Does **smig** work with SurrealDB 3?
 
-Not yet, but we're actively working on it! SurrealDB 3 requires a new JavaScript library for connectivity, and we're currently implementing support for it. Once that's complete, we'll also add support for the new `ALTER FIELD` syntax that SurrealDB 3 introduces, which will provide even more flexibility for schema changes.
+**Yes!** SurrealDB 3 support is available in **smig** version 1.x. If you need SurrealDB 3 compatibility, please upgrade to the latest version:
 
-For now, **smig** works with SurrealDB 2.x using the `DEFINE OVERWRITE` method for field modifications.
+```bash
+bun install -D smig@next
+```
+
+See the [v1.x README](https://github.com/kathysledge/smig/blob/main/README.md) for full documentation on the new version, which includes:
+- SurrealDB 3 SDK compatibility
+- Updated syntax for regex validation (`string::matches()`)
+- Updated function naming (`string::is_email()` instead of `string::is::email()`)
+- Simplified computed field syntax (no more `<future>` keyword)
+
+This v0.x branch is maintained for SurrealDB 2.x compatibility only.
 
 ### Why don't my tables need an ID field?
 
