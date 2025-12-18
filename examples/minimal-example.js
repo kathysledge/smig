@@ -20,7 +20,6 @@ import {
 // A simple task/todo schema
 const taskSchema = defineSchema({
   table: 'task',
-  schemafull: true,
   fields: {
     title: string()
       .assert('$value != NONE')

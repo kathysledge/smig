@@ -80,7 +80,6 @@ import {
 
 const userSchema = defineSchema({
   table: 'user',
-  schemafull: true,
   fields: {
     name: string(),
     email: string(),
@@ -230,7 +229,6 @@ import {
 
 const schema = defineSchema({
   table: 'example',
-  schemafull: true,
   fields: {
     // Basic types
     name: string(),
@@ -553,7 +551,6 @@ const likeRelation = defineRelation({
 ```javascript
 const categorySchema = defineSchema({
   table: 'category',
-  schemafull: true,
   fields: {
     name: string(),
     parent: option('record<category>'), // Self-referencing for hierarchy
@@ -573,7 +570,6 @@ const categorySchema = defineSchema({
 ```javascript
 const auditLogSchema = defineSchema({
   table: 'audit_log',
-  schemafull: true,
   fields: {
     table: string(),
     recordId: string(),

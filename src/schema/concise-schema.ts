@@ -1469,7 +1469,7 @@ export class SurrealQLAnalyzer {
  *
  * @param config - Configuration object for the table schema
  * @param config.table - The name of the table
- * @param config.schemafull - Whether to enforce strict schema (default: true)
+ * @param config.schemaless - Whether to allow flexible schema (default: false, meaning schemafull)
  * @param config.fields - Object mapping field names to field definitions
  * @param config.indexes - Optional object mapping index names to index definitions
  * @param config.events - Optional object mapping event names to event definitions
@@ -1481,10 +1481,9 @@ export class SurrealQLAnalyzer {
  * ```typescript
  * const userSchema = defineSchema({
  *   table: 'user',
- *   schemafull: true,
  *   fields: {
  *     id_uuid: uuid().default('rand::uuid::v7()'),
- *     email: string().assert('$value ~ /^[^@]+@[^@]+\\.[^@]+$/').unique(),
+ *     email: string().assert('string::is_email($value)').unique(),
  *     name: string().required(),
  *     isActive: bool().default(true),
  *     createdAt: datetime().value('time::now()'),
@@ -1505,7 +1504,7 @@ export class SurrealQLAnalyzer {
  */
 export function defineSchema(config: {
   table: string;
-  schemafull?: boolean;
+  schemaless?: boolean;
   fields: Record<string, unknown>;
   indexes?: Record<string, SurrealQLIndex>;
   events?: Record<string, SurrealQLEvent>;
@@ -1513,7 +1512,7 @@ export function defineSchema(config: {
 }) {
   return {
     name: config.table,
-    schemafull: config.schemafull !== false,
+    schemafull: config.schemaless !== true,
     fields: Object.entries(config.fields).map(([name, field]) => ({
       name,
       // biome-ignore lint/suspicious/noExplicitAny: Field builders are dynamically typed

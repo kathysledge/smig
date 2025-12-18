@@ -38,7 +38,6 @@ describe('MermaidGenerator', () => {
     it('should generate diagram with single table', () => {
       const userSchema = defineSchema({
         table: 'user',
-        schemafull: true,
         fields: {
           email: string(),
           name: string(),
@@ -604,7 +603,7 @@ describe('MermaidGenerator', () => {
     it('should handle empty tables', () => {
       const schema = defineSchema({
         table: 'empty',
-        schemafull: false,
+        schemaless: true,
         fields: {},
       });
 
