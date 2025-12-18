@@ -9,7 +9,7 @@
 [![License: ISC](https://img.shields.io/badge/License-ISC-violet.svg)](https://opensource.org/license/isc-license-txt)
 
 > [!NOTE]
-> This is the README for the current `1.x` version of **smig** with SurrealDB 3 compatibility. For SurrealDB 2 compatibility, you need the `0.x` version ([view README](https://github.com/kathysledge/smig/raw/v0.x/README.md))
+> This is the README for the current `1.x` version of **smig** with SurrealDB 3 compatibility. For SurrealDB 2 compatibility, you need the `0.x` version ([view README](https://github.com/kathysledge/smig/blob/v0.x/README.md))
 
 ---
 
