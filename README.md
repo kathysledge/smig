@@ -1254,6 +1254,6 @@ ISC © [Chris Harris](https://github.com/kathysledge)
 
 Built with ❤️ for the SurrealDB community.
 
-<a href="https://www.buymeacoffee.com/kathysledge">
+<a href="https://ko-fi.com/kathysledge">
   <img alt="Buy me a coffee" width="420" src="https://github.com/kathysledge/smig/raw/main/media/buy-me-a-coffee-button.avif">
 </a>
