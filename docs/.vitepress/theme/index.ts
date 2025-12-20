@@ -18,7 +18,7 @@ export default {
     const route = useRoute();
     
     const initZoom = () => {
-      mediumZoom('.main img', { 
+      mediumZoom('.main img, [data-zoomable]', { 
         background: 'var(--vp-c-bg)',
         margin: 24,
       });

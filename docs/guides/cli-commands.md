@@ -57,8 +57,8 @@ bun smig migrate --env production
 1. Loads your schema file
 2. Connects to the database
 3. Compares schema to current database state
-4. Generates SQL for differences
-5. Applies the SQL
+4. Generates SurrealQL (SQL) for differences
+5. Applies the SurrealQL
 6. Records the migration in `_migrations` table
 
 ### diff
@@ -173,7 +173,7 @@ bun smig validate [options]
 
 ```bash
 bun smig validate
-bun smig validate --schema ./schemas/main.js
+bun smig validate --schema ./schemas/main.ts
 ```
 
 **Output:**

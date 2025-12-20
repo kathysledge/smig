@@ -26,7 +26,7 @@ const daysSince = fn('fn::days_since')
 
 This generates:
 
-```sql
+```surql
 DEFINE FUNCTION fn::days_since($date: datetime) -> int {
   RETURN math::floor((time::now() - $date) / 86400);
 };
@@ -34,7 +34,7 @@ DEFINE FUNCTION fn::days_since($date: datetime) -> int {
 
 Call it with:
 
-```sql
+```surql
 SELECT fn::days_since(createdAt) AS days_old FROM post;
 ```
 
@@ -309,7 +309,7 @@ const transferCredits = fn('fn::transfer_credits')
 
 Call functions in SELECT statements:
 
-```sql
+```surql
 SELECT fn::days_since(createdAt) AS age FROM post;
 ```
 

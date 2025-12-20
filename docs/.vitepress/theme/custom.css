@@ -1,3 +1,8 @@
+/* Logo height */
+:root {
+  --vp-nav-logo-height: 35px;
+}
+
 /* Medium zoom styling */
 .medium-zoom-overlay {
   z-index: 100;
@@ -8,7 +13,8 @@
 }
 
 /* Make images appear clickable */
-.main img {
+.main img,
+[data-zoomable] {
   cursor: zoom-in;
 }
 

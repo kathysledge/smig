@@ -15,7 +15,7 @@
 
 **smig** is the first library to provide **automatic migration generation** for SurrealDB. Define your schema once using a type-safe API, and let **smig** handle the rest.
 
-📖 **[Full documentation →](docs/index.md)**
+📖 **[Full documentation ›](https://smig.build/)**
 
 ---
 
@@ -35,20 +35,29 @@ pnpm add -D smig
 ## Quick start
 
 ```bash
-# Initialize project
-smig init
+# Initialize project (creates schema.ts)
+bun smig init
 
-# Generate migration
-smig diff --message "Initial schema"
+# Preview migration
+bun smig diff
 
 # Apply to database
-smig push
+bun smig migrate
 ```
 
 ## Example schema
 
-```javascript
-import { defineSchema, composeSchema, string, bool, datetime, record, index } from 'smig';
+```typescript
+import {
+  defineSchema,
+  composeSchema,
+  string,
+  bool,
+  datetime,
+  record,
+  array,
+  index,
+} from 'smig';
 
 const userSchema = defineSchema({
   table: 'user',
@@ -75,9 +84,15 @@ const postSchema = defineSchema({
   indexes: {
     author: index(['author', 'createdAt']),
     // HNSW vector index for semantic search
-    semantic: index(['embedding']).hnsw().dimension(1536).dist('cosine'),
+    semantic: index(['embedding'])
+      .hnsw()
+      .dimension(1536)
+      .dist('COSINE'),
     // Full-text search
-    search: index(['title', 'content']).fulltext().analyzer('english'),
+    contentSearch: index(['content'])
+      .search()
+      .analyzer('english')
+      .highlights(),
   },
 });
 
@@ -106,20 +121,20 @@ export default composeSchema({
 
 | Command | Description |
 |---------|-------------|
-| `smig init` | Initialize a new project |
-| `smig diff` | Generate migration from schema changes |
-| `smig push` | Apply pending migrations |
-| `smig status` | Show migration status |
-| `smig rollback` | Undo the last migration |
-| `smig mermaid` | Generate ER diagram |
+| `bun smig init` | Initialize a new project |
+| `bun smig diff` | Preview migration from schema changes |
+| `bun smig migrate` | Apply pending migrations |
+| `bun smig status` | Show migration status |
+| `bun smig rollback` | Undo the last migration |
+| `bun smig mermaid` | Generate ER diagram |
 
 ## Documentation
 
-- **[Getting started](docs/getting-started/index.md)** — Installation and first migration
-- **[Guides](docs/guides/index.md)** — Schema design, CLI, best practices
-- **[Schema reference](docs/schema-reference/index.md)** — Tables, fields, indexes, events
-- **[API reference](docs/api-reference/index.md)** — Programmatic API
-- **[Examples](docs/examples/index.md)** — Blog, social network, e-commerce, AI embeddings
+- **[Getting started ›](https://smig.build/getting-started/)** — Installation and first migration
+- **[Guides ›](https://smig.build/guides/)** — Schema design, CLI, best practices
+- **[Schema reference ›](https://smig.build/schema-reference/)** — Tables, fields, indexes, events
+- **[API reference ›](https://smig.build/api-reference/)** — Programmatic API
+- **[Examples ›](https://smig.build/examples/)** — Blog, social network, e-commerce, AI embeddings
 
 ## Contributing
 

@@ -32,7 +32,7 @@ const posts = defineSchema({
 
 This generates:
 
-```sql
+```surql
 DEFINE EVENT on_publish ON TABLE post
   WHEN $before.isPublished = false AND $after.isPublished = true
   THEN UPDATE $after SET publishedAt = time::now();

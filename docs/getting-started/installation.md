@@ -6,7 +6,7 @@ This guide covers installing **smig** and setting up your project.
 
 Before installing **smig**, you need:
 
-- **Node.js 18+** or **Bun 1.0+**
+- **Bun 1.0+** (recommended) or **Node.js 18+**
 - **SurrealDB 3.0+**
 
 ### Installing SurrealDB
@@ -242,16 +242,13 @@ export default {
 
 ### Supported file extensions
 
-**smig** automatically handles all common JavaScript and TypeScript extensions:
+**smig** natively supports TypeScript with zero configuration:
 
 | Extension | Description |
 |-----------|-------------|
-| `.ts` | TypeScript |
+| `.ts` | TypeScript (recommended) |
 | `.mts` | TypeScript (ES modules) |
 | `.cts` | TypeScript (CommonJS) |
-| `.js` | JavaScript |
-| `.mjs` | JavaScript (ES modules) |
-| `.cjs` | JavaScript (CommonJS) |
 
 ::: tip How it works
 **smig** uses [jiti](https://github.com/unjs/jiti) to compile TypeScript on-the-fly. You don't need `ts-node`, `tsx`, or any other runtime — it just works.
@@ -276,16 +273,16 @@ For larger projects:
 myapp/
 ├── db/
 │   ├── schema/
-│   │   ├── index.js    # Main schema (composeSchema)
-│   │   ├── user.js     # User table
-│   │   ├── post.js     # Post table
+│   │   ├── index.ts    # Main schema (composeSchema)
+│   │   ├── user.ts     # User table
+│   │   ├── post.ts     # Post table
 │   │   └── relations/
-│   │       ├── follows.js
-│   │       └── likes.js
+│   │       ├── follows.ts
+│   │       └── likes.ts
 │   ├── functions/
-│   │   └── utils.js    # Database functions
+│   │   └── utils.ts    # Database functions
 │   └── analyzers/
-│       └── search.js   # Full-text search config
+│       └── search.ts   # Full-text search config
 ├── smig.config.ts
 └── src/
     └── ...
@@ -317,7 +314,7 @@ bun add -D smig
 
 **smig** uses ES modules. Ensure your `package.json` has:
 
-```typescripton
+```typescript
 {
   "type": "module"
 }

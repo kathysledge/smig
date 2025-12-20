@@ -1,21 +1,31 @@
 import { defineConfig } from 'vitepress';
 import { withMermaid } from 'vitepress-plugin-mermaid';
+import surqlGrammar from './languages/surql.tmLanguage.json';
 
 export default withMermaid(
   defineConfig({
     title: 'smig',
     description: 'Automatic schema migrations for SurrealDB',
     
+    // Force dark mode only (no toggle)
+    appearance: 'force-dark',
+    
+    markdown: {
+      languages: [
+        {
+          ...surqlGrammar,
+          aliases: ['surql', 'surrealql', 'surrealdb'],
+        },
+      ],
+    },
+    
     head: [
-      ['link', { rel: 'icon', href: '/smig-logo-light.svg' }],
+      ['link', { rel: 'icon', href: '/smig-logo-dark.svg' }],
     ],
 
     themeConfig: {
-      logo: {
-        light: '/smig-logo-light.svg',
-        dark: '/smig-logo-dark.svg',
-      },
-      siteTitle: 'smig',
+      logo: '/smig-logo-dark.svg',
+      siteTitle: false,
 
       nav: [
         { text: 'Guide', link: '/getting-started/' },

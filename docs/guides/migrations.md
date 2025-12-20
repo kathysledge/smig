@@ -17,7 +17,7 @@ flowchart TB
         Parse[Parse Schema]
         Introspect[Introspect DB]
         Compare[Compare States]
-        Generate[Generate SQL]
+        Generate[Generate SurrealQL]
     end
     
     subgraph output [Outputs]
@@ -59,7 +59,7 @@ flowchart TB
 
 **smig** uses granular `ALTER` statements when possible, which is more efficient than redefining entire fields:
 
-```sql
+```surql
 -- For single property changes, use ALTER
 ALTER FIELD status ON TABLE user DEFAULT 'active';
 ALTER FIELD email ON TABLE user ASSERT string::is_email($value);
@@ -85,7 +85,7 @@ DEFINE FIELD OVERWRITE profile ON TABLE user
 
 Migrations are tracked in a `_migrations` table:
 
-```sql
+```surql
 DEFINE TABLE _migrations SCHEMAFULL;
 DEFINE FIELD appliedAt ON _migrations TYPE datetime;
 DEFINE FIELD up ON _migrations TYPE string;
@@ -215,10 +215,10 @@ Verify migrations work before production:
 
 ```bash
 # Apply to staging
-bun smig migrate --config ./staging.config.js
+bun smig migrate --config ./staging.config.ts
 
 # Verify, then production
-bun smig migrate --config ./production.config.js
+bun smig migrate --config ./production.config.ts
 ```
 
 ## See also

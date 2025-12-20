@@ -25,7 +25,7 @@ const orderNumber = sequence('order_number');
 
 This generates:
 
-```sql
+```surql
 DEFINE SEQUENCE order_number;
 ```
 
@@ -47,7 +47,7 @@ sequence('order_number').start(10000)
 
 Generates:
 
-```sql
+```surql
 DEFINE SEQUENCE order_number START 10000;
 ```
 
@@ -124,7 +124,7 @@ const createOrder = fn('fn::create_order')
 
 Use sequences directly in SQL:
 
-```sql
+```surql
 LET $next = sequence::next('order_seq');
 CREATE order SET orderNumber = $next;
 ```

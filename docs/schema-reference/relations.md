@@ -6,7 +6,7 @@ Relations are how you connect records in SurrealDB. Unlike traditional foreign k
 
 In a social network, users follow other users. In a traditional database, you'd create a junction table:
 
-```sql
+```surql
 CREATE TABLE follows (
   follower_id INT,
   following_id INT,
@@ -31,7 +31,7 @@ const follows = defineRelation({
 
 The power of relations is that you can traverse them:
 
-```sql
+```surql
 -- Who does Alice follow?
 SELECT ->follows->user FROM user WHERE name = 'Alice';
 
@@ -57,7 +57,7 @@ const likes = defineRelation({
 
 This generates:
 
-```sql
+```surql
 DEFINE TABLE likes TYPE RELATION IN user OUT post SCHEMAFULL;
 DEFINE FIELD in ON TABLE likes TYPE record<user> ASSERT $value != NONE;
 DEFINE FIELD out ON TABLE likes TYPE record<post> ASSERT $value != NONE;
@@ -112,7 +112,7 @@ const mentions = defineRelation({
 
 Use the arrow syntax:
 
-```sql
+```surql
 -- Alice follows Bob
 RELATE user:alice->follows->user:bob SET since = time::now();
 
@@ -122,7 +122,7 @@ RELATE user:alice->reviewed->product:laptop SET rating = 5, comment = 'Great lap
 
 Or using CREATE:
 
-```sql
+```surql
 CREATE follows SET in = user:alice, out = user:bob, since = time::now();
 ```
 
@@ -132,7 +132,7 @@ CREATE follows SET in = user:alice, out = user:bob, since = time::now();
 
 Follow relations forward with the `->` arrow:
 
-```sql
+```surql
 -- Posts that Alice likes
 SELECT ->likes->post FROM user:alice;
 
@@ -144,7 +144,7 @@ SELECT ->follows->user.name FROM user:alice;
 
 Follow relations backward with the `<-` arrow:
 
-```sql
+```surql
 -- Users who like this post
 SELECT <-likes<-user FROM post:xyz;
 
@@ -156,7 +156,7 @@ SELECT <-follows<-user.name FROM user:alice;
 
 Access the relation record (edge) with its fields:
 
-```sql
+```surql
 -- All follow relationships for Alice
 SELECT ->follows FROM user:alice;
 
@@ -168,7 +168,7 @@ SELECT ->reviewed.rating, ->reviewed.comment, ->reviewed->product.name FROM user
 
 Add WHERE clauses to filter by relation attributes:
 
-```sql
+```surql
 -- 5-star reviews from Alice
 SELECT ->reviewed WHERE rating = 5 ->product FROM user:alice;
 ```

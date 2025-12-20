@@ -31,7 +31,7 @@ const users = defineSchema({
 
 This generates:
 
-```sql
+```surql
 DEFINE TABLE user TYPE NORMAL SCHEMAFULL;
 DEFINE FIELD email ON TABLE user TYPE string ASSERT $value != NONE;
 DEFINE FIELD name ON TABLE user TYPE string;
@@ -282,7 +282,7 @@ const customers = defineSchema({
 
 This generates:
 
-```sql
+```surql
 ALTER TABLE users RENAME TO customers;
 ```
 

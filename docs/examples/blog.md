@@ -97,9 +97,9 @@ export default composeSchema({
 
 ## Generated SurrealQL
 
-Running `bun smig migrate` generates this SQL:
+Running `bun smig migrate` generates this SurrealQL (SQL):
 
-```sql
+```surql
 -- Users
 DEFINE TABLE user TYPE NORMAL SCHEMAFULL;
 DEFINE FIELD email ON TABLE user TYPE string 
@@ -155,7 +155,7 @@ DEFINE INDEX parent ON TABLE comment FIELDS parent;
 
 Register a new author:
 
-```sql
+```surql
 CREATE user SET
   email = "author@example.com",
   name = "Jane Doe",
@@ -166,7 +166,7 @@ CREATE user SET
 
 Create a draft and then publish it (triggers the `publishedAt` event):
 
-```sql
+```surql
 CREATE post SET
   author = user:author,
   title = "Getting Started with SurrealDB",
@@ -182,7 +182,7 @@ UPDATE post:abc123 SET published = true;
 
 Use full-text search on title and content:
 
-```sql
+```surql
 SELECT * FROM post
 WHERE content @@ "SurrealDB database"
 ORDER BY search::score(1) DESC
@@ -193,7 +193,7 @@ LIMIT 10;
 
 Fetch a post with all its comments in one query:
 
-```sql
+```surql
 SELECT 
   *,
   (SELECT * FROM comment WHERE post = $parent.id ORDER BY createdAt) AS comments
@@ -205,7 +205,7 @@ WHERE slug = "getting-started-surrealdb";
 
 Get top-level comments with their nested replies:
 
-```sql
+```surql
 -- Get top-level comments with replies
 SELECT 
   *,

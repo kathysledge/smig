@@ -38,7 +38,7 @@ Run `diff` with dry-run to see what would change:
 bun smig diff
 ```
 
-This shows the SQL that would run, without running it.
+This shows the SurrealQL (SQL) that would run, without running it.
 
 ### How do I undo a migration?
 

@@ -34,7 +34,7 @@ const users = defineSchema({
 
 This creates:
 
-```sql
+```surql
 DEFINE INDEX email ON TABLE user FIELDS email UNIQUE;
 ```
 
@@ -192,7 +192,7 @@ const documents = defineSchema({
 
 Query with:
 
-```sql
+```surql
 SELECT * FROM document
 WHERE embedding <|10,100|> $query_embedding
 ORDER BY embedding <|10,100|> $query_embedding;
@@ -251,7 +251,7 @@ userEmail: index(['email']).unique().was('emailIndex')
 
 This generates:
 
-```sql
+```surql
 ALTER INDEX emailIndex ON TABLE user RENAME TO userEmail;
 ```
 

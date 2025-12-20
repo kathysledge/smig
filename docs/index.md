@@ -16,7 +16,7 @@ hero:
 features:
   - icon: 🎯
     title: Define once, migrate anywhere
-    details: Write your schema in TypeScript or JavaScript. smig generates the SQL and tracks what's changed.
+    details: Write your schema in TypeScript. smig generates the SurrealQL and tracks what's changed.
   - icon: 🔄
     title: Automatic rollbacks
     details: Every migration comes with a reverse migration. One command to undo changes.
@@ -35,9 +35,9 @@ features:
 
 ## What is smig?
 
-**smig** is a schema migration tool for [SurrealDB](https://surrealdb.com). You define your database structure in JavaScript or TypeScript, and **smig** figures out what SQL to run to make your database match.
+**smig** is a schema migration tool for [SurrealDB](https://surrealdb.com). You define your database structure in TypeScript, and **smig** figures out what SurrealQL (SQL) to run to make your database match.
 
-Think of it like this: instead of writing SQL migrations by hand, you describe what your database should look like, and **smig** works out the steps to get there.
+Think of it like this: instead of writing SurrealQL migrations by hand, you describe what your database should look like, and **smig** works out the steps to get there.
 
 ```typescript
 import { defineSchema, string, datetime, index } from 'smig';
@@ -57,7 +57,7 @@ const users = defineSchema({
 
 Run `bun smig migrate` and this becomes:
 
-```sql
+```surql
 DEFINE TABLE user TYPE NORMAL SCHEMAFULL;
 DEFINE FIELD email ON TABLE user TYPE string ASSERT $value != NONE;
 DEFINE FIELD name ON TABLE user TYPE string;
@@ -183,15 +183,19 @@ bun smig migrate
 ### Documentation
 
 **Getting started**
+<br>
 New to **smig**? [Start here ›](/getting-started/)
 
-**Guides**  
+**Guides**
+<br>
 [Schema design](/guides/schema-design), [migrations](/guides/migrations), [multi-environment](/guides/multi-environment)
 
 **Schema reference**
+<br>
 Every option, with examples. [Browse ›](/schema-reference/)
 
 **Examples**
+<br>
 [Blog](/examples/blog), [Social network](/examples/social-network), [E-commerce](/examples/ecommerce), [AI embeddings](/examples/ai-embeddings)
 
 </div>

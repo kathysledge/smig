@@ -23,17 +23,17 @@ export default composeSchema({
 For larger projects, split by domain:
 
 ```typescript
-// schema/user.js
+// schema/user.ts
 export const userSchema = defineSchema({ /* ... */ });
 
-// schema/blog.js
+// schema/blog.ts
 export const postSchema = defineSchema({ /* ... */ });
 export const commentSchema = defineSchema({ /* ... */ });
 
-// schema/index.js
+// schema/index.ts
 import { composeSchema } from 'smig';
-import { userSchema } from './user.js';
-import { postSchema, commentSchema } from './blog.js';
+import { userSchema } from './user';
+import { postSchema, commentSchema } from './blog';
 
 export default composeSchema({
   models: { user: userSchema, post: postSchema, comment: commentSchema },

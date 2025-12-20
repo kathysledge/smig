@@ -190,7 +190,7 @@ export default composeSchema({
 
 Add a new product with pricing and stock:
 
-```sql
+```surql
 CREATE product SET
   sku = "WIDGET-001",
   name = "Super Widget",
@@ -207,7 +207,7 @@ CREATE product SET
 
 Create an order (triggers inventory reduction automatically):
 
-```sql
+```surql
 CREATE order SET
   customer = customer:cust123,
   items = [
@@ -231,7 +231,7 @@ CREATE order SET
 
 Fetch an order with its product information:
 
-```sql
+```surql
 SELECT 
   *,
   items.*.product.* AS productDetails
@@ -243,7 +243,7 @@ WHERE orderNumber = 10001;
 
 Find products that need restocking:
 
-```sql
+```surql
 SELECT * FROM product
 WHERE stock <= lowStockThreshold AND isActive = true
 ORDER BY stock ASC;
@@ -253,7 +253,7 @@ ORDER BY stock ASC;
 
 Find your biggest spenders:
 
-```sql
+```surql
 SELECT * FROM customer
 ORDER BY totalSpent DESC
 LIMIT 10;
@@ -263,7 +263,7 @@ LIMIT 10;
 
 Aggregate revenue by product category:
 
-```sql
+```surql
 SELECT 
   category,
   count() AS orderCount,

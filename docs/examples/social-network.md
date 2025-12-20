@@ -163,7 +163,7 @@ export default composeSchema({
 
 Create a follow relationship between two users:
 
-```sql
+```surql
 RELATE user:alice -> follows -> user:bob;
 ```
 
@@ -171,7 +171,7 @@ RELATE user:alice -> follows -> user:bob;
 
 Remove a follow relationship:
 
-```sql
+```surql
 DELETE follows WHERE in = user:alice AND out = user:bob;
 ```
 
@@ -179,7 +179,7 @@ DELETE follows WHERE in = user:alice AND out = user:bob;
 
 Get all users who follow a specific user:
 
-```sql
+```surql
 SELECT * FROM user:bob <- follows <- user;
 ```
 
@@ -187,7 +187,7 @@ SELECT * FROM user:bob <- follows <- user;
 
 Get all users that a user follows:
 
-```sql
+```surql
 SELECT * FROM user:alice -> follows -> user;
 ```
 
@@ -195,7 +195,7 @@ SELECT * FROM user:alice -> follows -> user;
 
 Check if one user follows another:
 
-```sql
+```surql
 SELECT * FROM follows 
 WHERE in = user:alice AND out = user:bob;
 ```
@@ -204,7 +204,7 @@ WHERE in = user:alice AND out = user:bob;
 
 Create a like relationship:
 
-```sql
+```surql
 RELATE user:alice -> likes -> post:123;
 ```
 
@@ -212,7 +212,7 @@ RELATE user:alice -> likes -> post:123;
 
 Remove a like:
 
-```sql
+```surql
 DELETE likes WHERE in = user:alice AND out = post:123;
 ```
 
@@ -220,7 +220,7 @@ DELETE likes WHERE in = user:alice AND out = post:123;
 
 Get all posts a user has liked:
 
-```sql
+```surql
 SELECT * FROM user:alice -> likes -> post
 ORDER BY likedAt DESC
 LIMIT 20;
@@ -230,7 +230,7 @@ LIMIT 20;
 
 Build a chronological feed of posts from people a user follows:
 
-```sql
+```surql
 SELECT * FROM post 
 WHERE author IN (SELECT VALUE out FROM follows WHERE in = user:alice)
 ORDER BY createdAt DESC
@@ -241,7 +241,7 @@ LIMIT 50;
 
 Find users who both follow each other:
 
-```sql
+```surql
 LET $following = (SELECT VALUE out FROM follows WHERE in = user:alice);
 LET $followers = (SELECT VALUE in FROM follows WHERE out = user:alice);
 RETURN array::intersect($following, $followers);
@@ -251,7 +251,7 @@ RETURN array::intersect($following, $followers);
 
 Discover new people through your network:
 
-```sql
+```surql
 SELECT DISTINCT out FROM user:alice -> follows -> user -> follows -> user
 WHERE out != user:alice 
 AND out NOT IN (SELECT VALUE out FROM follows WHERE in = user:alice);

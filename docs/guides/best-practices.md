@@ -29,7 +29,7 @@ bun smig diff
 
 ### Review before pushing
 
-Always review generated SQL before applying:
+Always review generated SurrealQL (SQL) before applying:
 
 ```bash
 bun smig diff --dry-run
@@ -188,12 +188,12 @@ bun smig migrate
 # 2. Test thoroughly
 
 # 3. Apply to staging
-bun smig migrate --config smig.staging.config.js
+bun smig migrate --config smig.staging.config.ts
 
 # 4. QA approval
 
 # 5. Apply to production
-bun smig migrate --config smig.production.config.js
+bun smig migrate --config smig.production.config.ts
 ```
 
 ### Backup before major changes

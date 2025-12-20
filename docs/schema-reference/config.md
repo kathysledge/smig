@@ -25,7 +25,7 @@ const graphqlConfig = config('graphql')
 
 This generates:
 
-```sql
+```surql
 DEFINE CONFIG GRAPHQL
   TABLES INCLUDE user, post, comment
   FUNCTIONS INCLUDE fn::get_user, fn::search;

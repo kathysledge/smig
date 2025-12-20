@@ -50,7 +50,7 @@ Let's break this down:
 
 ## Step 2: Preview the migration
 
-Before applying changes, let's see what SQL will be generated:
+Before applying changes, let's see what SurrealQL (SQL) will be generated:
 
 ```bash
 bun smig diff
@@ -119,7 +119,7 @@ You can also query SurrealDB directly:
 surreal sql --endpoint ws://localhost:8000 --namespace test --database test
 ```
 
-```sql
+```surql
 INFO FOR DB;
 -- Shows: tables: { user: ... }
 

@@ -10,7 +10,7 @@ Each page follows the same structure:
 2. **When would you use it?** — Practical scenarios
 3. **Basic usage** — Minimal working example
 4. **All options** — Complete list with examples
-5. **Generated SQL** — What **smig** produces
+5. **Generated SurrealQL** — What **smig** produces
 6. **Related** — Links to connected topics
 
 ## Tables and fields

@@ -27,7 +27,7 @@ const english = analyzer('english')
 
 This generates:
 
-```sql
+```surql
 DEFINE ANALYZER english TOKENIZERS blank, class FILTERS lowercase, snowball(english);
 ```
 
@@ -253,7 +253,7 @@ indexes: {
 
 Match content against your query:
 
-```sql
+```surql
 SELECT * FROM post WHERE title @@ 'running shoes';
 ```
 
@@ -261,7 +261,7 @@ SELECT * FROM post WHERE title @@ 'running shoes';
 
 Get relevance scores for ranking results:
 
-```sql
+```surql
 SELECT *, search::score(0) AS relevance
 FROM post
 WHERE title @0@ 'running shoes'
@@ -272,7 +272,7 @@ ORDER BY relevance DESC;
 
 Show matched terms with HTML tags:
 
-```sql
+```surql
 SELECT search::highlight('<b>', '</b>', 0) AS highlighted
 FROM post
 WHERE content @0@ 'database';

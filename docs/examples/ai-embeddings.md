@@ -385,7 +385,7 @@ async function computeSimilarities(docId) {
 
 Combine vector search with metadata filters:
 
-```sql
+```surql
 SELECT *,
   vector::similarity::cosine(embedding, $query_embedding) AS score
 FROM document

@@ -47,7 +47,7 @@ const userAuth = access('user')
 
 This generates:
 
-```sql
+```surql
 DEFINE ACCESS user ON DATABASE TYPE RECORD
   SIGNUP (
     CREATE user SET
@@ -233,7 +233,7 @@ const apiAuth = access('api_key')
 Register new users through RECORD access:
 
 ```typescript
-// JavaScript SDK
+// SurrealDB SDK
 await db.signup({
   access: 'account',
   variables: {
@@ -262,7 +262,7 @@ await db.signin({
 
 After signin, queries can access `$auth` — the authenticated user's record:
 
-```sql
+```surql
 -- Only return the current user's posts
 SELECT * FROM post WHERE author = $auth.id;
 

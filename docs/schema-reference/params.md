@@ -23,13 +23,13 @@ const appVersion = param('app_version')
 
 This generates:
 
-```sql
+```surql
 DEFINE PARAM $app_version VALUE '2.0.0';
 ```
 
 Access it in queries:
 
-```sql
+```surql
 SELECT * FROM logs WHERE version = $app_version;
 ```
 
@@ -107,7 +107,7 @@ param('full_config').value(`{
 
 Reference params in your SQL:
 
-```sql
+```surql
 SELECT * FROM user WHERE role IN $allowed_roles;
 SELECT * FROM post LIMIT $default_page_size;
 ```
@@ -195,7 +195,7 @@ const constants = param('constants').value(`{
 
 Params can be updated with SurrealQL:
 
-```sql
+```surql
 -- Update from application code
 UPDATE $maintenance_mode SET value = true;
 

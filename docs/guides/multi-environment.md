@@ -9,8 +9,8 @@ Create separate config files for each environment:
 ```
 project/
 ├── smig.config.ts          # Development (default)
-├── smig.staging.config.js  # Staging
-├── smig.production.config.js # Production
+├── smig.staging.config.ts  # Staging
+├── smig.production.config.ts # Production
 └── schema.ts               # Shared schema
 ```
 
@@ -35,7 +35,7 @@ export default {
 A copy of production for testing:
 
 ```typescript
-// smig.staging.config.js
+// smig.staging.config.ts
 export default {
   url: 'wss://staging.surrealdb.example.com',
   namespace: 'staging',
@@ -51,7 +51,7 @@ export default {
 Your live environment with environment variables:
 
 ```typescript
-// smig.production.config.js
+// smig.production.config.ts
 export default {
   url: 'wss://prod.surrealdb.example.com',
   namespace: 'production',
@@ -72,10 +72,10 @@ bun smig diff
 bun smig migrate
 
 # Staging
-bun smig migrate --config smig.staging.config.js
+bun smig migrate --config smig.staging.config.ts
 
 # Production
-bun smig migrate --config smig.production.config.js
+bun smig migrate --config smig.production.config.ts
 ```
 
 ## Environment variables
@@ -105,16 +105,16 @@ bun smig migrate
 
 Create shortcuts for common operations:
 
-```typescripton
+```typescript
 {
   "scripts": {
     "db:diff": "bun smig diff",
     "db:push": "bun smig migrate",
-    "db:push:staging": "bun smig migrate --config smig.staging.config.js",
-    "db:push:prod": "bun smig migrate --config smig.production.config.js",
+    "db:push:staging": "bun smig migrate --config smig.staging.config.ts",
+    "db:push:prod": "bun smig migrate --config smig.production.config.ts",
     "db:status": "bun smig status",
-    "db:status:staging": "bun smig status --config smig.staging.config.js",
-    "db:status:prod": "bun smig status --config smig.production.config.js"
+    "db:status:staging": "bun smig status --config smig.staging.config.ts",
+    "db:status:prod": "bun smig status --config smig.production.config.ts"
   }
 }
 ```
@@ -204,8 +204,8 @@ bun smig diff
 bun smig migrate  # To dev database
 
 # After merge to main
-bun smig migrate --config smig.staging.config.js
-bun smig migrate --config smig.production.config.js
+bun smig migrate --config smig.staging.config.ts
+bun smig migrate --config smig.production.config.ts
 ```
 
 ## See also

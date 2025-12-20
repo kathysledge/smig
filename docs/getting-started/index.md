@@ -29,7 +29,7 @@ Done! You now have a `user` and `post` table in your database.
 
 ### You'll need
 
-- **Node.js 18+** or **Bun 1.0+** (we recommend Bun — it's faster)
+- **Bun 1.0+** (recommended) or **Node.js 18+**
 - **SurrealDB 3.0+** installed and accessible
 
 ### Checking your setup
@@ -37,9 +37,9 @@ Done! You now have a `user` and `post` table in your database.
 Verify your environment is ready:
 
 ```bash
-# Check Node.js or Bun
-node --version   # Should be 18.0.0 or higher
+# Check Bun or Node.js
 bun --version    # Should be 1.0.0 or higher
+node --version   # Should be 18.0.0 or higher (if not using Bun)
 
 # Check SurrealDB
 surreal version  # Should be 3.0.0 or higher
@@ -53,7 +53,7 @@ If you don't have SurrealDB, see [surrealdb.com/install](https://surrealdb.com/i
 
 ### 1. Define your schema
 
-You describe your database structure in a JavaScript file:
+You describe your database structure in a TypeScript file:
 
 ```typescript
 // schema.ts
@@ -97,7 +97,7 @@ Apply your schema to the database:
 bun smig migrate
 ```
 
-**smig** compares your schema to the database, generates the necessary SQL, and applies it.
+**smig** compares your schema to the database, generates the necessary SurrealQL (SQL), and applies it.
 
 ## Next steps
 
@@ -119,7 +119,7 @@ A detailed walkthrough of creating, previewing, and applying migrations.
 
 ### Do I need TypeScript?
 
-No. **smig** works with plain JavaScript. TypeScript is supported and gives you better autocomplete, but it's optional.
+TypeScript is recommended for the best developer experience with full autocomplete and type safety. **smig** natively compiles TypeScript — no build step required.
 
 ### Does smig work with existing databases?
 

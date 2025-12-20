@@ -92,7 +92,7 @@ email: string().required()
 
 This adds an assertion that rejects `NONE`:
 
-```sql
+```surql
 DEFINE FIELD email ON TABLE user TYPE string ASSERT $value != NONE;
 ```
 
@@ -295,7 +295,7 @@ fields: {
 
 This creates a nested structure:
 
-```typescripton
+```typescript
 {
   "address": {
     "street": "...",
@@ -335,7 +335,7 @@ contactEmail: string().was(['email', 'emailAddress'])
 
 This generates:
 
-```sql
+```surql
 ALTER FIELD name ON TABLE user RENAME TO fullName;
 ```
 
