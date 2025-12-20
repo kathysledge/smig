@@ -1,54 +1,51 @@
 # Resources
 
-Additional resources for **smig** and SurrealDB development.
-
----
+Helpful links, references, and ways to get involved with **smig**.
 
 ## Official links
 
-- [**smig** on npm](https://www.npmjs.com/package/smig)
-- [**smig** on GitHub](https://github.com/kathysledge/smig)
-- [SurrealDB documentation](https://surrealdb.com/docs)
-- [SurrealDB GitHub](https://github.com/surrealdb/surrealdb)
+- [GitHub repository](https://github.com/kathysledge/smig) — Source code, issues, discussions
+- [npm package](https://www.npmjs.com/package/smig) — Package registry
+- [Changelog](https://github.com/kathysledge/smig/blob/main/CHANGELOG.md) — What's new in each version
 
----
+## SurrealDB resources
 
-## Community
+- [SurrealDB documentation](https://surrealdb.com/docs) — Official SurrealDB docs
+- [SurrealDB Discord](https://discord.gg/surrealdb) — Community chat
+- [SurrealQL reference](https://surrealdb.com/docs/surrealql) — Query language reference
 
-- [SurrealDB Discord](https://surrealdb.com/discord)
-- [SurrealDB GitHub Discussions](https://github.com/surrealdb/surrealdb/discussions)
+## Getting help
 
----
+### Found a bug?
 
-## Tools
+[Open an issue](https://github.com/kathysledge/smig/issues/new) on GitHub. Include:
+- What you expected to happen
+- What actually happened
+- Your **smig** and SurrealDB versions
+- A minimal code example
 
-### Development
+### Have a question?
 
-- [Surrealist](https://surrealist.app/) — Desktop GUI for SurrealDB
-- [surrealdb.js](https://github.com/surrealdb/surrealdb.js) — Official JavaScript SDK
+[Start a discussion](https://github.com/kathysledge/smig/discussions) on GitHub. We're happy to help with:
+- How to model specific schemas
+- Migration strategies
+- Feature requests
 
-### Visualization
+## Contributing
 
-- [Mermaid Live Editor](https://mermaid.live/) — Preview ER diagrams
-- [Mermaid Viewer](https://newmo-oss.github.io/mermaid-viewer/) — Simple diagram viewer
+We welcome contributions! See the [contributing guide](https://github.com/kathysledge/smig/blob/main/CONTRIBUTING.md) for details on:
+- Setting up the development environment
+- Running tests
+- Submitting pull requests
 
----
+## Support the project
 
-## Related projects
+If **smig** saves you time, consider supporting development:
 
-- [Alembic](https://alembic.sqlalchemy.org/) — Python database migrations (inspiration for **smig**)
-- [Prisma](https://www.prisma.io/) — Node.js ORM with migrations
-- [Drizzle](https://orm.drizzle.team/) — TypeScript ORM
-
----
-
-## Changelog
-
-See [CHANGELOG.md](../../CHANGELOG.md) for the complete version history.
-
----
+- [Ko-fi](https://ko-fi.com/kathysledge) — One-time or monthly support
+- ⭐ Star the repo on [GitHub](https://github.com/kathysledge/smig)
+- Share with your team
 
 ## License
 
-**smig** is licensed under the ISC License. See [LICENSE](../../LICENSE) for details.
-
+**smig** is released under the [ISC License](https://github.com/kathysledge/smig/blob/main/LICENSE) — free for personal and commercial use.

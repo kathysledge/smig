@@ -7,15 +7,22 @@ import { cleanupTestFiles, TEST_DATABASES } from './setup';
 describe('Configuration Integration Tests', () => {
   const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.js');
   const TEST_ENV_PATH = path.join(process.cwd(), '.env.test.integration');
+  const TEST_SCHEMA_PATH = path.join(process.cwd(), 'schema.ts');
 
   beforeEach(() => {
     // Clean up any existing test files
-    cleanupTestFiles(['smig.config.js', '.env.test.integration']);
+    cleanupTestFiles(['smig.config.js', '.env.test.integration', 'schema.ts']);
+    // Create a minimal schema file for validation tests
+    fs.writeFileSync(
+      TEST_SCHEMA_PATH,
+      `import { composeSchema } from './dist/schema/concise-schema.ts';
+export default composeSchema({ models: {}, relations: {} });`,
+    );
   });
 
   afterEach(() => {
     // Clean up test files after each test
-    cleanupTestFiles(['smig.config.js', '.env.test.integration']);
+    cleanupTestFiles(['smig.config.js', '.env.test.integration', 'schema.ts']);
   });
 
   describe('Environment-Based Configuration', () => {
@@ -28,7 +35,7 @@ export default {
   password: '${TEST_DATABASES.db1.password}',
   namespace: '${TEST_DATABASES.db1.namespace}',
   database: 'default_database',
-  schema: './schema.js',
+  schema: './schema.ts',
   environments: {
     development: {
       database: 'dev_database',
@@ -74,7 +81,7 @@ export default {
   password: 'root',
   namespace: 'test',
   database: \`\${process.env.TEST_DB_PREFIX}_main\`,
-  schema: './schema.js',
+  schema: './schema.ts',
   environments: {
     test: {
       database: \`\${process.env.TEST_DB_PREFIX}_test\`,
@@ -112,7 +119,7 @@ export default {
           password: 'root',
           namespace: 'test',
           database: 'test',
-          schema: './schema.js',
+          schema: './schema.ts',
         }),
       ).toThrow();
 
@@ -124,7 +131,7 @@ export default {
           password: 'root',
           namespace: 'test',
           database: 'test',
-          schema: './schema.js',
+          schema: './schema.ts',
         }),
       ).not.toThrow();
     });
@@ -138,7 +145,7 @@ export default {
     password: 'root',
     namespace: 'test',
     database: 'default_db',
-    schema: './schema.js'
+    schema: './schema.ts'
   },
   development: {
     database: 'dev_db'
@@ -177,7 +184,7 @@ export default {
   password: 'config_password',
   namespace: 'config_namespace',
   database: 'config_database',
-  schema: './schema.js'
+  schema: './schema.ts'
 };`;
 
       fs.writeFileSync(TEST_CONFIG_PATH, configContent);
@@ -207,7 +214,7 @@ SMIG_USERNAME=env_user
 SMIG_PASSWORD=env_password
 SMIG_NAMESPACE=env_namespace
 SMIG_DATABASE=env_database
-SMIG_SCHEMA=./env-schema.js
+SMIG_SCHEMA=./env-schema.ts
 `,
       );
 
@@ -234,7 +241,7 @@ export default {
     password: 'root',
     namespace: 'test',
     database: 'default_db',
-    schema: './schema.js'
+    schema: './schema.ts'
   },
   development: {
     database: 'dev_db'
@@ -269,7 +276,7 @@ export default {
     password: 'root',
     namespace: 'test',
     database: 'only_default',
-    schema: './schema.js'
+    schema: './schema.ts'
   }
 };`;
 
@@ -290,7 +297,7 @@ export default {
         password: TEST_DATABASES.db1.password,
         namespace: TEST_DATABASES.db1.namespace,
         database: TEST_DATABASES.db1.database,
-        schema: './schema.js',
+        schema: './schema.ts',
       };
 
       const config2 = {
@@ -299,7 +306,7 @@ export default {
         password: TEST_DATABASES.db2.password,
         namespace: TEST_DATABASES.db2.namespace,
         database: TEST_DATABASES.db2.database,
-        schema: './schema.js',
+        schema: './schema.ts',
       };
 
       // Validate both configs are valid

@@ -1,186 +1,279 @@
 # Params
 
-Define global database parameters with `param()`.
+Params are global configuration values stored in the database. Think of them as database-level constants or settings.
 
----
+## What are params for?
 
-## Basic usage
+Params let you:
 
-```javascript
+- **Store configuration** — API keys, feature flags, version numbers
+- **Share values across queries** — Constants used in multiple places
+- **Change behavior without code** — Update a param, affect all queries
+
+## Creating a param
+
+Use the `param()` function to define a global parameter:
+
+```typescript
 import { param } from 'smig';
 
 const appVersion = param('app_version')
-  .value('"1.0.0"');
-
-const maxPageSize = param('max_page_size')
-  .value('100');
+  .value("'2.0.0'");
 ```
 
-**Generated SurrealQL:**
+This generates:
 
 ```sql
-DEFINE PARAM $app_version VALUE "1.0.0";
-DEFINE PARAM $max_page_size VALUE 100;
+DEFINE PARAM $app_version VALUE '2.0.0';
 ```
 
----
+Access it in queries:
 
-## Options
+```sql
+SELECT * FROM logs WHERE version = $app_version;
+```
 
-| Method | Description | Required |
-|--------|-------------|----------|
-| `.value(expr)` | Parameter value | Yes |
-| `.permissions(rule)` | Access control | No |
-| `.comment(text)` | Documentation | No |
-
----
-
-## Value types
+## Param values
 
 ### Strings
 
-```javascript
-param('environment').value('"production"')
-param('api_url').value('"https://api.example.com"')
+Note: String values need inner quotes:
+
+```typescript
+param('greeting').value("'Hello, World!'")
+param('mode').value("'production'")
 ```
 
 ### Numbers
 
-```javascript
-param('max_retries').value('5')
+Numeric values don't need quotes:
+
+```typescript
+param('max_retries').value('3')
 param('timeout_seconds').value('30')
-param('rate_limit').value('1000')
+param('pi').value('3.14159')
 ```
 
-### Arrays
+### Booleans
 
-```javascript
-param('allowed_roles').value('["admin", "moderator", "user"]')
-param('feature_flags').value('["new_ui", "beta_features"]')
+True/false values:
+
+```typescript
+param('feature_enabled').value('true')
+param('maintenance_mode').value('false')
 ```
 
 ### Objects
 
-```javascript
+Complex configuration as structured data:
+
+```typescript
 param('config').value(`{
-  maxUploadSize: 10485760,
-  allowedTypes: ["image/png", "image/jpeg"],
-  compression: true
+  debug: false,
+  maxConnections: 100,
+  timeout: '30s'
 }`)
+```
+
+### Arrays
+
+Lists of values:
+
+```typescript
+param('allowed_origins').value(`[
+  'https://app.example.com',
+  'https://admin.example.com'
+]`)
 ```
 
 ### Expressions
 
-```javascript
-param('start_of_day').value('time::floor(time::now(), 1d)')
-param('random_seed').value('rand::uuid()')
+Params can be expressions, not just static values:
+
+```typescript
+// Current time when queried
+param('current_year').value('time::year(time::now())')
+
+// Computed from other params
+param('full_config').value(`{
+  version: $app_version,
+  env: $environment
+}`)
 ```
-
----
-
-## Permissions
-
-Control who can access the parameter:
-
-```javascript
-param('secret_key')
-  .value('"sk_live_..."')
-  .permissions('$auth.role = "admin"')
-
-param('public_config')
-  .value('{ theme: "dark" }')
-  .permissions('true')  // Anyone can read
-```
-
----
 
 ## Using params
 
-Reference parameters in queries with `$`:
+### In queries
+
+Reference params in your SQL:
 
 ```sql
--- In queries
-SELECT * FROM post LIMIT $max_page_size;
-
--- In field definitions
-DEFINE FIELD config ON settings VALUE $default_config;
-
--- In conditions
 SELECT * FROM user WHERE role IN $allowed_roles;
+SELECT * FROM post LIMIT $default_page_size;
 ```
 
----
+### In field defaults
+
+Use params as default values:
+
+```typescript
+role: string().default('$default_role')
+```
+
+### In assertions
+
+Validate against param values:
+
+```typescript
+retries: int().assert('$value <= $max_retries')
+```
+
+### In functions
+
+Access params in function logic:
+
+```typescript
+fn('fn::is_maintenance')
+  .params({})
+  .returns('bool')
+  .body('RETURN $maintenance_mode;')
+```
 
 ## Common patterns
 
-### Configuration
-
-```javascript
-const maxPageSize = param('max_page_size').value('50');
-const defaultTimeout = param('default_timeout').value('30s');
-const apiVersion = param('api_version').value('"v2"');
-```
-
 ### Feature flags
 
-```javascript
+Toggle features without code changes:
+
+```typescript
 const features = param('features').value(`{
   darkMode: true,
   betaFeatures: false,
-  newDashboard: true
+  maxFileUploadMb: 100
+}`);
+
+// In queries
+// SELECT * FROM feature WHERE $features.darkMode = true
+```
+
+### Environment config
+
+Store environment-specific settings:
+
+```typescript
+const environment = param('environment').value("'production'");
+const debugMode = param('debug_mode').value('false');
+const apiUrl = param('api_url').value("'https://api.example.com'");
+```
+
+### Rate limits
+
+Configure throttling without code changes:
+
+```typescript
+const rateLimit = param('rate_limit').value(`{
+  requests: 100,
+  window: '1m',
+  burstMultiplier: 2
 }`);
 ```
 
-### Environment-specific values
+### Application constants
 
-```javascript
-// Set different values per environment via migrations or CLI
-const environment = param('environment').value('"development"');
-const apiEndpoint = param('api_endpoint').value('"http://localhost:3000"');
+Centralize magic numbers and strings:
+
+```typescript
+const constants = param('constants').value(`{
+  maxUsernameLength: 30,
+  minPasswordLength: 8,
+  sessionTimeout: '7d',
+  supportEmail: 'support@example.com'
+}`);
 ```
 
----
+## Updating params
+
+Params can be updated with SurrealQL:
+
+```sql
+-- Update from application code
+UPDATE $maintenance_mode SET value = true;
+
+-- Or redefine
+DEFINE PARAM $maintenance_mode VALUE true;
+```
+
+This makes them useful for runtime configuration that doesn't require code deploys.
+
+## Param comments
+
+Document your params:
+
+```typescript
+const maxRetries = param('max_retries')
+  .value('3')
+  .comment('Maximum retry attempts for failed operations');
+```
 
 ## Complete example
 
-```javascript
-import { param, composeSchema } from 'smig';
+A full set of application configuration parameters:
 
+```typescript
+import { param, defineSchema, string, int, composeSchema } from 'smig';
+
+// Application configuration
 const appVersion = param('app_version')
-  .value('"2.1.0"')
+  .value("'2.5.0'")
   .comment('Current application version');
 
-const maxPageSize = param('max_page_size')
-  .value('100')
-  .comment('Maximum items per page for pagination');
+const environment = param('environment')
+  .value("'production'");
 
+// Feature flags
 const features = param('features')
   .value(`{
     darkMode: true,
-    analytics: true,
+    advancedSearch: true,
     betaFeatures: false
   }`)
-  .comment('Feature flag configuration');
+  .comment('Feature toggle configuration');
 
-const allowedOrigins = param('allowed_origins')
-  .value('["https://app.example.com", "https://admin.example.com"]')
-  .permissions('$auth.role = "admin"');
+// Rate limiting
+const rateLimits = param('rate_limits')
+  .value(`{
+    api: { requests: 100, window: '1m' },
+    auth: { requests: 5, window: '15m' }
+  }`);
+
+// Business rules
+const businessRules = param('business_rules')
+  .value(`{
+    maxOrderItems: 50,
+    minOrderValue: 10.00,
+    freeShippingThreshold: 75.00
+  }`);
+
+// Use in schema
+const orders = defineSchema({
+  table: 'order',
+  fields: {
+    items: array('object')
+      .assert('array::len($value) <= $business_rules.maxOrderItems'),
+    total: decimal()
+      .assert('$value >= $business_rules.minOrderValue'),
+    // ...
+  },
+});
 
 export default composeSchema({
-  models: { /* ... */ },
-  params: {
-    appVersion,
-    maxPageSize,
-    features,
-    allowedOrigins,
-  },
+  models: { order: orders },
+  params: [appVersion, environment, features, rateLimits, businessRules],
 });
 ```
 
----
+## Related
 
-## See also
-
-- [Schema reference](index.md) - Full API overview
-- [Config](config.md) - API and GraphQL configuration
-
+- [Fields](/schema-reference/fields) — Use params in defaults and assertions
+- [Functions](/schema-reference/functions) — Use params in function logic
+- [Access](/schema-reference/access) — Use params for auth configuration

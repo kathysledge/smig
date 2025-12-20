@@ -11,6 +11,8 @@ import { createHash } from 'node:crypto';
 import * as path from 'node:path';
 import * as fs from 'fs-extra';
 import { SurrealClient } from '../database/surreal-client';
+// SQL generators
+import { generateIndexDefinition as generateIndexSQL } from '../generators/index-gen';
 import type {
   DatabaseConfig,
   Migration,
@@ -21,6 +23,13 @@ import type {
   SurrealScope,
 } from '../types/schema';
 import { debugLog, debugLogSchema } from '../utils/debug-logger';
+// Introspection parsers
+import {
+  parseEventDefinition,
+  parseFieldDefinition,
+  parseIndexDefinition,
+  parseTableInfo,
+} from './introspection';
 
 /**
  * Main class for managing SurrealDB database migrations.
@@ -129,7 +138,6 @@ export class MigrationManager {
    * - appliedAt: When the migration was applied
    * - up: Forward migration SQL
    * - down: Rollback migration SQL
-   * - message: Optional description of the migration
    * - checksum: SHA256 hash of the up migration (for integrity verification)
    * - downChecksum: SHA256 hash of the down migration (for integrity verification)
    */
@@ -146,7 +154,6 @@ export class MigrationManager {
         DEFINE FIELD appliedAt ON TABLE _migrations TYPE datetime;
         DEFINE FIELD up ON TABLE _migrations TYPE string;
         DEFINE FIELD down ON TABLE _migrations TYPE string;
-        DEFINE FIELD message ON TABLE _migrations TYPE option<string>;
         DEFINE FIELD checksum ON TABLE _migrations TYPE string;
         DEFINE FIELD downChecksum ON TABLE _migrations TYPE string;
       `;
@@ -184,7 +191,6 @@ export class MigrationManager {
     schema: SurrealDBSchema,
     upMigration?: string,
     downMigration?: string,
-    message?: string,
   ): Promise<void> {
     const migrationId = `${Date.now()}_migration`;
 
@@ -222,7 +228,6 @@ export class MigrationManager {
       appliedAt: new Date(),
       up,
       down,
-      message,
       checksum,
       downChecksum,
     });
@@ -545,6 +550,47 @@ export class MigrationManager {
       const stillExists = (schema.analyzers || []).find((a) => a.name === currentAnalyzer.name);
       if (!stillExists) {
         return true; // Removed analyzer found
+      }
+    }
+
+    // Check for param changes
+    for (const newParam of schema.params || []) {
+      const currentParam = (currentSchema.params || []).find((p) => p.name === newParam.name);
+
+      if (!currentParam) {
+        return true; // New param found
+      }
+
+      // Check if param value has changed
+      if (currentParam.value !== newParam.value) {
+        return true; // Param modified
+      }
+    }
+
+    // Check for removed params
+    for (const currentParam of currentSchema.params || []) {
+      const stillExists = (schema.params || []).find((p) => p.name === currentParam.name);
+      if (!stillExists) {
+        return true; // Removed param found
+      }
+    }
+
+    // Check for sequence changes
+    for (const newSequence of schema.sequences || []) {
+      const currentSequence = (currentSchema.sequences || []).find(
+        (s) => s.name === newSequence.name,
+      );
+
+      if (!currentSequence) {
+        return true; // New sequence found
+      }
+    }
+
+    // Check for removed sequences
+    for (const currentSequence of currentSchema.sequences || []) {
+      const stillExists = (schema.sequences || []).find((s) => s.name === currentSequence.name);
+      if (!stillExists) {
+        return true; // Removed sequence found
       }
     }
 
@@ -1001,6 +1047,95 @@ export class MigrationManager {
       }
     }
 
+    // Handle params
+    for (const newParam of schema.params || []) {
+      const currentParam = (currentSchema.params || []).find((p) => p.name === newParam.name);
+
+      if (!currentParam) {
+        // New param
+        upChanges.push(`-- New param: ${newParam.name}`);
+        upChanges.push(`DEFINE PARAM $${newParam.name} VALUE ${newParam.value};`);
+        upChanges.push('');
+
+        changeLog.push({
+          type: 'param',
+          table: newParam.name,
+          operation: 'create',
+          details: { newParam },
+        });
+      } else if (currentParam.value !== newParam.value) {
+        // Modified param value
+        upChanges.push(`-- Modified param: ${newParam.name}`);
+        upChanges.push(`ALTER PARAM $${newParam.name} VALUE ${newParam.value};`);
+        upChanges.push('');
+
+        changeLog.push({
+          type: 'param',
+          table: newParam.name,
+          operation: 'modify',
+          details: { oldValue: currentParam.value, newValue: newParam.value },
+        });
+      }
+    }
+
+    // Check for removed params
+    for (const currentParam of currentSchema.params || []) {
+      const stillExists = (schema.params || []).find((p) => p.name === currentParam.name);
+      if (!stillExists) {
+        upChanges.push(`-- Removed param: ${currentParam.name}`);
+        upChanges.push(`REMOVE PARAM $${currentParam.name};`);
+        upChanges.push('');
+
+        changeLog.push({
+          type: 'param',
+          table: currentParam.name,
+          operation: 'remove',
+          details: { currentParam },
+        });
+      }
+    }
+
+    // Handle sequences
+    for (const newSequence of schema.sequences || []) {
+      const currentSequence = (currentSchema.sequences || []).find(
+        (s) => s.name === newSequence.name,
+      );
+
+      if (!currentSequence) {
+        // New sequence
+        upChanges.push(`-- New sequence: ${newSequence.name}`);
+        let seqDef = `DEFINE SEQUENCE ${newSequence.name}`;
+        if (newSequence.start !== undefined) seqDef += ` START ${newSequence.start}`;
+        if (newSequence.step !== undefined) seqDef += ` STEP ${newSequence.step}`;
+        upChanges.push(`${seqDef};`);
+        upChanges.push('');
+
+        changeLog.push({
+          type: 'sequence',
+          table: newSequence.name,
+          operation: 'create',
+          details: { newSequence },
+        });
+      }
+    }
+
+    // Check for removed sequences
+    for (const currentSequence of currentSchema.sequences || []) {
+      const stillExists = (schema.sequences || []).find((s) => s.name === currentSequence.name);
+      if (!stillExists) {
+        upChanges.push(`-- Removed sequence: ${currentSequence.name}`);
+        upChanges.push(`REMOVE SEQUENCE ${currentSequence.name};`);
+        upChanges.push('');
+
+        changeLog.push({
+          type: 'sequence',
+          table: currentSequence.name,
+          operation: 'remove',
+          details: { currentSequence },
+        });
+      }
+    }
+
     // Generate rollback migration (reverse order of changes)
     downChanges.push('-- Rollback migration');
     downChanges.push('');
@@ -1027,6 +1162,14 @@ export class MigrationManager {
           } else if (change.type === 'analyzer') {
             downChanges.push(`-- Rollback: Remove analyzer ${change.table}`);
             downChanges.push(`REMOVE ANALYZER ${change.table};`);
+            downChanges.push('');
+          } else if (change.type === 'param') {
+            downChanges.push(`-- Rollback: Remove param ${change.table}`);
+            downChanges.push(`REMOVE PARAM $${change.table};`);
+            downChanges.push('');
+          } else if (change.type === 'sequence') {
+            downChanges.push(`-- Rollback: Remove sequence ${change.table}`);
+            downChanges.push(`REMOVE SEQUENCE ${change.table};`);
             downChanges.push('');
           }
           break;
@@ -1088,6 +1231,23 @@ export class MigrationManager {
             if (analyzer) {
               downChanges.push(`-- Rollback: Recreate analyzer ${change.table}`);
               downChanges.push(this.generateAnalyzerDefinition(analyzer));
+              downChanges.push('');
+            }
+          } else if (change.type === 'param') {
+            const param = change.details.currentParam;
+            if (param) {
+              downChanges.push(`-- Rollback: Recreate param ${change.table}`);
+              downChanges.push(`DEFINE PARAM $${param.name} VALUE ${param.value};`);
+              downChanges.push('');
+            }
+          } else if (change.type === 'sequence') {
+            const seq = change.details.currentSequence;
+            if (seq) {
+              downChanges.push(`-- Rollback: Recreate sequence ${change.table}`);
+              let seqDef = `DEFINE SEQUENCE ${seq.name}`;
+              if (seq.start !== undefined) seqDef += ` START ${seq.start}`;
+              if (seq.step !== undefined) seqDef += ` STEP ${seq.step}`;
+              downChanges.push(`${seqDef};`);
               downChanges.push('');
             }
           }
@@ -1228,6 +1388,14 @@ export class MigrationManager {
               downChanges.push(this.generateAnalyzerDefinition(currentAnalyzer));
               downChanges.push('');
             }
+          } else if (change.type === 'param') {
+            // Rollback param modification - restore original value
+            const oldValue = change.details.oldValue;
+            if (oldValue) {
+              downChanges.push(`-- Rollback: Restore param ${change.table} to original value`);
+              downChanges.push(`ALTER PARAM $${change.table} VALUE ${oldValue};`);
+              downChanges.push('');
+            }
           }
           break;
 
@@ -1292,7 +1460,6 @@ export class MigrationManager {
       migrations.map((m: Record<string, unknown>) => ({
         id: m.id,
         appliedAt: m.appliedAt,
-        message: m.message,
       })),
     );
 
@@ -1303,7 +1470,6 @@ export class MigrationManager {
         appliedAt: new Date(m.appliedAt as string | number | Date),
         up: m.up as string,
         down: m.down as string,
-        message: (m.message as string) || undefined,
         checksum: m.checksum as string,
         downChecksum: m.downChecksum as string,
       }))
@@ -1314,7 +1480,6 @@ export class MigrationManager {
       processedMigrations.map((m: Migration) => ({
         id: m.id,
         appliedAt: m.appliedAt,
-        message: m.message,
       })),
     );
     return processedMigrations;
@@ -1331,13 +1496,12 @@ export class MigrationManager {
    * @returns The SurrealDB-generated record ID
    */
   private async recordMigration(migration: Migration): Promise<string> {
-    debugLog(`Recording migration with message: ${migration.message || 'No message'}`);
+    debugLog(`Recording migration: ${migration.id}`);
 
     const migrationData = {
       appliedAt: new Date(),
       up: migration.up,
       down: migration.down,
-      message: migration.message || undefined, // undefined -> NONE in SurrealDB
       checksum: migration.checksum,
       downChecksum: migration.downChecksum,
     };
@@ -1494,9 +1658,54 @@ export class MigrationManager {
       }
     }
 
+    // Parse params from database info
+    const virtualizedParams = [];
+    if (infoResult && infoResult.length > 0 && infoResult[0].params) {
+      const paramsObj = infoResult[0].params as Record<string, unknown>;
+      for (const [paramName, paramDef] of Object.entries(paramsObj)) {
+        try {
+          // Parse param definition: "DEFINE PARAM $name VALUE expression"
+          const paramDefStr = paramDef as string;
+          const valueMatch = paramDefStr.match(/VALUE\s+(.+?)(?:\s+COMMENT|;|$)/i);
+          const value = valueMatch ? valueMatch[1].trim() : '';
+          virtualizedParams.push({
+            name: paramName.startsWith('$') ? paramName.substring(1) : paramName,
+            value: value,
+          });
+          debugLog(`Parsed param ${paramName}:`, { value });
+        } catch (error) {
+          debugLog(`Could not parse param ${paramName}:`, error);
+        }
+      }
+    }
+
+    // Parse sequences from database info
+    const virtualizedSequences = [];
+    if (infoResult && infoResult.length > 0 && infoResult[0].sequences) {
+      const sequencesObj = infoResult[0].sequences as Record<string, unknown>;
+      for (const [seqName, seqDef] of Object.entries(sequencesObj)) {
+        try {
+          // Parse sequence definition: "DEFINE SEQUENCE name START x STEP y"
+          const seqDefStr = seqDef as string;
+          const startMatch = seqDefStr.match(/START\s+(\d+)/i);
+          const stepMatch = seqDefStr.match(/STEP\s+(\d+)/i);
+          virtualizedSequences.push({
+            name: seqName,
+            start: startMatch ? parseInt(startMatch[1], 10) : undefined,
+            step: stepMatch ? parseInt(stepMatch[1], 10) : undefined,
+          });
+          debugLog(`Parsed sequence ${seqName}:`, { start: startMatch?.[1], step: stepMatch?.[1] });
+        } catch (error) {
+          debugLog(`Could not parse sequence ${seqName}:`, error);
+        }
+      }
+    }
+
     debugLog(`Parsed ${virtualizedFunctions.length} functions`);
     debugLog(`Parsed ${virtualizedScopes.length} scopes`);
     debugLog(`Parsed ${virtualizedAnalyzers.length} analyzers`);
+    debugLog(`Parsed ${virtualizedParams.length} params`);
+    debugLog(`Parsed ${virtualizedSequences.length} sequences`);
 
     return {
       tables: virtualizedTables,
@@ -1504,6 +1713,8 @@ export class MigrationManager {
       functions: virtualizedFunctions,
       scopes: virtualizedScopes,
       analyzers: virtualizedAnalyzers,
+      params: virtualizedParams,
+      sequences: virtualizedSequences,
       comments: [],
     } as unknown as SurrealDBSchema;
   }
@@ -1526,90 +1737,37 @@ export class MigrationManager {
     // Parse the INFO FOR TABLE result to extract schema information
     debugLog(`Parsing info result for ${tableName}:`, infoResult);
 
-    const fields = [];
-    const indexes = [];
-    const events = [];
+    // Use the modular introspection parser
+    const tableInfo = parseTableInfo(tableName, infoResult) as {
+      name: string;
+      schemafull: boolean;
+      drop: boolean;
+      type: string;
+      changefeedDuration: string | null;
+      changefeedIncludeOriginal: boolean;
+      fields: Array<Record<string, unknown>>;
+      indexes: Array<Record<string, unknown>>;
+      events: Array<Record<string, unknown>>;
+      isRelation: boolean;
+      relationInfo: { from: string | null; to: string | null } | null;
+    };
 
-    // Parse fields from the info result
-    if (infoResult.fields) {
-      for (const [fieldName, fieldDef] of Object.entries(
-        infoResult.fields as Record<string, unknown>,
-      )) {
-        // Skip array wildcard fields (e.g., followers[*]) - these are auto-generated by SurrealDB
-        if (fieldName.includes('[*]')) {
-          continue;
-        }
-
-        // Include all fields, including 'in' and 'out' fields for relation tables
-        // These are important for schema comparison
-
-        const parsedField = {
-          name: fieldName,
-          type: this.extractFieldType(fieldDef as string),
-          optional: this.isFieldOptional(fieldDef as string),
-          readonly: this.isFieldReadonly(fieldDef as string),
-          flexible: this.isFieldFlexible(fieldDef as string),
-          ifNotExists: this.hasIfNotExists(fieldDef as string),
-          overwrite: this.hasOverwrite(fieldDef as string),
-          default: this.extractFieldDefault(fieldDef as string),
-          value: this.extractFieldValue(fieldDef as string),
-          assert: this.extractFieldAssert(fieldDef as string),
-          permissions: this.extractFieldPermissions(fieldDef as string),
-          comment: this.extractFieldComment(fieldDef as string),
-        };
-
-        debugLog(`Parsed field ${fieldName} in table ${tableName}:`, {
-          name: parsedField.name,
-          type: parsedField.type,
-          optional: parsedField.optional,
-          readonly: parsedField.readonly,
-          flexible: parsedField.flexible,
-          ifNotExists: parsedField.ifNotExists,
-          overwrite: parsedField.overwrite,
-          default: parsedField.default,
-          value: parsedField.value,
-          assert: parsedField.assert,
-          permissions: parsedField.permissions,
-          comment: parsedField.comment,
-        });
-
-        fields.push(parsedField);
-      }
-    }
-
-    // Parse indexes from the info result
-    if (infoResult.indexes) {
-      for (const [indexName, indexDef] of Object.entries(
-        infoResult.indexes as Record<string, unknown>,
-      )) {
-        indexes.push({
-          name: indexName,
-          columns: this.extractIndexColumns(indexDef as string),
-          unique: this.isIndexUnique(indexDef as string),
-        });
-      }
-    }
-
-    // Parse events from the info result
-    if (infoResult.events) {
-      for (const [eventName, eventDef] of Object.entries(
-        infoResult.events as Record<string, unknown>,
-      )) {
-        events.push({
-          name: eventName,
-          when: this.extractEventWhen(eventDef as string),
-          thenStatement: this.extractEventThen(eventDef as string),
-        });
-      }
-    }
+    debugLog(`Parsed table ${tableName}:`, {
+      fields: tableInfo.fields.length,
+      indexes: tableInfo.indexes.length,
+      events: tableInfo.events.length,
+      isRelation: tableInfo.isRelation,
+    });
 
     return {
       name: tableName,
       schemafull: true,
       comments: [],
-      fields,
-      indexes,
-      events,
+      fields: tableInfo.fields,
+      indexes: tableInfo.indexes,
+      events: tableInfo.events,
+      isRelation: tableInfo.isRelation,
+      relationInfo: tableInfo.relationInfo,
     };
   }
 
@@ -1631,10 +1789,11 @@ export class MigrationManager {
     overwrite: /OVERWRITE/,
     flexible: /FLEX(?:IBLE)?/,
     readonly: /READONLY/,
-    optional: /OPTIONAL/,
+    // Match optional types - both option<T> and none | T formats (SurrealDB v3)
+    optional: /TYPE\s+(?:option<|none\s*\|)/i,
 
-    // Field properties
-    type: /TYPE\s+([^;]+?)(?:\s+(?:READONLY|VALUE|ASSERT|DEFAULT|PERMISSIONS|COMMENT|FLEX(?:IBLE)?|$))/,
+    // Field properties - capture type including union types like "none | string"
+    type: /(?:FLEXIBLE\s+)?TYPE\s+([^\s;]+(?:<[^>]+>)?(?:\s*\|\s*[^\s;]+(?:<[^>]+>)?)*)/,
     value: /VALUE\s+([^;]+?)(?:\s+(?:ASSERT|DEFAULT|PERMISSIONS|COMMENT|FLEX(?:IBLE)?|$))/,
     assert: /ASSERT\s+([^;]+?)(?:\s+(?:DEFAULT|PERMISSIONS|COMMENT|FLEX(?:IBLE)?|$))/,
     default: /DEFAULT\s+([^;]+?)(?:\s+(?:ASSERT|PERMISSIONS|COMMENT|FLEX(?:IBLE)?|$))/,
@@ -2200,8 +2359,9 @@ export class MigrationManager {
   /**
    * Generates a SurrealQL DEFINE INDEX statement from an index definition.
    *
-   * This method constructs the complete index definition including column list
-   * and uniqueness constraint in the correct SurrealQL syntax.
+   * This method constructs the complete index definition including column list,
+   * uniqueness constraint, and advanced index types (HNSW, MTREE, SEARCH) in
+   * the correct SurrealQL syntax.
    *
    * @param tableName - The name of the table the index belongs to
    * @param index - The index definition object
@@ -2213,14 +2373,37 @@ export class MigrationManager {
     index: any,
   ): string {
     const indexName = index.name || `${tableName}_${index.columns.join('_')}`;
-    let definition = `DEFINE INDEX ${indexName} ON TABLE ${tableName} COLUMNS ${index.columns.join(', ')}`;
 
-    if (index.unique) {
-      definition += ' UNIQUE';
-    }
-
-    definition += ';';
-    return definition;
+    // Use the proper generator which supports all index types
+    return generateIndexSQL(tableName, indexName, {
+      columns: index.columns || [],
+      unique: index.unique || false,
+      type: index.type || 'BTREE',
+      // Search options
+      analyzer: index.analyzer || null,
+      highlights: index.highlights || false,
+      bm25: index.bm25 || null,
+      docIdsCache: index.docIdsCache || null,
+      docLengthsCache: index.docLengthsCache || null,
+      postingsCache: index.postingsCache || null,
+      termsCache: index.termsCache || null,
+      // Vector options (MTREE/HNSW)
+      dimension: index.dimension || null,
+      dist: index.dist || null,
+      // MTREE-specific
+      capacity: index.capacity || null,
+      // HNSW-specific
+      efc: index.efc || null,
+      m: index.m || null,
+      m0: index.m0 || null,
+      lm: index.lm || null,
+      // Metadata
+      comments: index.comments || [],
+      previousNames: index.previousNames || [],
+      ifNotExists: index.ifNotExists || false,
+      overwrite: index.overwrite || false,
+      concurrently: index.concurrently || false,
+    });
   }
 
   /**
@@ -2239,7 +2422,9 @@ export class MigrationManager {
     // biome-ignore lint/suspicious/noExplicitAny: Dynamic event definitions from schema introspection
     event: any,
   ): string {
-    const trimmedStatement = event.thenStatement.trim();
+    // Handle both schema events (thenStatement) and introspected events (then)
+    const thenValue = event.thenStatement ?? event.then ?? '';
+    const trimmedStatement = String(thenValue).trim();
 
     // If the statement is already wrapped in braces, don't wrap again
     const isAlreadyWrapped = trimmedStatement.startsWith('{') && trimmedStatement.endsWith('}');
@@ -3012,7 +3197,7 @@ export class MigrationManager {
  * @example
  * ```typescript
  * // Load schema from file
- * const schema = await loadSchemaFromFile('./schema.js');
+ * const schema = await loadSchemaFromFile('./schema.ts');
  *
  * // Use with migration manager
  * const manager = new MigrationManager(config);
@@ -3021,8 +3206,8 @@ export class MigrationManager {
  *
  * ## Example Schema File
  *
- * ```javascript
- * // schema.js
+ * ```typescript
+ * // schema.ts
  * import { defineSchema, composeSchema, string, int } from 'smig';
  *
  * const userSchema = defineSchema({
@@ -3045,13 +3230,31 @@ export async function loadSchemaFromFile(filePath: string): Promise<SurrealDBSch
   }
 
   const ext = path.extname(filePath);
-  if (ext !== '.js') {
-    throw new Error(`Unsupported file type: ${ext}. Only .js files are supported.`);
+  const supportedExtensions = ['.js', '.mjs', '.cjs', '.ts', '.mts', '.cts'];
+
+  if (!supportedExtensions.includes(ext)) {
+    throw new Error(
+      `Unsupported file type: ${ext}. Supported types: ${supportedExtensions.join(', ')}`,
+    );
   }
 
   try {
-    // Dynamic import of the schema file
-    const module = await import(path.resolve(filePath));
+    const absolutePath = path.resolve(filePath);
+    let module: Record<string, unknown>;
+
+    // Use jiti for TypeScript files, native import for JavaScript
+    if (['.ts', '.mts', '.cts'].includes(ext)) {
+      // Dynamic import of jiti to avoid bundling issues
+      const { createJiti } = await import('jiti');
+      const jiti = createJiti(import.meta.url, {
+        // Enable TypeScript support
+        interopDefault: true,
+      });
+      module = (await jiti.import(absolutePath)) as Record<string, unknown>;
+    } else {
+      // Native import for JavaScript files
+      module = await import(absolutePath);
+    }
 
     // Look for default export or named exports
     const schema = module.default || module.schema || module.fullSchema;
@@ -3062,7 +3265,7 @@ export async function loadSchemaFromFile(filePath: string): Promise<SurrealDBSch
       );
     }
 
-    return schema;
+    return schema as SurrealDBSchema;
   } catch (error) {
     throw new Error(`Failed to load schema from ${filePath}: ${error}`);
   }

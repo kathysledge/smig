@@ -1,167 +1,305 @@
 # Sequences
 
-Define auto-increment sequences with `sequence()`.
+Sequences generate auto-incrementing numbers. Use them for order numbers, invoice IDs, or any place you need guaranteed unique sequential values.
 
----
+## What are sequences for?
 
-## Basic usage
+Sometimes UUIDs aren't the right choice:
 
-```javascript
+- **Order numbers** — Customers expect "Order #10042", not "Order #a7b3c9d2-..."
+- **Invoice IDs** — Sequential numbers for accounting
+- **Serial numbers** — Manufacturing or tracking codes
+- **Human-readable IDs** — Short, memorable identifiers
+
+Sequences give you database-guaranteed unique incrementing numbers.
+
+## Creating a sequence
+
+Use the `sequence()` function to define an auto-incrementing sequence:
+
+```typescript
 import { sequence } from 'smig';
 
-const orderNumber = sequence('order_number')
-  .start(1000)
-  .batch(100);
+const orderNumber = sequence('order_number');
 ```
 
-**Generated SurrealQL:**
+This generates:
 
 ```sql
-DEFINE SEQUENCE order_number BATCH 100 START 1000;
+DEFINE SEQUENCE order_number;
 ```
 
----
+Use it in a field:
 
-## Options
-
-| Method | Description | Default |
-|--------|-------------|---------|
-| `.start(n)` | Starting value | `0` |
-| `.batch(n)` | Batch size for preallocation | `1` |
-| `.timeout(duration)` | Batch reservation timeout | - |
-
----
-
-## Batch sizing
-
-Sequences preallocate values in batches for performance:
-
-```javascript
-// Single allocation (slower, no gaps)
-sequence('invoice_id').batch(1)
-
-// Batch allocation (faster, may have gaps on restart)
-sequence('order_id').batch(100)
+```typescript
+orderNumber: int().default('sequence::next("order_number")')
 ```
 
----
+## Sequence options
+
+### Start value
+
+Begin from a specific number:
+
+```typescript
+sequence('order_number').start(10000)
+```
+
+Generates:
+
+```sql
+DEFINE SEQUENCE order_number START 10000;
+```
+
+### Step
+
+Increment by more than 1:
+
+```typescript
+sequence('ticket_number').step(2)
+// 1, 3, 5, 7, ...
+```
+
+### Cycle
+
+Wrap around when reaching a limit:
+
+```typescript
+sequence('daily_counter')
+  .minValue(1)
+  .maxValue(999)
+  .cycle()
+// 1, 2, ..., 999, 1, 2, ...
+```
+
+### Cache
+
+Preallocate numbers for performance:
+
+```typescript
+sequence('high_volume')
+  .cache(100)  // Fetch 100 at a time
+```
 
 ## Using sequences
 
-Get the next value with `sequence::next()`:
+### In field defaults
 
-```sql
--- In queries
-CREATE order SET
-  orderNumber = sequence::next('order_number'),
-  createdAt = time::now();
+Reference the sequence in a field's default value:
 
--- In field defaults
-DEFINE FIELD orderNumber ON order 
-  DEFAULT sequence::next('order_number');
-```
+```typescript
+import { defineSchema, int, string, sequence } from 'smig';
 
----
+const orderSeq = sequence('order_seq').start(10000);
 
-## Common patterns
-
-### Order numbers
-
-```javascript
-const orderNumber = sequence('order_number')
-  .start(10000)
-  .batch(50)
-  .comment('Sequential order numbers starting at 10000');
-```
-
-### Invoice IDs
-
-```javascript
-const invoiceId = sequence('invoice_id')
-  .start(1)
-  .batch(10);
-```
-
-### With field definition
-
-```javascript
-const orderSchema = defineSchema({
-  table: 'order',
-  fields: {
-    orderNumber: int().default('sequence::next("order_number")').readonly(),
-    customer: record('customer').required(),
-    total: decimal(),
-    createdAt: datetime().default('time::now()'),
-  },
-});
-
-const orderSequence = sequence('order_number')
-  .start(10000)
-  .batch(100);
-
-export default composeSchema({
-  models: { order: orderSchema },
-  sequences: { orderNumber: orderSequence },
-});
-```
-
----
-
-## Complete example
-
-```javascript
-import { sequence, defineSchema, composeSchema, int, decimal, datetime, record } from 'smig';
-
-// Sequences
-const orderNumber = sequence('order_number')
-  .start(10000)
-  .batch(100);
-
-const invoiceNumber = sequence('invoice_number')
-  .start(1)
-  .batch(50);
-
-// Tables using sequences
-const orderSchema = defineSchema({
+const orders = defineSchema({
   table: 'order',
   fields: {
     orderNumber: int()
-      .default('sequence::next("order_number")')
+      .default('sequence::next("order_seq")')
       .readonly(),
-    customer: record('customer').required(),
-    total: decimal().required(),
-    createdAt: datetime().default('time::now()'),
-  },
-});
-
-const invoiceSchema = defineSchema({
-  table: 'invoice',
-  fields: {
-    invoiceNumber: int()
-      .default('sequence::next("invoice_number")')
-      .readonly(),
-    order: record('order').required(),
-    amount: decimal().required(),
-    issuedAt: datetime().default('time::now()'),
-  },
-});
-
-export default composeSchema({
-  models: {
-    order: orderSchema,
-    invoice: invoiceSchema,
-  },
-  sequences: {
-    orderNumber,
-    invoiceNumber,
+    // ...
   },
 });
 ```
 
----
+### In functions
 
-## See also
+Generate sequence values programmatically:
 
-- [Fields](fields.md) - Using sequences in defaults
-- [Tables](tables.md) - Table definitions
+```typescript
+const createOrder = fn('fn::create_order')
+  .params({ customer: 'record<user>', items: 'array' })
+  .returns('record')
+  .body(`{
+    LET $num = sequence::next('order_seq');
+    CREATE order SET
+      orderNumber = $num,
+      customer = $customer,
+      items = $items;
+  }`);
+```
 
+### In queries
+
+Use sequences directly in SQL:
+
+```sql
+LET $next = sequence::next('order_seq');
+CREATE order SET orderNumber = $next;
+```
+
+## Sequence functions
+
+SurrealDB provides these functions:
+
+| Function | Description |
+|----------|-------------|
+| `sequence::next(name)` | Get and increment |
+| `sequence::value(name)` | Get current value without incrementing |
+
+## Common patterns
+
+### Order numbering
+
+Customer-facing order numbers starting from a specific value:
+
+```typescript
+const orderSeq = sequence('order_seq')
+  .start(10000)
+  .comment('Customer-facing order numbers');
+
+// In table
+orderNumber: int()
+  .default('sequence::next("order_seq")')
+  .readonly()
+  .comment('Auto-generated order number')
+```
+
+### Invoice numbering with prefix
+
+Generate formatted invoice numbers like "INV-2025-000001":
+
+```typescript
+const invoiceSeq = sequence('invoice_seq').start(1);
+
+// In function
+fn('fn::generate_invoice_number')
+  .params({})
+  .returns('string')
+  .body(`{
+    LET $num = sequence::next('invoice_seq');
+    LET $year = time::year(time::now());
+    RETURN string::concat('INV-', $year, '-', string::pad_start($num, 6, '0'));
+  }`)
+// Returns: "INV-2025-000001", "INV-2025-000002", etc.
+```
+
+### Daily reset counter
+
+For ticket systems that reset daily:
+
+```typescript
+const dailyTicket = sequence('daily_ticket')
+  .minValue(1)
+  .maxValue(9999)
+  .cycle();
+
+// Reset at midnight with a scheduled job
+// DEFINE SEQUENCE daily_ticket ... RESTART;
+```
+
+### Multiple sequences per table
+
+Different ID types in one table:
+
+```typescript
+const custSeq = sequence('customer_seq').start(1000);
+const vendSeq = sequence('vendor_seq').start(5000);
+
+const accounts = defineSchema({
+  table: 'account',
+  fields: {
+    type: string().required(),
+    accountNumber: int().readonly(),
+    // Computed based on type
+  },
+  events: {
+    assignNumber: event('assign_number')
+      .onCreate()
+      .then(`{
+        IF $after.type = 'customer' {
+          UPDATE $after SET accountNumber = sequence::next('customer_seq');
+        } ELSE {
+          UPDATE $after SET accountNumber = sequence::next('vendor_seq');
+        };
+      }`),
+  },
+});
+```
+
+## Sequence comments
+
+Document your sequence's purpose:
+
+```typescript
+const orderSeq = sequence('order_seq')
+  .start(10000)
+  .comment('Sequential order numbers starting from 10000');
+```
+
+## Considerations
+
+### Gaps
+
+Sequences can have gaps:
+- If a transaction rolls back, the sequence number is not reclaimed
+- This is normal and expected
+
+### Performance
+
+Sequences are fast but require database roundtrips. For extremely high volume:
+- Use `cache()` to preallocate numbers
+- Consider UUIDs if strict sequence isn't required
+
+### Uniqueness
+
+Sequences guarantee uniqueness within the sequence, but not globally. If you need globally unique numbers, use UUIDs or combine sequence with a prefix.
+
+## Complete example
+
+A complete setup with multiple sequences for orders and tickets:
+
+```typescript
+import { sequence, defineSchema, int, string, datetime, record, composeSchema } from 'smig';
+
+// Define sequences
+const orderSeq = sequence('order_seq')
+  .start(10000)
+  .comment('Customer-facing order numbers');
+
+const invoiceSeq = sequence('invoice_seq')
+  .start(1)
+  .comment('Invoice sequential numbers');
+
+const ticketSeq = sequence('ticket_seq')
+  .start(1)
+  .comment('Support ticket numbers');
+
+// Use in schemas
+const orders = defineSchema({
+  table: 'order',
+  fields: {
+    orderNumber: int()
+      .default('sequence::next("order_seq")')
+      .readonly()
+      .comment('Human-readable order number'),
+    customer: record('user').required(),
+    status: string().default('pending'),
+    createdAt: datetime().default('time::now()'),
+  },
+});
+
+const tickets = defineSchema({
+  table: 'ticket',
+  fields: {
+    ticketNumber: int()
+      .default('sequence::next("ticket_seq")')
+      .readonly(),
+    subject: string().required(),
+    priority: string().default('normal'),
+    createdAt: datetime().default('time::now()'),
+  },
+});
+
+export default composeSchema({
+  models: { order: orders, ticket: tickets },
+  sequences: [orderSeq, invoiceSeq, ticketSeq],
+});
+```
+
+## Related
+
+- [Fields](/schema-reference/fields) — Use sequences in default values
+- [Functions](/schema-reference/functions) — Generate formatted IDs
+- [Events](/schema-reference/events) — Assign numbers on create

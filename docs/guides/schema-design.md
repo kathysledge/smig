@@ -2,16 +2,14 @@
 
 Best practices for designing effective SurrealDB schemas with **smig**.
 
----
-
 ## Schema organization
 
 ### Single file vs. multiple files
 
-For small projects, a single `schema.js` works well:
+For small projects, a single `schema.ts` works well:
 
-```javascript
-// schema.js
+```typescript
+// schema.ts
 import { defineSchema, composeSchema } from 'smig';
 
 const userSchema = defineSchema({ /* ... */ });
@@ -24,7 +22,7 @@ export default composeSchema({
 
 For larger projects, split by domain:
 
-```javascript
+```typescript
 // schema/user.js
 export const userSchema = defineSchema({ /* ... */ });
 
@@ -42,15 +40,13 @@ export default composeSchema({
 });
 ```
 
----
-
 ## Naming conventions
 
 ### Tables
 
 Use **singular, lowercase** names:
 
-```javascript
+```typescript
 // ✓ Good
 defineSchema({ table: 'user' });
 defineSchema({ table: 'blog_post' });
@@ -64,7 +60,7 @@ defineSchema({ table: 'BlogPosts' });
 
 Use **camelCase** for multi-word fields:
 
-```javascript
+```typescript
 fields: {
   email: string(),
   firstName: string(),      // ✓ camelCase
@@ -77,7 +73,7 @@ fields: {
 
 Name indexes by their purpose:
 
-```javascript
+```typescript
 indexes: {
   email: index(['email']).unique(),           // Simple: field name
   byAuthorDate: index(['author', 'createdAt']), // Composite: descriptive
@@ -85,13 +81,13 @@ indexes: {
 }
 ```
 
----
-
 ## Field patterns
 
 ### Required vs. optional
 
-```javascript
+Choose whether a field can be null:
+
+```typescript
 fields: {
   // Required: must have a value
   email: string().required(),
@@ -106,7 +102,9 @@ fields: {
 
 ### Defaults and computed values
 
-```javascript
+Provide values automatically:
+
+```typescript
 fields: {
   // Static default
   isActive: bool().default(true),
@@ -126,7 +124,9 @@ fields: {
 
 ### Validation with assertions
 
-```javascript
+Enforce data integrity rules:
+
+```typescript
 fields: {
   // Single assertion
   email: string().assert('string::is_email($value)'),
@@ -146,13 +146,13 @@ fields: {
 }
 ```
 
----
-
 ## Relationships
 
 ### Record references
 
-```javascript
+Link to other tables:
+
+```typescript
 fields: {
   // Single table reference
   author: record('user').required(),
@@ -170,7 +170,9 @@ fields: {
 
 ### Foreign key constraints
 
-```javascript
+Control what happens when referenced records are deleted:
+
+```typescript
 fields: {
   // Cascade delete: when user is deleted, delete this record
   author: record('user')
@@ -192,7 +194,7 @@ fields: {
 
 For many-to-many or attributed relationships, use relations:
 
-```javascript
+```typescript
 import { defineRelation } from 'smig';
 
 const followsRelation = defineRelation({
@@ -219,13 +221,13 @@ const likesRelation = defineRelation({
 });
 ```
 
----
-
 ## Index strategies
 
 ### When to create indexes
 
-```javascript
+Create indexes for these common scenarios:
+
+```typescript
 indexes: {
   // Unique constraints
   email: index(['email']).unique(),
@@ -243,7 +245,9 @@ indexes: {
 
 ### Index types
 
-```javascript
+Choose the right index type for your use case:
+
+```typescript
 indexes: {
   // Standard B-tree (default)
   email: index(['email']).unique(),
@@ -265,13 +269,13 @@ indexes: {
 }
 ```
 
----
-
 ## Events and triggers
 
 ### Common patterns
 
-```javascript
+Frequently used event triggers:
+
+```typescript
 events: {
   // Update timestamp on modification
   updateTimestamp: event('update_timestamp')
@@ -292,8 +296,6 @@ events: {
     .thenDo('THROW "Cannot unpublish"'),
 }
 ```
-
----
 
 ## See also
 

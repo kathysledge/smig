@@ -49,7 +49,7 @@ function ensureEnvLoaded(): void {
  * This represents a fully resolved configuration with no optional fields.
  */
 export interface SmigConfig {
-  /** Path to the JavaScript schema definition file */
+  /** Path to the TypeScript schema definition file */
   schema: string;
   /** WebSocket URL for the SurrealDB server (e.g., 'ws://localhost:8000') */
   url: string;
@@ -76,7 +76,7 @@ export interface SmigEnvironmentConfig extends SmigConfig {
  * All fields are optional as they can be provided through other configuration sources.
  */
 export interface SmigConfigFile {
-  /** Path to the JavaScript schema definition file */
+  /** Path to the TypeScript schema definition file */
   schema?: string;
   /** WebSocket URL for the SurrealDB server */
   url?: string;
@@ -97,7 +97,7 @@ export interface SmigConfigFile {
  * These take highest precedence in the configuration resolution process.
  */
 export interface ConfigOptions {
-  /** Path to the JavaScript schema definition file */
+  /** Path to the TypeScript schema definition file */
   schema?: string;
   /** WebSocket URL for the SurrealDB server */
   url?: string;
@@ -117,7 +117,7 @@ export interface ConfigOptions {
  * Default configuration values
  */
 export const DEFAULT_CONFIG: SmigConfig = {
-  schema: './schema.js',
+  schema: './schema.ts',
   url: 'ws://localhost:8000',
   username: 'root',
   password: 'root',

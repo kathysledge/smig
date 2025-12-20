@@ -34,14 +34,14 @@ describe('Configuration Loader', () => {
       expect(DEFAULT_CONFIG.password).toBe('root');
       expect(DEFAULT_CONFIG.namespace).toBe('test');
       expect(DEFAULT_CONFIG.database).toBe('test');
-      expect(DEFAULT_CONFIG.schema).toBe('./schema.js');
+      expect(DEFAULT_CONFIG.schema).toBe('./schema.ts');
     });
   });
 
   describe('Configuration Validation', () => {
     it('should validate valid configuration', () => {
       const validConfig = {
-        schema: './schema.js',
+        schema: './schema.ts',
         url: 'ws://localhost:8000',
         username: 'root',
         password: 'root',
@@ -57,7 +57,7 @@ describe('Configuration Loader', () => {
 
     it('should throw error for missing required fields', () => {
       const invalidConfig = {
-        schema: './schema.js',
+        schema: './schema.ts',
         // missing other required fields
         // biome-ignore lint/suspicious/noExplicitAny: Testing invalid config requires flexible typing
       } as any;
@@ -67,7 +67,7 @@ describe('Configuration Loader', () => {
 
     it('should throw error for invalid URL format', () => {
       const invalidConfig = {
-        schema: './schema.js',
+        schema: './schema.ts',
         url: 'invalid-url',
         username: 'root',
         password: 'root',
@@ -80,7 +80,7 @@ describe('Configuration Loader', () => {
 
     it('should throw error for non-existent schema file', () => {
       const invalidConfig = {
-        schema: './non-existent-schema.js',
+        schema: './non-existent-schema.ts',
         url: 'ws://localhost:8000',
         username: 'root',
         password: 'root',

@@ -15,7 +15,7 @@ describe('Field Default Values', () => {
     database: 'test',
     username: 'root',
     password: 'root',
-    schema: './schema.js',
+    schema: './schema.ts',
   };
 
   beforeEach(() => {

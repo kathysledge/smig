@@ -2,29 +2,29 @@
 
 Production-ready patterns for using **smig** effectively.
 
----
-
 ## Schema management
 
 ### Keep schema in version control
 
-Your `schema.js` is the source of truth. Always commit it:
+Your `schema.ts` is the source of truth. Always commit it:
 
 ```bash
-git add schema.js
+git add schema.ts
 git commit -m "Add user authentication fields"
 ```
 
 ### Use meaningful migration messages
 
+Descriptive messages help you understand history:
+
 ```bash
 # ✓ Good
-smig diff --message "Add user email verification fields"
-smig diff --message "Create product catalog tables"
+bun smig diff
+bun smig diff
 
 # ✗ Avoid
-smig diff --message "update"
-smig diff --message "fix"
+bun smig diff
+bun smig diff
 ```
 
 ### Review before pushing
@@ -32,18 +32,18 @@ smig diff --message "fix"
 Always review generated SQL before applying:
 
 ```bash
-smig diff --message "Big change" --dry-run
+bun smig diff --dry-run
 # Review the output carefully
-smig push
+bun smig migrate
 ```
-
----
 
 ## Field design
 
 ### Use appropriate types
 
-```javascript
+Choose the most precise type for each field:
+
+```typescript
 // ✓ Use specific types
 fields: {
   email: string().assert('string::is_email($value)'),
@@ -63,7 +63,9 @@ fields: {
 
 ### Validate at the database level
 
-```javascript
+Let the database enforce your rules:
+
+```typescript
 fields: {
   email: string()
     .required()
@@ -79,7 +81,9 @@ fields: {
 
 ### Use computed fields wisely
 
-```javascript
+Computed fields are powerful but have tradeoffs:
+
+```typescript
 fields: {
   // Good: derived from other fields
   fullName: string().computed('string::concat(firstName, " ", lastName)'),
@@ -92,13 +96,13 @@ fields: {
 }
 ```
 
----
-
 ## Index optimization
 
 ### Index what you query
 
-```javascript
+Match your indexes to your query patterns:
+
+```typescript
 // If you query: SELECT * FROM post WHERE author = $user AND published = true ORDER BY createdAt DESC
 indexes: {
   byAuthorPublished: index(['author', 'published', 'createdAt']),
@@ -112,7 +116,7 @@ Each index:
 - Uses storage space
 - Must be maintained
 
-```javascript
+```typescript
 // ✗ Too many indexes
 indexes: {
   a: index(['field1']),
@@ -128,13 +132,13 @@ indexes: {
 }
 ```
 
----
-
 ## Relation design
 
 ### Use relations for many-to-many
 
-```javascript
+Relations scale better than embedded arrays:
+
+```typescript
 // ✗ Array of references (can grow unbounded)
 const userSchema = defineSchema({
   table: 'user',
@@ -156,7 +160,9 @@ const followsRelation = defineRelation({
 
 ### Use relations for attributed edges
 
-```javascript
+When the relationship itself has data:
+
+```typescript
 // When you need metadata on relationships
 const likesRelation = defineRelation({
   name: 'likes',
@@ -169,35 +175,37 @@ const likesRelation = defineRelation({
 });
 ```
 
----
-
 ## Migration safety
 
 ### Test in lower environments first
 
+Don't push directly to production:
+
 ```bash
 # 1. Apply to dev
-smig push
+bun smig migrate
 
 # 2. Test thoroughly
 
 # 3. Apply to staging
-smig push --config smig.staging.config.js
+bun smig migrate --config smig.staging.config.js
 
 # 4. QA approval
 
 # 5. Apply to production
-smig push --config smig.production.config.js
+bun smig migrate --config smig.production.config.js
 ```
 
 ### Backup before major changes
+
+Protect your data before significant schema updates:
 
 ```bash
 # Before risky migrations
 surreal export --conn ws://localhost:8000 backup-$(date +%Y%m%d).surql
 
 # Apply migration
-smig push
+bun smig migrate
 
 # If something goes wrong
 surreal import --conn ws://localhost:8000 backup-20240115.surql
@@ -207,25 +215,25 @@ surreal import --conn ws://localhost:8000 backup-20240115.surql
 
 **smig** uses transactions by default. If any statement fails, the entire migration is rolled back.
 
----
-
 ## Team workflows
 
 ### One schema, multiple developers
 
+Coordinate schema changes in teams:
+
 ```bash
 # Developer A
 git pull
-smig diff --message "Add feature A"
-git add schema.js
+bun smig diff
+git add schema.ts
 git commit -m "Schema: Add feature A"
 git push
 
 # Developer B
 git pull  # Gets A's changes
-smig push # Apply A's migration locally
-smig diff --message "Add feature B"
-git add schema.js
+bun smig migrate # Apply A's migration locally
+bun smig diff
+git add schema.ts
 git commit -m "Schema: Add feature B"
 git push
 ```
@@ -235,26 +243,26 @@ git push
 If two developers modify the schema simultaneously:
 
 1. Git merge as normal
-2. Review the merged `schema.js`
-3. Run `smig diff --dry-run` to verify
+2. Review the merged `schema.ts`
+3. Run `bun smig diff --dry-run` to verify
 4. Apply the combined changes
-
----
 
 ## Error handling
 
 ### Check status before operations
 
-```javascript
+Verify the connection and state before pushing:
+
+```typescript
 // In deployment scripts
 const { execSync } = require('child_process');
 
 try {
   // Check connection
-  execSync('smig status', { stdio: 'inherit' });
+  execSync('bun smig status', { stdio: 'inherit' });
   
   // Apply migrations
-  execSync('smig push --force', { stdio: 'inherit' });
+  execSync('bun smig migrate --force', { stdio: 'inherit' });
 } catch (error) {
   console.error('Migration failed:', error.message);
   process.exit(1);
@@ -265,12 +273,10 @@ try {
 
 If a rollback fails:
 
-1. Check `smig status` for current state
+1. Check `bun smig status` for current state
 2. Manually fix any partial changes
-3. Run `smig diff --dry-run` to sync state
+3. Run `bun smig diff --dry-run` to sync state
 4. Apply fresh migration if needed
-
----
 
 ## Performance considerations
 
@@ -278,7 +284,7 @@ If a rollback fails:
 
 For tables with millions of rows:
 
-```javascript
+```typescript
 // Use concurrent index creation
 indexes: {
   email: index(['email']).unique().concurrently(),
@@ -289,7 +295,7 @@ indexes: {
 
 For HNSW indexes, tune parameters based on your data:
 
-```javascript
+```typescript
 indexes: {
   embedding: index(['embedding'])
     .hnsw()
@@ -299,8 +305,6 @@ indexes: {
     .efConstruction(100), // Higher = better quality, slower build
 }
 ```
-
----
 
 ## See also
 

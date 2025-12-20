@@ -269,7 +269,7 @@ export const TEST_DATABASES = {
 };
 
 // Helper function to create test schema files
-export function createTestSchema(content: string, filename = 'test-schema.js'): string {
+export function createTestSchema(content: string, filename = 'test-schema.ts'): string {
   const fs = require('node:fs');
   const path = require('node:path');
 

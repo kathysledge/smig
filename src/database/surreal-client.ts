@@ -87,8 +87,21 @@ export class SurrealClient {
    * ```
    */
   async connect(): Promise<void> {
+    const CONNECTION_TIMEOUT = 10000; // 10 seconds
+
     try {
-      await this.client.connect(this.config.url);
+      // Wrap connection in a timeout to prevent hanging indefinitely
+      const connectWithTimeout = async () => {
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => {
+            reject(new Error(`Connection timeout after ${CONNECTION_TIMEOUT / 1000}s - is SurrealDB running at ${this.config.url}?`));
+          }, CONNECTION_TIMEOUT);
+        });
+
+        await Promise.race([this.client.connect(this.config.url), timeoutPromise]);
+      };
+
+      await connectWithTimeout();
 
       if (this.config.username && this.config.password) {
         await this.client.signin({
@@ -104,7 +117,8 @@ export class SurrealClient {
 
       this.connected = true;
     } catch (error) {
-      throw new Error(`Failed to connect to SurrealDB: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to connect to SurrealDB: ${errorMessage}`);
     }
   }
 
@@ -504,7 +518,6 @@ export class SurrealClient {
       appliedAt: new Date(),
       up: migration.up,
       down: migration.down,
-      message: migration.message || undefined, // undefined -> NONE in SurrealDB
       checksum: migration.checksum,
       downChecksum: migration.downChecksum,
     };

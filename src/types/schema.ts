@@ -236,6 +236,8 @@ export interface SurrealFunction {
   body: string;
   /** Array of comments for documentation */
   comments: string[];
+  /** Optional permissions for function access control */
+  permissions?: string | null;
 }
 
 // ============================================================================
@@ -305,8 +307,42 @@ export interface SurrealDBSchema {
   scopes: SurrealScope[];
   /** Array of analyzer definitions in the schema */
   analyzers: SurrealAnalyzer[];
+  /** Array of param definitions in the schema */
+  params?: SurrealParam[];
+  /** Array of sequence definitions in the schema */
+  sequences?: SurrealSequence[];
   /** Array of schema-level comments for documentation */
   comments: string[];
+}
+
+/**
+ * Definition for a SurrealDB param.
+ */
+export interface SurrealParam {
+  /** The param name (without $ prefix) */
+  name: string;
+  /** The param value expression */
+  value: string;
+  /** Optional comment */
+  comment?: string;
+  /** Previous names for rename detection */
+  previousNames?: string[];
+}
+
+/**
+ * Definition for a SurrealDB sequence.
+ */
+export interface SurrealSequence {
+  /** The sequence name */
+  name: string;
+  /** Starting value */
+  start?: number;
+  /** Step increment */
+  step?: number;
+  /** Optional comment */
+  comment?: string;
+  /** Previous names for rename detection */
+  previousNames?: string[];
 }
 
 // ============================================================================
@@ -329,8 +365,6 @@ export interface Migration {
   up: string;
   /** Backward migration SQL (reverts changes) */
   down: string;
-  /** Message describing the migration purpose (NONE if not provided) */
-  message?: string;
   /** Checksum of the up migration content with algorithm prefix (e.g., "sha256.abc123...") */
   checksum: string;
   /** Checksum of the down migration content with algorithm prefix (e.g., "sha256.def456...") */

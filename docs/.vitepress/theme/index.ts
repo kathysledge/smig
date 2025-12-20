@@ -1,12 +1,19 @@
 import DefaultTheme from 'vitepress/theme';
 import mediumZoom from 'medium-zoom';
-import { onMounted, watch, nextTick } from 'vue';
+import { h, onMounted, watch, nextTick } from 'vue';
 import { useRoute } from 'vitepress';
+import Breadcrumbs from './Breadcrumbs.vue';
 
 import './custom.css';
 
 export default {
   extends: DefaultTheme,
+  Layout: () => {
+    return h(DefaultTheme.Layout, null, {
+      // Add breadcrumbs above the document
+      'doc-before': () => h(Breadcrumbs),
+    });
+  },
   setup() {
     const route = useRoute();
     
@@ -27,4 +34,3 @@ export default {
     );
   },
 };
-

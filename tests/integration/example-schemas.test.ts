@@ -111,7 +111,7 @@ export default {
     // Step 2: Run migrate (ora spinner outputs to stderr, so capture both)
     console.log(`[${schemaName}] Step 2: Migrating...`);
     const { stdout: migrateStdout, stderr: migrateStderr } = await execAsync(
-      `node ${CLI_PATH} migrate --message "Test migration for ${schemaName}" --debug`,
+      `node ${CLI_PATH} migrate --debug`,
     );
     const migrateOutput = migrateStdout + migrateStderr;
     console.log(`  Migrate output: ${migrateOutput.substring(0, 200)}...`);
@@ -154,7 +154,7 @@ export default {
 
   describe('Simple Blog Schema', () => {
     it('should migrate and have no remaining changes', async () => {
-      const schemaRelPath = `${EXAMPLES_REL_DIR}/simple-blog-schema.js`;
+      const schemaRelPath = `${EXAMPLES_REL_DIR}/simple-blog-schema.ts`;
       expect(fs.existsSync(path.join(process.cwd(), schemaRelPath))).toBe(true);
       await runMigrationCycleTest(schemaRelPath, 'blog');
     }, 30000);
@@ -195,7 +195,7 @@ export default {
 
       // Apply migration (capture stderr for ora spinner output)
       const { stdout: migrateStdout, stderr: migrateStderr } = await execAsync(
-        `node ${CLI_PATH} migrate --message "Rollback test migration"`,
+        `node ${CLI_PATH} migrate`,
       );
       const migrateOutput = migrateStdout + migrateStderr;
       expect(migrateOutput).toMatch(/Migration applied successfully|No changes detected/);
@@ -239,21 +239,21 @@ export default {
 
       // First migration (capture stderr for ora spinner output)
       const { stdout: firstStdout, stderr: firstStderr } = await execAsync(
-        `node ${CLI_PATH} migrate --message "First migration"`,
+        `node ${CLI_PATH} migrate`,
       );
       const firstMigrate = firstStdout + firstStderr;
       expect(firstMigrate).toMatch(/Migration applied successfully|No changes detected/);
 
       // Second migration attempt - should detect no changes
       const { stdout: secondStdout, stderr: secondStderr } = await execAsync(
-        `node ${CLI_PATH} migrate --message "Second migration"`,
+        `node ${CLI_PATH} migrate`,
       );
       const secondMigrate = secondStdout + secondStderr;
       expect(secondMigrate).toMatch(/No changes detected|up to date/);
 
       // Third migration attempt - still no changes
       const { stdout: thirdStdout, stderr: thirdStderr } = await execAsync(
-        `node ${CLI_PATH} migrate --message "Third migration"`,
+        `node ${CLI_PATH} migrate`,
       );
       const thirdMigrate = thirdStdout + thirdStderr;
       expect(thirdMigrate).toMatch(/No changes detected|up to date/);

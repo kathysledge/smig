@@ -1,255 +1,277 @@
-<img src="/homepage-banner.jpg" alt="smig - Automatic schema migrations for SurrealDB" style="width: 100%; border-radius: 12px; margin-bottom: 2rem;" />
+---
+layout: home
 
-## Automatic schema migrations for SurrealDB
+hero:
+  name: smig
+  text: Schema migrations for SurrealDB
+  tagline: Define your database schema in code. Let smig handle the migrations.
+  actions:
+    - theme: brand
+      text: Get started
+      link: /getting-started/
+    - theme: alt
+      text: View on GitHub
+      link: https://github.com/kathysledge/smig
 
-**smig** is the first library to provide automatic migration generation for SurrealDB. Define your schema once using a type-safe API, and let **smig** handle the rest.
-
-## The problem
-
-Database schema management is one of the most error-prone aspects of application development:
-
-- **Manual migration scripts** are tedious to write and easy to get wrong
-- **Schema drift** between environments causes production incidents
-- **Rollbacks** require manually reversing every change
-- **No single source of truth** for your database structure
-
-## The solution
-
-**smig** brings production-grade schema management to SurrealDB with a declarative, code-first approach:
-
-```mermaid
-flowchart LR
-    subgraph define [Define Once]
-        Schema[Schema Definition<br/>TypeScript/JavaScript]
-    end
-    
-    subgraph smig [smig Generates]
-        Compare[Compare with<br/>Current State]
-        Up[Forward<br/>Migration]
-        Down[Rollback<br/>Migration]
-    end
-    
-    subgraph apply [Apply Safely]
-        DB[(SurrealDB)]
-        History[Migration<br/>History]
-    end
-    
-    Schema --> Compare
-    Compare --> Up
-    Compare --> Down
-    Up --> DB
-    Up --> History
-    Down -.-> DB
-```
-
+features:
+  - icon: 🎯
+    title: Define once, migrate anywhere
+    details: Write your schema in TypeScript or JavaScript. smig generates the SQL and tracks what's changed.
+  - icon: 🔄
+    title: Automatic rollbacks
+    details: Every migration comes with a reverse migration. One command to undo changes.
+  - icon: 🧠
+    title: Vector search ready
+    details: Full HNSW and MTREE support for AI/ML applications out of the box.
+  - icon: 💎
+    title: Native TypeScript
+    details: Zero-config TypeScript support. Just use .ts files — no build step required.
 ---
 
-## Key capabilities
+<img src="/homepage-banner.jpg" alt="bun smig - Automatic schema migrations for SurrealDB" data-zoomable style="width: 100%; border-radius: 12px; margin: 2rem 0;" />
 
-### For technical decision-makers
+<div class="two-column-layout">
+<div class="main-column">
 
-| Capability | Business value |
-|------------|----------------|
-| **Automatic migration generation** | Reduce developer time spent on schema changes by 80% |
-| **Bidirectional migrations** | Instant rollbacks reduce incident recovery time |
-| **Type-safe schema definition** | Catch errors at development time, not production |
-| **Migration checksums** | Detect unauthorized or corrupted schema changes |
-| **Multi-environment support** | Consistent schemas across dev, staging, and production |
-| **Full SurrealDB v3 support** | Vector search, full-text, graph relations, and more |
+## What is smig?
 
-### For developers
+**smig** is a schema migration tool for [SurrealDB](https://surrealdb.com). You define your database structure in JavaScript or TypeScript, and **smig** figures out what SQL to run to make your database match.
 
-| Feature | Description |
-|---------|-------------|
-| **Fluent builder API** | Intuitive, chainable methods with full TypeScript intellisense |
-| **All field types** | String, int, float, datetime, uuid, array, record, geometry, and more |
-| **Advanced indexes** | Unique, HNSW vector search, full-text with BM25, count indexes |
-| **Graph relations** | First-class support for SurrealDB's relation tables |
-| **Events & triggers** | Define business logic that runs on CREATE, UPDATE, DELETE |
-| **Custom functions** | Reusable database functions with parameters and return types |
-| **Authentication** | Define access methods with SIGNUP/SIGNIN logic |
-| **Full-text search** | Custom analyzers with tokenizers and filters |
-| **CLI tools** | Generate, apply, rollback, and inspect migrations |
+Think of it like this: instead of writing SQL migrations by hand, you describe what your database should look like, and **smig** works out the steps to get there.
 
----
+```typescript
+import { defineSchema, string, datetime, index } from 'smig';
 
-## Architecture
-
-```mermaid
-flowchart TB
-    subgraph app [Your Application]
-        SchemaFile[schema.js<br/>Schema Definition]
-        Config[smig.config.js<br/>Configuration]
-    end
-    
-    subgraph smig [smig Core]
-        Parser[Schema Parser]
-        Introspect[DB Introspector]
-        Differ[Schema Differ]
-        Generator[SQL Generator]
-        Manager[Migration Manager]
-    end
-    
-    subgraph db [SurrealDB]
-        Tables[(Tables)]
-        MigTable[(_migrations)]
-    end
-    
-    SchemaFile --> Parser
-    Config --> Manager
-    Parser --> Differ
-    Introspect --> Differ
-    Differ --> Generator
-    Generator --> Manager
-    Manager --> Tables
-    Manager --> MigTable
-    Tables --> Introspect
-```
-
----
-
-## How it works
-
-### 1. Define your schema
-
-```javascript
-import { defineSchema, composeSchema, string, datetime, record, index } from 'smig';
-
-const userSchema = defineSchema({
+const users = defineSchema({
   table: 'user',
   fields: {
-    email: string().assert('string::is_email($value)'),
-    name: string().required(),
+    email: string().required(),
+    name: string(),
     createdAt: datetime().default('time::now()'),
   },
   indexes: {
     email: index(['email']).unique(),
   },
 });
-
-export default composeSchema({
-  models: { user: userSchema },
-});
 ```
 
-### 2. Generate migrations
-
-```bash
-smig diff --message "Add user table"
-```
-
-**smig** compares your schema to the database and generates:
+Run `bun smig migrate` and this becomes:
 
 ```sql
--- Forward migration
 DEFINE TABLE user TYPE NORMAL SCHEMAFULL;
-DEFINE FIELD email ON TABLE user TYPE string ASSERT string::is_email($value);
-DEFINE FIELD name ON TABLE user TYPE string ASSERT $value != NONE;
+DEFINE FIELD email ON TABLE user TYPE string ASSERT $value != NONE;
+DEFINE FIELD name ON TABLE user TYPE string;
 DEFINE FIELD createdAt ON TABLE user TYPE datetime DEFAULT time::now();
 DEFINE INDEX email ON TABLE user FIELDS email UNIQUE;
-
--- Rollback migration (auto-generated)
-REMOVE TABLE user;
 ```
 
-### 3. Apply to your database
+## Why smig?
 
-```bash
-smig push
+### If you're evaluating tools
+
+**smig** is the only migration tool built specifically for SurrealDB 3. It understands SurrealDB's unique features:
+
+- **Graph relations** — First-class support for SurrealDB's relation tables
+- **Vector indexes** — HNSW and MTREE for AI/ML similarity search
+- **Full-text search** — Custom analyzers with tokenizers and filters
+- **Multi-model** — Tables, documents, and graphs in one schema
+
+### If you're a developer
+
+The API is designed to feel natural:
+
+```typescript
+// Fields have chainable methods
+email: string()
+  .required()
+  .assert('string::is_email($value)')
+  .comment('Primary contact email')
+
+// Indexes are just as readable
+emailIndex: index(['email'])
+  .unique()
+  .comment('Unique constraint on email')
+
+// Vector search is one line
+embeddingIndex: index(['embedding'])
+  .hnsw(1536)
+  .dist('COSINE')
 ```
 
----
+## How it works
 
-## Comparison with alternatives
+At its core, **smig** follows a simple, robust workflow:
 
-| Feature | smig | Raw SurrealQL | Other tools |
-|---------|------|---------------|-------------|
-| Automatic migration generation | ✅ | ❌ | ❌ |
-| Bidirectional migrations | ✅ | ❌ | Partial |
-| Type-safe schema definition | ✅ | ❌ | Partial |
-| SurrealDB v3 support | ✅ | ✅ | ❌ |
-| Vector index support (HNSW) | ✅ | ✅ | ❌ |
-| Full-text search config | ✅ | ✅ | ❌ |
-| Graph relation support | ✅ | ✅ | ❌ |
-| Migration history tracking | ✅ | ❌ | ✅ |
-| Checksum verification | ✅ | ❌ | Partial |
+```mermaid
+flowchart LR
+    A[Your schema.ts] --> B[smig diff]
+    B --> C{Changes?}
+    C -->|Yes| D[Generate SQL]
+    C -->|No| E[Nothing to do]
+    D --> F[smig migrate]
+    F --> G[(SurrealDB)]
+```
 
----
+1. **You write** a schema file describing your tables, fields, indexes
+2. **smig compares** your schema to what's in the database
+3. **smig generates** the SQL needed to sync them up
+4. **You run** `bun smig migrate` to apply the changes
+5. **smig records** the migration so it knows what's been applied
 
-## Quick start
+## What can you define?
 
-### Installation
+**smig** covers nearly everything in SurrealDB 3:
+
+| What | Why you'd use it |
+|------|------------------|
+| [Tables](/schema-reference/tables) | Store your data |
+| [Fields](/schema-reference/fields) | Define columns with types and validation |
+| [Indexes](/schema-reference/indexes) | Speed up queries, enforce uniqueness, vector search |
+| [Events](/schema-reference/events) | Run logic when data changes |
+| [Relations](/schema-reference/relations) | Connect records in a graph |
+| [Functions](/schema-reference/functions) | Reusable database logic |
+| [Analyzers](/schema-reference/analyzers) | Configure full-text search |
+| [Access](/schema-reference/access) | Authentication methods |
+| [Params](/schema-reference/params) | Global configuration values |
+| [Sequences](/schema-reference/sequences) | Auto-incrementing numbers |
+
+</div>
+<div class="sidebar-column">
+
+<div class="sidebar-card">
+
+### Quick start
+
+Get up and running in seconds:
 
 ```bash
-# Using bun (recommended)
+# Install
 bun add -D smig
 
-# Using npm
-npm install -D smig
+# Initialize
+bun smig init
 
-# Using pnpm
-pnpm add -D smig
+# Start SurrealDB
+surreal start memory
+
+# Apply schema
+bun smig migrate
 ```
 
-### Initialize
+[Full installation guide ›](/getting-started/installation)
 
-```bash
-smig init
-```
+</div>
 
-### Generate and apply
+<div class="sidebar-card">
 
-```bash
-smig diff --message "Initial schema"
-smig push
-```
+### CLI commands
 
-[Get started →](getting-started/index.md)
+| Command | Description |
+|---------|-------------|
+| `bun smig init` | Create starter files |
+| `bun smig diff` | Preview changes |
+| `bun smig migrate` | Apply changes |
+| `bun smig rollback` | Undo last migration |
+| `bun smig status` | Show status |
 
----
+[CLI reference ›](/guides/cli-commands)
 
-## Documentation
+</div>
 
-### Getting started
-- [Quick start guide](getting-started/index.md)
-- [Installation](getting-started/installation.md)
-- [Your first migration](getting-started/first-migration.md)
+<div class="sidebar-card">
 
-### Guides
-- [Schema design patterns](guides/schema-design.md)
-- [Understanding migrations](guides/migrations.md)
-- [CLI commands](guides/cli-commands.md)
-- [Multi-environment workflows](guides/multi-environment.md)
-- [Best practices](guides/best-practices.md)
+### Documentation
 
-### Schema reference
-- [Tables](schema-reference/tables.md)
-- [Fields](schema-reference/fields.md)
-- [Indexes](schema-reference/indexes.md)
-- [Events](schema-reference/events.md)
-- [Relations](schema-reference/relations.md)
-- [Functions](schema-reference/functions.md)
-- [Analyzers](schema-reference/analyzers.md)
-- [Access (auth)](schema-reference/access.md)
-- [Params](schema-reference/params.md)
-- [Sequences](schema-reference/sequences.md)
+**Getting started**
+New to **smig**? [Start here ›](/getting-started/)
 
-### Examples
-- [Simple blog](examples/blog.md)
-- [Social network](examples/social-network.md)
-- [E-commerce](examples/ecommerce.md)
-- [AI embeddings with vector search](examples/ai-embeddings.md)
+**Guides**  
+[Schema design](/guides/schema-design), [migrations](/guides/migrations), [multi-environment](/guides/multi-environment)
 
----
+**Schema reference**
+Every option, with examples. [Browse ›](/schema-reference/)
 
-## Support the project
+**Examples**
+[Blog](/examples/blog), [Social network](/examples/social-network), [E-commerce](/examples/ecommerce), [AI embeddings](/examples/ai-embeddings)
 
-If **smig** saves you time, consider supporting development:
+</div>
 
-[![Buy Me a Coffee](../media/buy-me-a-coffee-button.avif)](https://buymeacoffee.com/kathysledge)
+<div class="sidebar-card">
 
----
+### Get involved
 
-## License
+- [GitHub](https://github.com/kathysledge/smig)
+- [Report issues](https://github.com/kathysledge/smig/issues)
+- [Discussions](https://github.com/kathysledge/smig/discussions)
 
-ISC License - see [LICENSE](../LICENSE) for details.
+If **smig** saves you time, consider [supporting development](https://ko-fi.com/kathysledge) ☕
+
+</div>
+
+</div>
+</div>
+
+<style>
+.two-column-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.main-column {
+  min-width: 0;
+}
+
+.sidebar-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sidebar-card {
+  background: var(--vp-c-bg-soft);
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.sidebar-card h3 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  border-bottom: none;
+}
+
+.sidebar-card p {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.sidebar-card pre {
+  font-size: 0.8rem;
+}
+
+.sidebar-card table {
+  font-size: 0.85rem;
+  margin: 0.5rem 0;
+}
+
+.sidebar-card table td,
+.sidebar-card table th {
+  padding: 0.25rem 0.5rem;
+}
+
+.sidebar-card a {
+  font-size: 0.9rem;
+}
+
+@media (max-width: 960px) {
+  .two-column-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .sidebar-column {
+    order: -1;
+  }
+}
+</style>

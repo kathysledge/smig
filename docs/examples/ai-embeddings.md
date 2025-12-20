@@ -1,362 +1,427 @@
-# AI embeddings with vector search
+# AI embeddings example
 
-Build semantic search and AI-powered recommendations using HNSW vector indexes.
+Build a semantic search system with vector embeddings. This example shows how to store OpenAI embeddings, create HNSW indexes, and perform similarity searches.
 
----
+## What we're building
 
-## Overview
+A document search system that:
+- Stores documents with their embeddings
+- Enables semantic (meaning-based) search
+- Combines vector search with full-text search
+- Suggests similar documents
 
-SurrealDB v3 supports HNSW (Hierarchical Navigable Small World) indexes for fast approximate nearest neighbor search. This enables:
+## The schema
 
-- **Semantic search**: Find content by meaning, not just keywords
-- **Recommendations**: "Users who liked this also liked..."
-- **Similarity matching**: Find similar documents, products, or users
-- **RAG applications**: Retrieval-augmented generation for LLMs
+Here's the complete schema for a semantic search system with documents, embeddings, and search functions:
 
----
-
-## Schema
-
-```javascript
-import {
-  defineSchema,
-  defineRelation,
+```typescript
+import { 
+  defineSchema, 
   composeSchema,
-  string,
-  int,
-  float,
-  bool,
-  datetime,
+  string, 
+  datetime, 
   array,
   record,
-  option,
   index,
+  fn,
+  analyzer
 } from 'smig';
 
-// Documents with embeddings for semantic search
-const documentSchema = defineSchema({
+// Custom analyzer for technical content
+const techAnalyzer = analyzer('tech')
+  .tokenizers(['blank', 'class', 'camel'])
+  .filters(['lowercase', 'ascii'])
+  .comment('Analyzer for technical documentation');
+
+// Documents with embeddings
+const documents = defineSchema({
   table: 'document',
+  comment: 'Documents with semantic embeddings',
   fields: {
+    // Content
     title: string().required(),
     content: string().required(),
-    summary: option('string'),
+    summary: string(),
     
-    // OpenAI ada-002 embeddings (1536 dimensions)
-    embedding: array('float').required(),
-    
-    author: record('user').required(),
-    category: option('string'),
+    // Metadata
+    category: string(),
     tags: array('string').default([]),
-    isPublished: bool().default(false),
+    author: record('user'),
+    
+    // Embedding vector (OpenAI ada-002 = 1536 dimensions)
+    embedding: array('float')
+      .comment('1536-dimensional OpenAI embedding vector'),
+    
+    // Timestamps
     createdAt: datetime().default('time::now()'),
-    updatedAt: datetime().value('time::now()'),
+    updatedAt: datetime(),
   },
   indexes: {
-    // HNSW vector index for semantic search
+    // Vector similarity search (HNSW)
     semantic: index(['embedding'])
-      .hnsw()
-      .dimension(1536)
-      .dist('cosine')
+      .hnsw(1536)
+      .dist('COSINE')
+      .efc(200)
       .m(16)
-      .efConstruction(100),
+      .comment('Semantic search via cosine similarity'),
     
-    // Traditional indexes
-    author: index(['author', 'createdAt']),
+    // Full-text search
+    fulltext: index(['title', 'content'])
+      .search('tech')
+      .highlights()
+      .bm25(1.2, 0.75)
+      .comment('Keyword-based full-text search'),
+    
+    // Metadata indexes
     category: index(['category']),
-    
-    // Full-text for keyword fallback
-    search: index(['title', 'content'])
-      .fulltext()
-      .analyzer('english'),
+    tags: index(['tags']),
   },
 });
 
-// Products with embeddings for recommendations
-const productSchema = defineSchema({
-  table: 'product',
+// Search history for analytics
+const searchHistory = defineSchema({
+  table: 'search_history',
   fields: {
-    name: string().required(),
-    description: string().required(),
-    price: float().required(),
-    
-    // Product embedding from description + metadata
-    embedding: array('float').required(),
-    
-    category: string().required(),
-    isActive: bool().default(true),
-  },
-  indexes: {
-    // Vector search for similar products
-    similar: index(['embedding'])
-      .hnsw()
-      .dimension(384)  // Sentence transformers size
-      .dist('cosine'),
-    
-    category: index(['category', 'isActive']),
+    query: string().required(),
+    user: record('user'),
+    results: array('record<document>'),
+    searchedAt: datetime().default('time::now()'),
   },
 });
 
-// Users with preference embeddings
-const userSchema = defineSchema({
-  table: 'user',
+// Document similarity cache
+const similarity = defineSchema({
+  table: 'document_similarity',
+  comment: 'Pre-computed similar document pairs',
   fields: {
-    email: string().required(),
-    name: string().required(),
-    
-    // User preference vector (aggregated from interactions)
-    preferenceEmbedding: option(array('float')),
-    
-    createdAt: datetime().default('time::now()'),
+    source: record('document').required(),
+    target: record('document').required(),
+    score: float().required(),
+    computedAt: datetime().default('time::now()'),
   },
   indexes: {
-    email: index(['email']).unique(),
-    
-    // Find users with similar preferences
-    preferences: index(['preferenceEmbedding'])
-      .hnsw()
-      .dimension(384)
-      .dist('cosine'),
+    source: index(['source']),
+    sourceScore: index(['source', 'score']),
   },
 });
 
-// Interaction tracking for preference learning
-const interactsRelation = defineRelation({
-  name: 'interacts',
-  from: 'user',
-  to: 'product',
-  fields: {
-    action: string().required(),  // view, like, purchase
-    weight: float().default(1.0),
-    timestamp: datetime().default('time::now()'),
-  },
-  indexes: {
-    byUser: index(['in', 'timestamp']),
-    byProduct: index(['out', 'timestamp']),
-  },
-});
+// Semantic search function
+const semanticSearch = fn('fn::semantic_search')
+  .params({
+    query_embedding: 'array<float>',
+    limit: 'option<int>',
+    min_score: 'option<float>'
+  })
+  .returns('array')
+  .body(`{
+    LET $max = $limit ?? 10;
+    LET $threshold = $min_score ?? 0.7;
+    
+    RETURN SELECT 
+      *,
+      vector::similarity::cosine(embedding, $query_embedding) AS score
+    FROM document
+    WHERE embedding != NONE
+      AND vector::similarity::cosine(embedding, $query_embedding) >= $threshold
+    ORDER BY score DESC
+    LIMIT $max;
+  }`)
+  .comment('Find documents semantically similar to query embedding');
+
+// Hybrid search (vector + keyword)
+const hybridSearch = fn('fn::hybrid_search')
+  .params({
+    query: 'string',
+    query_embedding: 'array<float>',
+    limit: 'option<int>',
+    vector_weight: 'option<float>'
+  })
+  .returns('array')
+  .body(`{
+    LET $max = $limit ?? 10;
+    LET $vw = $vector_weight ?? 0.5;
+    LET $kw = 1.0 - $vw;
+    
+    -- Get vector results
+    LET $vector_results = SELECT 
+      id,
+      vector::similarity::cosine(embedding, $query_embedding) AS vector_score
+    FROM document
+    WHERE embedding != NONE
+    ORDER BY vector_score DESC
+    LIMIT $max * 2;
+    
+    -- Get keyword results
+    LET $keyword_results = SELECT 
+      id,
+      search::score(0) AS keyword_score
+    FROM document
+    WHERE title @0@ $query OR content @0@ $query
+    ORDER BY keyword_score DESC
+    LIMIT $max * 2;
+    
+    -- Combine and rank
+    RETURN SELECT 
+      document.*,
+      ($vw * vector_score + $kw * keyword_score) AS combined_score
+    FROM (
+      SELECT 
+        id,
+        vector_score ?? 0 AS vector_score,
+        keyword_score ?? 0 AS keyword_score
+      FROM array::union($vector_results, $keyword_results)
+      GROUP BY id
+    ) 
+    JOIN document ON document.id = id
+    ORDER BY combined_score DESC
+    LIMIT $max;
+  }`)
+  .comment('Combine vector and keyword search with configurable weighting');
+
+// Find similar documents
+const findSimilar = fn('fn::find_similar')
+  .params({
+    doc_id: 'record<document>',
+    limit: 'option<int>'
+  })
+  .returns('array')
+  .body(`{
+    LET $max = $limit ?? 5;
+    LET $doc = SELECT embedding FROM $doc_id;
+    
+    IF $doc.embedding = NONE {
+      RETURN [];
+    };
+    
+    RETURN SELECT *
+    FROM document
+    WHERE id != $doc_id
+      AND embedding != NONE
+    ORDER BY vector::similarity::cosine(embedding, $doc.embedding) DESC
+    LIMIT $max;
+  }`)
+  .comment('Find documents similar to a given document');
 
 export default composeSchema({
   models: {
-    document: documentSchema,
-    product: productSchema,
-    user: userSchema,
+    document: documents,
+    searchHistory: searchHistory,
+    documentSimilarity: similarity,
   },
-  relations: {
-    interacts: interactsRelation,
-  },
+  functions: [semanticSearch, hybridSearch, findSimilar],
+  analyzers: [techAnalyzer],
 });
 ```
 
----
+## Understanding the schema
 
-## HNSW index options
+### Vector embeddings
 
-| Option | Description | Typical value |
-|--------|-------------|---------------|
-| `.dimension(n)` | Vector dimensions | Depends on embedding model |
-| `.dist(metric)` | Distance metric | `'cosine'` for text |
-| `.m(n)` | Connections per node | 12-48 (higher = better recall) |
-| `.efConstruction(n)` | Build quality | 100-500 (higher = slower build) |
+The `embedding` field stores the vector representation of the document content:
 
-### Common embedding dimensions
-
-| Model | Dimensions |
-|-------|------------|
-| OpenAI text-embedding-3-small | 1536 |
-| OpenAI text-embedding-3-large | 3072 |
-| Cohere embed-english-v3 | 1024 |
-| Sentence Transformers (all-MiniLM) | 384 |
-| BGE-base | 768 |
-
----
-
-## Semantic search queries
-
-### Find similar documents
-
-```sql
--- $query_embedding is the vector for the search query
-SELECT 
-  *,
-  vector::distance::cosine(embedding, $query_embedding) AS score
-FROM document
-WHERE embedding <|10,100|> $query_embedding
-  AND isPublished = true
-ORDER BY score ASC;
+```typescript
+embedding: array('float')
+  .comment('1536-dimensional OpenAI embedding vector'),
 ```
 
-The `<|K,EF|>` operator:
-- **K**: Number of results to return
-- **EF**: Search effort (higher = more accurate, slower)
+Different embedding models have different dimensions:
+- OpenAI `text-embedding-ada-002`: 1536 dimensions
+- OpenAI `text-embedding-3-small`: 1536 dimensions
+- Cohere `embed-english-v3.0`: 1024 dimensions
 
-### Hybrid search (vector + keyword)
+### HNSW index
 
-```sql
--- Combine semantic and keyword search
-LET $semantic = (
-  SELECT id, 0.7 AS weight
-  FROM document
-  WHERE embedding <|20,100|> $query_embedding
-);
+The `hnsw()` index enables fast approximate nearest neighbor search:
 
-LET $keyword = (
-  SELECT id, 0.3 * search::score(1) AS weight
-  FROM document
-  WHERE content @@ $query_text
-);
-
-SELECT * FROM document
-WHERE id IN array::union($semantic.id, $keyword.id)
-ORDER BY (
-  ($semantic[WHERE id = $parent.id].weight ?? 0) +
-  ($keyword[WHERE id = $parent.id].weight ?? 0)
-) DESC
-LIMIT 10;
+```typescript
+semantic: index(['embedding'])
+  .hnsw(1536)          // Dimensions must match embedding size
+  .dist('COSINE')      // Cosine similarity (good for text)
+  .efc(200)            // Higher = better quality, slower build
+  .m(16)               // Connections per node
 ```
 
----
+**EFC (efConstruction)**: Quality during index building. Higher values (100-500) give better recall but slower indexing.
 
-## Product recommendations
+**M**: Maximum connections per node. Higher values (16-64) improve recall at the cost of memory.
 
-### Similar products
+### Distance metrics
 
-```sql
--- Find products similar to the one being viewed
-SELECT 
-  *,
-  vector::distance::cosine(embedding, $current_product.embedding) AS similarity
-FROM product
-WHERE id != $current_product.id
-  AND isActive = true
-  AND embedding <|6,50|> $current_product.embedding;
-```
+Choose based on your data:
 
-### Personalized recommendations
+| Metric | Best for |
+|--------|----------|
+| `COSINE` | Text embeddings (most common) |
+| `EUCLIDEAN` | When magnitude matters |
+| `DOT` | Normalized vectors, faster |
 
-```sql
--- Based on user's preference embedding
-SELECT 
-  *,
-  vector::distance::cosine(embedding, $user.preferenceEmbedding) AS relevance
-FROM product
-WHERE isActive = true
-  AND embedding <|20,100|> $user.preferenceEmbedding
-ORDER BY relevance ASC;
-```
+## Using the search functions
 
-### Collaborative filtering
+### Generate embeddings
 
-```sql
--- Find users with similar preferences
-LET $similar_users = (
-  SELECT in AS user
-  FROM user
-  WHERE preferenceEmbedding <|10,50|> $current_user.preferenceEmbedding
-    AND id != $current_user.id
-);
+First, get embeddings from your AI provider:
 
--- Get products they liked but current user hasn't seen
-SELECT DISTINCT out AS product
-FROM interacts
-WHERE in IN $similar_users
-  AND action IN ["like", "purchase"]
-  AND out NOT IN (
-    SELECT out FROM interacts WHERE in = $current_user.id
-  )
-LIMIT 20;
-```
-
----
-
-## Building embeddings
-
-### Using OpenAI (Node.js)
-
-```javascript
+```typescript
+// Example with OpenAI
 import OpenAI from 'openai';
 
 const openai = new OpenAI();
 
 async function getEmbedding(text) {
   const response = await openai.embeddings.create({
-    model: 'text-embedding-3-small',
+    model: 'text-embedding-ada-002',
     input: text,
   });
   return response.data[0].embedding;
 }
-
-// Insert document with embedding
-const embedding = await getEmbedding(content);
-await db.query(`
-  CREATE document SET
-    title = $title,
-    content = $content,
-    embedding = $embedding,
-    author = $author
-`, { title, content, embedding, author });
 ```
 
-### Updating user preferences
+### Store documents with embeddings
 
-```javascript
-// Aggregate embeddings from liked products
-async function updateUserPreferences(userId) {
-  await db.query(`
-    LET $liked = (
-      SELECT out.embedding 
-      FROM interacts 
-      WHERE in = $userId AND action = "like"
-    );
-    
-    UPDATE $userId SET preferenceEmbedding = (
-      SELECT VALUE math::mean(embedding) FROM $liked GROUP ALL
-    )[0]
-  `, { userId });
+Save documents along with their computed embeddings:
+
+```typescript
+async function storeDocument(title, content) {
+  const embedding = await getEmbedding(`${title}\n\n${content}`);
+  
+  await db.create('document', {
+    title,
+    content,
+    embedding,
+  });
 }
 ```
 
----
+### Semantic search
+
+Find documents by meaning rather than keywords:
+
+```typescript
+async function searchDocuments(query) {
+  const queryEmbedding = await getEmbedding(query);
+  
+  const results = await db.query(
+    'RETURN fn::semantic_search($embedding, $limit, $threshold)',
+    {
+      embedding: queryEmbedding,
+      limit: 10,
+      threshold: 0.75,
+    }
+  );
+  
+  return results;
+}
+```
+
+### Hybrid search
+
+Combine meaning and keywords:
+
+```typescript
+async function hybridSearch(query) {
+  const queryEmbedding = await getEmbedding(query);
+  
+  const results = await db.query(
+    'RETURN fn::hybrid_search($query, $embedding, $limit, $weight)',
+    {
+      query,
+      embedding: queryEmbedding,
+      limit: 10,
+      weight: 0.6,  // 60% vector, 40% keyword
+    }
+  );
+  
+  return results;
+}
+```
+
+## Advanced patterns
+
+### Chunking long documents
+
+For documents longer than the embedding model's context window:
+
+```typescript
+const chunks = defineSchema({
+  table: 'document_chunk',
+  fields: {
+    document: record('document').required(),
+    chunkIndex: int().required(),
+    content: string().required(),
+    embedding: array('float'),
+  },
+  indexes: {
+    chunkEmbedding: index(['embedding'])
+      .hnsw(1536)
+      .dist('COSINE'),
+    document: index(['document', 'chunkIndex']),
+  },
+});
+```
+
+### Caching similarity scores
+
+Pre-compute similar documents during off-peak hours:
+
+```typescript
+// Run as a batch job
+async function computeSimilarities(docId) {
+  const similar = await db.query(
+    'RETURN fn::find_similar($id, 20)',
+    { id: docId }
+  );
+  
+  for (const doc of similar) {
+    await db.create('document_similarity', {
+      source: docId,
+      target: doc.id,
+      score: doc.score,
+    });
+  }
+}
+```
+
+### Filtering with vectors
+
+Combine vector search with metadata filters:
+
+```sql
+SELECT *,
+  vector::similarity::cosine(embedding, $query_embedding) AS score
+FROM document
+WHERE category = 'technology'
+  AND embedding != NONE
+ORDER BY score DESC
+LIMIT 10;
+```
 
 ## Performance tips
 
-### Index tuning
+### Index build time
 
-```javascript
-// High accuracy (slower)
-index(['embedding'])
-  .hnsw()
-  .dimension(1536)
-  .dist('cosine')
-  .m(48)
-  .efConstruction(500)
+HNSW indexes are fast to query but slow to build. For large datasets:
+- Build incrementally
+- Use lower `efc` for initial load, rebuild later
+- Consider MTREE for smaller datasets (<100k documents)
 
-// Balanced
-index(['embedding'])
-  .hnsw()
-  .dimension(1536)
-  .dist('cosine')
-  .m(16)
-  .efConstruction(100)
+### Embedding storage
 
-// Fast (lower accuracy)
-index(['embedding'])
-  .hnsw()
-  .dimension(1536)
-  .dist('cosine')
-  .m(8)
-  .efConstruction(40)
-```
+Embeddings are large. For 1 million documents with 1536-dim float32 vectors:
+- ~6 GB just for embeddings
+
+Consider:
+- Quantization (float16 or int8)
+- Only embedding important content
+- Removing old embeddings
 
 ### Query optimization
 
-- Use appropriate EF values: Start with 50-100, increase if recall is low
-- Filter early: Apply WHERE clauses to reduce candidate set
-- Limit dimensions: Use PCA/quantization for very high-dimensional vectors
+- Filter before vector search when possible
+- Use appropriate `limit` values
+- Pre-compute common similarity queries
 
----
+## Related
 
-## See also
-
-- [Indexes reference](../schema-reference/indexes.md) - HNSW options
-- [Social network](social-network.md) - Graph relations
-
+- [Indexes](/schema-reference/indexes) — Vector index details
+- [Functions](/schema-reference/functions) — Custom search logic
+- [Analyzers](/schema-reference/analyzers) — Full-text configuration

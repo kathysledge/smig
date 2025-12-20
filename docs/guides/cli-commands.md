@@ -1,353 +1,389 @@
 # CLI commands
 
-Complete reference for **smig** command-line tools.
-
----
-
-## Overview
-
-```bash
-smig <command> [options]
-```
-
-| Command | Description |
-|---------|-------------|
-| `init` | Initialize a new project |
-| `diff` | Generate migration from schema changes |
-| `push` | Apply pending migrations |
-| `status` | Show migration status |
-| `rollback` | Undo the last migration |
-| `mermaid` | Generate ER diagram |
-
----
-
-## `smig init`
-
-Initialize a new **smig** project with starter files.
-
-```bash
-smig init [options]
-```
-
-### Options
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--schema <path>` | Path for schema file | `./schema.js` |
-| `--config <path>` | Path for config file | `./smig.config.js` |
-| `--force` | Overwrite existing files | `false` |
-
-### Examples
-
-```bash
-# Default initialization
-smig init
-
-# Custom paths
-smig init --schema ./db/schema.js --config ./db/config.js
-
-# Overwrite existing files
-smig init --force
-```
-
-### Generated files
-
-**schema.js:**
-```javascript
-import { defineSchema, composeSchema, string, bool, datetime, index } from 'smig';
-
-const userSchema = defineSchema({
-  table: 'user',
-  fields: {
-    name: string(),
-    email: string(),
-    isActive: bool().default(true),
-    createdAt: datetime().default('time::now()'),
-  },
-  indexes: {
-    email: index(['email']).unique(),
-  },
-});
-
-export default composeSchema({
-  models: { user: userSchema },
-});
-```
-
-**smig.config.js:**
-```javascript
-export default {
-  url: 'ws://localhost:8000',
-  namespace: 'test',
-  database: 'test',
-  username: 'root',
-  password: 'root',
-  schema: './schema.js',
-};
-```
-
----
-
-## `smig diff`
-
-Generate a migration by comparing your schema to the current database state.
-
-```bash
-smig diff [options]
-```
-
-### Options
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `-m, --message <msg>` | Migration description | Timestamp |
-| `-c, --config <path>` | Config file path | `./smig.config.js` |
-| `--dry-run` | Show diff without saving | `false` |
-| `--debug` | Enable debug output | `false` |
-
-### Examples
-
-```bash
-# Generate with message
-smig diff --message "Add user authentication"
-
-# Preview without applying
-smig diff --dry-run
-
-# Custom config
-smig diff --config ./production.config.js --message "Deploy v2"
-```
-
-### Output
-
-```
-Generating migration...
-
--- New table: user
-DEFINE TABLE user TYPE NORMAL SCHEMAFULL;
-DEFINE FIELD email ON TABLE user TYPE string ASSERT string::is_email($value);
-DEFINE FIELD name ON TABLE user TYPE string ASSERT $value != NONE;
-DEFINE INDEX email ON TABLE user FIELDS email UNIQUE;
-
-Migration generated: 2024-01-15T10:30:00.000Z - Add user authentication
-```
-
----
-
-## `smig push`
-
-Apply pending migrations to the database.
-
-```bash
-smig push [options]
-```
-
-### Options
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `-c, --config <path>` | Config file path | `./smig.config.js` |
-| `--force` | Skip confirmation prompts | `false` |
-| `--debug` | Enable debug output | `false` |
-
-### Examples
-
-```bash
-# Apply pending migrations
-smig push
-
-# Skip confirmation
-smig push --force
-
-# Custom config
-smig push --config ./production.config.js
-```
-
-### Output
-
-```
-Applying migrations...
-
-Migration 1/1: Add user authentication
-  ✓ DEFINE TABLE user...
-  ✓ DEFINE FIELD email...
-  ✓ DEFINE INDEX email...
-
-All migrations applied successfully!
-```
-
----
-
-## `smig status`
-
-Show current migration status and database state.
-
-```bash
-smig status [options]
-```
-
-### Options
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `-c, --config <path>` | Config file path | `./smig.config.js` |
-| `--json` | Output as JSON | `false` |
-
-### Examples
-
-```bash
-# Show status
-smig status
-
-# JSON output for scripting
-smig status --json
-```
-
-### Output
-
-```
-Migration Status
-================
-
-Database: test/test
-Connected: ✓
-
-Applied Migrations: 3
-  1. 2024-01-15T10:30:00.000Z - Initial schema
-  2. 2024-01-16T14:00:00.000Z - Add posts table
-  3. 2024-01-17T09:15:00.000Z - Add comments
-
-Tables: user, post, comment
-Relations: authored, commented
-
-Schema Status: In sync ✓
-```
-
----
-
-## `smig rollback`
-
-Undo the most recently applied migration.
-
-```bash
-smig rollback [options]
-```
-
-### Options
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `-c, --config <path>` | Config file path | `./smig.config.js` |
-| `--steps <n>` | Number of migrations to rollback | `1` |
-| `--force` | Skip confirmation prompts | `false` |
-| `--debug` | Enable debug output | `false` |
-
-### Examples
-
-```bash
-# Rollback last migration
-smig rollback
-
-# Rollback multiple migrations
-smig rollback --steps 3
-
-# Skip confirmation
-smig rollback --force
-```
-
-### Output
-
-```
-Rolling back migration: Add comments
-
-  ✓ REMOVE TABLE comment...
-
-Rollback complete. 2 migrations remaining.
-```
-
----
-
-## `smig mermaid`
-
-Generate a Mermaid ER diagram from your schema.
-
-```bash
-smig mermaid [options]
-```
-
-### Options
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `-c, --config <path>` | Config file path | `./smig.config.js` |
-| `-o, --output <path>` | Output file path | stdout |
-
-### Examples
-
-```bash
-# Output to terminal
-smig mermaid
-
-# Save to file
-smig mermaid --output ./docs/schema.mmd
-
-# Pipe to clipboard (macOS)
-smig mermaid | pbcopy
-```
-
-### Output
-
-```mermaid
-erDiagram
-    user {
-        string email
-        string name
-        bool isActive
-        datetime createdAt
-    }
-    post {
-        record author
-        string title
-        string content
-        bool published
-    }
-    user ||--o{ post : "authored"
-```
-
----
+**smig** provides a command-line interface for all migration operations. This page covers every command and option.
 
 ## Global options
 
-These options work with all commands:
+These options work with any command:
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--url <url>` | `-u` | SurrealDB server URL |
+| `--namespace <ns>` | `-n` | Database namespace |
+| `--database <db>` | `-d` | Database name |
+| `--username <user>` | `-U` | Authentication username |
+| `--password <pass>` | `-p` | Authentication password |
+| `--schema <path>` | `-s` | Path to schema file |
+| `--env <name>` | | Environment from config |
+| `--help` | `-h` | Show help |
+| `--version` | `-V` | Show version |
+
+Example:
+
+```bash
+bun smig migrate --url ws://localhost:8000 --namespace test --database myapp
+```
+
+## Commands
+
+### migrate
+
+Apply pending schema changes to the database.
+
+```bash
+bun smig migrate [options]
+```
 
 | Option | Description |
 |--------|-------------|
-| `--help` | Show help for command |
-| `--version` | Show smig version |
-| `--debug` | Enable debug output |
+| `--dry-run` | Preview changes without applying |
+| `--debug` | Write debug log to file |
 
----
+**Examples:**
+
+```bash
+# Apply changes with default config
+bun smig migrate
+
+# Preview changes without applying
+bun smig migrate --dry-run
+
+# Apply to production environment
+bun smig migrate --env production
+```
+
+**What it does:**
+
+1. Loads your schema file
+2. Connects to the database
+3. Compares schema to current database state
+4. Generates SQL for differences
+5. Applies the SQL
+6. Records the migration in `_migrations` table
+
+### diff
+
+Preview what SQL would be generated, without applying it.
+
+```bash
+bun smig diff [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--output <path>` | `-o` | Write SQL to file |
+| `--debug` | | Write debug log to file |
+
+**Examples:**
+
+```bash
+# Preview changes
+bun smig diff
+
+# Save to file for review
+bun smig diff --output migration.sql
+```
+
+**Output:**
+
+```
+Up Migration (apply changes):
+──────────────────────────────────────────────────
+-- Migration diff for 2025-01-15T10:30:00.000Z
+
+-- New field: user.avatar
+DEFINE FIELD avatar ON TABLE user TYPE option<string>;
+
+Down Migration (rollback):
+──────────────────────────────────────────────────
+REMOVE FIELD avatar ON TABLE user;
+```
+
+### status
+
+Show the current migration status.
+
+```bash
+bun smig status [options]
+```
+
+**Examples:**
+
+```bash
+bun smig status
+bun smig status --env production
+```
+
+**Output:**
+
+```
+📊 Migration Status:
+Applied migrations: 5
+
+Applied migrations:
+  - _migrations:abc123 (2025-01-10T08:00:00.000Z)
+  - _migrations:def456 (2025-01-12T14:30:00.000Z)
+  - _migrations:ghi789 (2025-01-15T09:15:00.000Z)
+
+✅ Database is up to date with schema
+```
+
+### rollback
+
+Undo applied migrations.
+
+```bash
+bun smig rollback [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--id <id>` | `-i` | Specific migration ID to rollback |
+| `--to <id>` | `-t` | Rollback all migrations after this one |
+| `--debug` | | Write debug log to file |
+
+**Examples:**
+
+```bash
+# Rollback the last migration
+bun smig rollback
+
+# Rollback a specific migration
+bun smig rollback --id abc123
+
+# Rollback multiple (back to a specific point)
+bun smig rollback --to def456
+```
+
+**Interactive confirmation:**
+
+```
+? Are you sure you want to rollback migration "_migrations:ghi789"? (y/N)
+```
+
+### validate
+
+Check your schema file for errors without connecting to the database.
+
+```bash
+bun smig validate [options]
+```
+
+**Examples:**
+
+```bash
+bun smig validate
+bun smig validate --schema ./schemas/main.js
+```
+
+**Output:**
+
+```
+📋 Schema Summary:
+  Tables:    5
+  Relations: 2
+  Functions: 3
+  Analyzers: 1
+  Scopes:    1
+  Fields:    47
+  Indexes:   12
+  Events:    4
+
+✅ Schema is valid!
+```
+
+### init
+
+Create starter files for a new project.
+
+```bash
+bun smig init [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--output <path>` | `-o` | Path for schema file (default: `./schema.ts`) |
+
+**Examples:**
+
+```bash
+# Create default files
+bun smig init
+
+# Custom schema path
+bun smig init --output ./src/db/schema.ts
+```
+
+**Creates:**
+
+- `schema.ts` — Example schema with common patterns
+- `smig.config.ts` — Configuration file
+
+### test
+
+Verify database connection.
+
+```bash
+bun smig test [options]
+```
+
+**Examples:**
+
+```bash
+bun smig test
+bun smig test --env production
+```
+
+**Output:**
+
+```
+✅ Database connection successful
+📊 Connected to: ws://localhost:8000
+📁 Namespace: test
+🗄️  Database: myapp
+```
+
+### config
+
+Show current configuration.
+
+```bash
+bun smig config [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--show-secrets` | | Show password values |
+
+**Examples:**
+
+```bash
+bun smig config
+bun smig config --show-secrets
+bun smig config --env production
+```
+
+**Output:**
+
+```
+🔧 Current Configuration:
+  Schema:    ./schema.ts
+  URL:       ws://localhost:8000
+  Namespace: test
+  Database:  myapp
+  Username:  root
+  Password:  ***
+
+🌍 Available Environments:
+  development
+› staging
+  production
+
+Use --env <name> to select an environment
+```
+
+### mermaid
+
+Generate an ER diagram from your schema.
+
+```bash
+bun smig mermaid [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--output <path>` | `-o` | Output file (default: `schema-diagram.mermaid`) |
+
+**Examples:**
+
+```bash
+bun smig mermaid
+bun smig mermaid --output docs/schema.mmd
+```
+
+**Interactive prompt:**
+
+```
+? Select diagram detail level:
+  ○ Minimal (executive summary)
+  ● Detailed (comprehensive view)
+```
+
+## Configuration file
+
+Create `smig.config.ts` in your project root:
+
+```typescript
+export default {
+  // Required
+  schema: './schema.ts',
+  url: 'ws://localhost:8000',
+  namespace: 'test',
+  database: 'myapp',
+  username: 'root',
+  password: 'root',
+  
+  // Optional: environment-specific overrides
+  environments: {
+    development: {
+      url: 'ws://localhost:8000',
+      namespace: 'dev',
+      database: 'myapp_dev',
+    },
+    staging: {
+      url: process.env.STAGING_DB_URL,
+      namespace: 'staging',
+      database: 'myapp_staging',
+      username: process.env.STAGING_DB_USER,
+      password: process.env.STAGING_DB_PASS,
+    },
+    production: {
+      url: process.env.PROD_DB_URL,
+      namespace: 'prod',
+      database: 'myapp',
+      username: process.env.PROD_DB_USER,
+      password: process.env.PROD_DB_PASS,
+    },
+  },
+};
+```
+
+Use with `--env`:
+
+```bash
+bun smig migrate --env production
+```
 
 ## Environment variables
 
-Configuration can also be set via environment variables:
+**smig** reads from `.env` files:
 
-| Variable | Description |
-|----------|-------------|
-| `SMIG_URL` | Database URL |
-| `SMIG_NAMESPACE` | Database namespace |
-| `SMIG_DATABASE` | Database name |
-| `SMIG_USERNAME` | Authentication username |
-| `SMIG_PASSWORD` | Authentication password |
-| `SMIG_SCHEMA` | Path to schema file |
-| `SMIG_CONFIG` | Path to config file |
+```bash
+# .env
+SMIG_URL=ws://localhost:8000
+SMIG_NAMESPACE=test
+SMIG_DATABASE=myapp
+SMIG_USERNAME=root
+SMIG_PASSWORD=root
+SMIG_SCHEMA=./schema.ts
+```
 
-Environment variables override config file values.
+Priority (highest to lowest):
 
----
+1. Command-line flags
+2. `smig.config.ts`
+3. Environment variables
+4. Default values
 
-## See also
+## Exit codes
 
-- [Multi-environment workflows](multi-environment.md)
-- [Best practices](best-practices.md)
+| Code | Meaning |
+|------|---------|
+| 0 | Success |
+| 1 | Error (check message) |
 
+## Related
+
+- [Getting started](/getting-started/) — First-time setup
+- [Multi-environment](/guides/multi-environment) — Managing multiple databases
+- [Understanding migrations](/guides/migrations) — How migrations work

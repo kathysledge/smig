@@ -25,7 +25,7 @@
  * - `--database` - SurrealDB database (default: test)
  * - `--username` - SurrealDB username (default: root)
  * - `--password` - SurrealDB password (default: root)
- * - `--schema` - Path to JavaScript schema file (default: ./schema.js)
+ * - `--schema` - Path to TypeScript schema file (default: ./schema.ts)
  *
  * ## Configuration
  *
@@ -43,10 +43,10 @@
  * - `SMIG_PASSWORD` - Authentication password
  * - `SMIG_SCHEMA` - Path to schema file
  *
- * ### Configuration File (smig.config.js)
- * ```javascript
- * module.exports = {
- *   schema: "./schema.js",
+ * ### Configuration File (smig.config.ts)
+ * ```typescript
+ * export default {
+ *   schema: "./schema.ts",
  *   url: process.env.SMIG_URL || "ws://localhost:8000",  // .env variables available
  *   username: "root",
  *   password: "root",
@@ -70,25 +70,25 @@
  * @example
  * ```bash
  * # Apply migrations using default config
- * smig migrate
+ * bun smig migrate
  *
  * # Apply migrations to production environment
- * smig migrate --env prod
+ * bun smig migrate --env prod
  *
  * # Override specific settings
- * smig migrate --env prod --database citadel_v2
+ * bun smig migrate --env prod --database citadel_v2
  *
  * # Check current configuration
- * smig config
+ * bun smig config
  *
  * # Check status
- * smig status --env dev
+ * bun smig status --env dev
  *
  * # Generate diff without applying
- * smig generate --output migration.sql
+ * bun smig generate --output migration.sql
  *
  * # Initialize new schema
- * smig init --output my-schema.js
+ * bun smig init --output my-schema.ts
  * ```
  */
 
@@ -178,7 +178,11 @@ const program = new Command();
 
 program
   .name('smig')
-  .description('Automatic SurrealDB migrations with a concise DSL')
+  .description(
+    'Automatic SurrealDB 3.x migrations with a type-safe schema DSL.\n\n' +
+      'Features: Vector indexes (HNSW/MTREE), ALTER/RENAME support, ACCESS/JWT auth,\n' +
+      'bidirectional migrations, rename tracking via .was(), and more.',
+  )
   .version('1.0.0-alpha.1')
   .configureHelp({
     showGlobalOptions: true,
@@ -199,8 +203,7 @@ program
   .command('migrate')
   .description('Apply schema changes to the database')
   .option('--debug', 'Enable debug logging to file')
-  .option('-m, --message <message>', 'Migration message for tracking purposes')
-
+  .option('--dry-run', 'Show what would be changed without applying')
   .action(async (options) => {
     const globalOpts = program.opts();
 
@@ -230,11 +233,32 @@ program
       await migrationManager.initialize();
       spinner.text = 'Done initializing...';
 
-      // Apply migration
-      spinner.text = 'Applying migration...';
-      await migrationManager.migrate(schema, undefined, undefined, options.message);
+      // Check if dry-run mode
+      if (options.dryRun) {
+        spinner.text = 'Generating migration diff (dry run)...';
+        const hasChanges = await migrationManager.hasChanges(schema);
 
-      spinner.succeed(chalk.green(`Migration applied successfully`));
+        if (hasChanges) {
+          const { up, down } = await migrationManager.generateDiff(schema);
+          spinner.succeed(chalk.blue('Dry run - changes detected (not applied)'));
+
+          console.log(`\n${chalk.cyan('Would apply (up):')}`);
+          console.log('─'.repeat(50));
+          console.log(up);
+
+          console.log(`\n${chalk.cyan('Would rollback (down):')}`);
+          console.log('─'.repeat(50));
+          console.log(down);
+        } else {
+          spinner.succeed(chalk.green('Dry run - no changes detected'));
+        }
+      } else {
+        // Apply migration
+        spinner.text = 'Applying migration...';
+        await migrationManager.migrate(schema);
+
+        spinner.succeed(chalk.green(`Migration applied successfully`));
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
 
@@ -297,7 +321,7 @@ program
 
         if (hasChanges) {
           console.log('\n🔄 Pending changes detected:');
-          console.log('Run "smig migrate" to apply changes');
+          console.log('Run "bun smig migrate" to apply changes');
         } else {
           console.log('\n✅ Database is up to date with schema');
         }
@@ -511,7 +535,11 @@ program
       await migrationManager.close();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : '';
       spinner.fail(chalk.red(`Generation failed: ${errorMessage}`));
+      if (options.debug && errorStack) {
+        console.error(chalk.gray(errorStack));
+      }
       process.exit(1);
     }
   });
@@ -520,7 +548,7 @@ program
 program
   .command('init')
   .description('Initialize a new schema file')
-  .option('-o, --output <path>', 'Output file path', './schema.js')
+  .option('-o, --output <path>', 'Output file path', './schema.ts')
   .option('--debug', 'Enable debug logging to file')
   .action(async (options) => {
     // Initialize debug logger if debug flag is set
@@ -553,69 +581,159 @@ program
       }
 
       const template = `import {
+  // Field types
   string,
   int,
+  float,
   bool,
   datetime,
+  uuid,
+  array,
   record,
+  // Indexes
   index,
+  // Schema builders
   defineSchema,
   defineRelation,
   composeSchema,
+  // Common patterns
   cf,
   ci,
-  ce
+  ce,
+  // Entities (SurrealDB 3.x)
+  fn,
+  analyzer,
+  access,
+  param,
 } from 'smig';
 
 /**
- * Example Schema File
+ * smig Schema File (SurrealDB 3.x)
  *
- * This is a basic example schema to get you started.
- * Modify the tables and fields according to your needs.
+ * This template showcases smig's full capabilities:
+ * - Type-safe schema definitions
+ * - Vector indexes for AI/ML (HNSW, MTREE)
+ * - ACCESS authentication (JWT, RECORD)
+ * - Rename tracking with .was()
+ * - And much more!
  */
 
-// User model - represents application users
+// =============================================================================
+// USER MODEL
+// =============================================================================
 const userModel = defineSchema({
   table: 'user',
   fields: {
-    name: string(),
-    email: string(),
+    // Basic fields
+    name: string().required(),
+    email: string().required(),
+    
+    // Optional fields with defaults
     isActive: bool().default(true),
-    createdAt: cf.timestamp(), // Timestamp field
+    role: string().default('user'),
+    
+    // Timestamps (using common field patterns)
+    createdAt: cf.timestamp(),
+    updatedAt: cf.timestamp(),
+    
+    // Vector embedding for AI search (384 dimensions)
+    embedding: array('float').comment('User profile embedding'),
   },
   indexes: {
-    emailIndex: index(['email']).unique(), // Unique email constraint
+    // Unique email constraint
+    emailIndex: index(['email']).unique(),
+    
+    // Vector index for similarity search (HNSW algorithm)
+    embeddingIndex: index(['embedding'])
+      .hnsw()
+      .dimension(384)
+      .dist('COSINE')
+      .comment('AI-powered user search'),
   },
 });
 
-// Post model - represents blog posts
+// =============================================================================
+// POST MODEL
+// =============================================================================
 const postModel = defineSchema({
   table: 'post',
   fields: {
-    title: string(),
+    title: string().required(),
     content: string(),
-    author: cf.owner('user'), // Foreign key to user
+    author: record('user').required(),
     isPublished: bool().default(false),
-    createdAt: cf.timestamp(), // Created timestamp
-    updatedAt: cf.timestamp(), // Updated timestamp
+    viewCount: int().default(0).readonly(),
+    createdAt: cf.timestamp(),
+    
+    // Content embedding for semantic search
+    contentEmbedding: array('float'),
   },
   indexes: {
-    authorIndex: index(['author']), // Fast lookups by author
-    createdAtIndex: ci.createdAt('post'), // Created date index
+    authorIndex: index(['author']),
+    publishedIndex: index(['isPublished', 'createdAt']),
+    
+    // Full-text search with custom analyzer
+    contentSearch: index(['content'])
+      .search()
+      .analyzer('english_analyzer')
+      .highlights(),
   },
 });
 
-// Like relation - represents users liking posts
+// =============================================================================
+// LIKE RELATION (Graph Edge)
+// =============================================================================
 const likeRelation = defineRelation({
   name: 'like',
   from: 'user',
   to: 'post',
   fields: {
-    createdAt: cf.timestamp(), // When the like was created
+    createdAt: cf.timestamp(),
   },
 });
 
-// Compose the complete schema
+// =============================================================================
+// CUSTOM FUNCTION
+// =============================================================================
+const daysSinceFunction = fn('fn::days_since')
+  .param('date', 'datetime')
+  .returns('int')
+  .body(\`
+    RETURN math::floor((time::now() - $date) / 86400);
+  \`);
+
+// =============================================================================
+// TEXT ANALYZER (Full-text Search)
+// =============================================================================
+const englishAnalyzer = analyzer('english_analyzer')
+  .tokenizers(['blank', 'class'])
+  .filters(['lowercase', 'snowball(english)']);
+
+// =============================================================================
+// ACCESS DEFINITION (Authentication)
+// =============================================================================
+const userAccess = access('user')
+  .record()
+  .signup(\`
+    CREATE user SET
+      email = $email,
+      password = crypto::argon2::generate($password)
+  \`)
+  .signin(\`
+    SELECT * FROM user WHERE
+      email = $email AND
+      crypto::argon2::compare(password, $password)
+  \`)
+  .session('7d');
+
+// =============================================================================
+// GLOBAL PARAMETER
+// =============================================================================
+const appVersion = param('app_version').value("'1.0.0'");
+
+// =============================================================================
+// COMPOSE COMPLETE SCHEMA
+// =============================================================================
 const fullSchema = composeSchema({
   models: {
     user: userModel,
@@ -623,6 +741,15 @@ const fullSchema = composeSchema({
   },
   relations: {
     like: likeRelation,
+  },
+  functions: {
+    days_since: daysSinceFunction,
+  },
+  analyzers: {
+    english_analyzer: englishAnalyzer,
+  },
+  scopes: {
+    user: userAccess,
   },
 });
 
@@ -634,8 +761,8 @@ export default fullSchema;
       spinner.succeed(chalk.green(`Schema file created: ${outputPath}`));
       console.log(chalk.blue('\n📝 Next steps:'));
       console.log('1. Edit the schema file to define your models');
-      console.log('2. Run "smig migrate" to apply to database');
-      console.log('3. Run "smig status" to check migration status');
+      console.log('2. Run "bun smig migrate" to apply to database');
+      console.log('3. Run "bun smig status" to check migration status');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       spinner.fail(chalk.red(`Failed to create schema file: ${errorMessage}`));
@@ -746,6 +873,176 @@ program
       spinner.fail(
         chalk.red(`Configuration error: ${error instanceof Error ? error.message : error}`),
       );
+      process.exit(1);
+    }
+  });
+
+// Validate command - validates schema without database connection
+program
+  .command('validate')
+  .description('Validate schema file syntax and structure (no database required)')
+  .option('--debug', 'Enable debug logging to file')
+  .action(async (options) => {
+    const globalOpts = program.opts();
+
+    // Initialize debug logger if debug flag is set
+    if (options.debug) {
+      const debugLogger = new DebugLogger(true);
+      setDebugLogger(debugLogger);
+    }
+
+    const spinner = ora('Validating schema...').start();
+
+    try {
+      // Get schema path from options (no database connection needed)
+      const schemaPath = path.resolve(globalOpts.schema || './schema.js');
+
+      spinner.text = 'Loading schema file...';
+      const schema = await loadSchemaFromFile(schemaPath);
+
+      // Validate schema structure
+      const issues: string[] = [];
+
+      // Check tables
+      if (!schema.tables || schema.tables.length === 0) {
+        issues.push('⚠️  No tables defined in schema');
+      } else {
+        for (const table of schema.tables) {
+          if (!table.name) {
+            issues.push('❌ Table missing name property');
+          }
+          if (!table.fields || table.fields.length === 0) {
+            issues.push(`⚠️  Table "${table.name}" has no fields defined`);
+          }
+        }
+      }
+
+      // Check relations
+      for (const relation of schema.relations || []) {
+        if (!relation.name) {
+          issues.push('❌ Relation missing name property');
+        }
+        if (!relation.from || !relation.to) {
+          issues.push(`❌ Relation "${relation.name}" missing from/to properties`);
+        }
+      }
+
+      // Check functions
+      for (const func of schema.functions || []) {
+        if (!func.name) {
+          issues.push('❌ Function missing name property');
+        }
+        if (!func.body) {
+          issues.push(`❌ Function "${func.name}" missing body`);
+        }
+      }
+
+      // Check analyzers
+      for (const analyzer of schema.analyzers || []) {
+        if (!analyzer.name) {
+          issues.push('❌ Analyzer missing name property');
+        }
+        if (!analyzer.tokenizers || analyzer.tokenizers.length === 0) {
+          issues.push(`⚠️  Analyzer "${analyzer.name}" has no tokenizers`);
+        }
+      }
+
+      spinner.succeed(chalk.green('Schema validation complete'));
+
+      // Display summary
+      console.log(chalk.bold('\n📋 Schema Summary:'));
+      console.log(chalk.blue(`  Tables:    ${schema.tables.length}`));
+      console.log(chalk.blue(`  Relations: ${schema.relations.length}`));
+      console.log(chalk.blue(`  Functions: ${(schema.functions || []).length}`));
+      console.log(chalk.blue(`  Analyzers: ${(schema.analyzers || []).length}`));
+      console.log(chalk.blue(`  Scopes:    ${(schema.scopes || []).length}`));
+
+      // Display field/index counts
+      let totalFields = 0;
+      let totalIndexes = 0;
+      let totalEvents = 0;
+      for (const table of [...schema.tables, ...schema.relations]) {
+        totalFields += table.fields?.length || 0;
+        totalIndexes += table.indexes?.length || 0;
+        totalEvents += table.events?.length || 0;
+      }
+      console.log(chalk.blue(`  Fields:    ${totalFields}`));
+      console.log(chalk.blue(`  Indexes:   ${totalIndexes}`));
+      console.log(chalk.blue(`  Events:    ${totalEvents}`));
+
+      // Display issues
+      if (issues.length > 0) {
+        console.log(chalk.bold('\n⚠️  Validation Issues:'));
+        for (const issue of issues) {
+          console.log(`  ${issue}`);
+        }
+      } else {
+        console.log(chalk.green('\n✅ Schema is valid!'));
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      spinner.fail(chalk.red(`Schema validation failed: ${errorMessage}`));
+      process.exit(1);
+    }
+  });
+
+// Diff command (alias for generate)
+program
+  .command('diff')
+  .description('Generate migration diff between schema and database (alias for generate)')
+  .option('-o, --output <path>', 'Output file path (defaults to stdout)')
+  .option('--debug', 'Enable debug logging to file')
+  .action(async (options) => {
+    // Delegate to generate command
+    const globalOpts = program.opts();
+
+    if (options.debug) {
+      const debugLogger = new DebugLogger(true);
+      setDebugLogger(debugLogger);
+    }
+
+    const spinner = ora('Loading configuration...').start();
+
+    try {
+      const config = await getConfigFromOptions(globalOpts);
+
+      spinner.text = 'Loading schema file...';
+      const schemaPath = path.resolve(config.schema);
+      const schema = await loadSchemaFromFile(schemaPath);
+
+      spinner.text = 'Connecting to database...';
+      const migrationManager = new MigrationManager(config);
+      await migrationManager.initialize();
+
+      spinner.text = 'Generating migration diff...';
+      const hasChanges = await migrationManager.hasChanges(schema);
+
+      if (hasChanges) {
+        const { up, down } = await migrationManager.generateDiff(schema);
+
+        spinner.succeed(chalk.green('Migration diff generated'));
+
+        if (options.output) {
+          await writeFile(options.output, up, 'utf-8');
+          console.log(chalk.blue(`📄 Migration written to: ${options.output}`));
+        }
+
+        console.log(`\n${chalk.cyan('Up Migration (apply changes):')}`);
+        console.log('─'.repeat(50));
+        console.log(up);
+
+        console.log(`\n${chalk.cyan('Down Migration (rollback):')}`);
+        console.log('─'.repeat(50));
+        console.log(down);
+      } else {
+        spinner.succeed(chalk.green('No changes detected'));
+        console.log(chalk.yellow('Database schema matches the schema definition.'));
+      }
+
+      await migrationManager.close();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      spinner.fail(chalk.red(`Diff generation failed: ${errorMessage}`));
       process.exit(1);
     }
   });

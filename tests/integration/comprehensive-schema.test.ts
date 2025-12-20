@@ -89,7 +89,7 @@ import {
   scope,
   string,
   uuid,
-} from '../../../dist/schema/concise-schema.js';
+} from '../../../dist/schema/concise-schema.ts';
 
 // ============================================================================
 // COMPREHENSIVE TEST SCHEMA - ${suffix}
@@ -427,7 +427,7 @@ import {
   scope,
   string,
   uuid,
-} from '../../../dist/schema/concise-schema.js';
+} from '../../../dist/schema/concise-schema.ts';
 
 // ============================================================================
 // MODIFIED COMPREHENSIVE TEST SCHEMA - v2
@@ -714,7 +714,7 @@ export default {
       // Apply migration (ora spinner outputs to stderr)
       console.log('\nStep 2: Applying migration...');
       const { stdout: migrateStdout, stderr: migrateStderr } = await execAsync(
-        `node ${CLI_PATH} migrate --message "Comprehensive schema v1" --debug`,
+        `node ${CLI_PATH} migrate --debug`,
       );
       const migrateOutput = migrateStdout + migrateStderr;
       expect(migrateOutput).toContain('Migration applied successfully');
@@ -751,7 +751,7 @@ export default {
 
       console.log('\nStep 1: Applying v1 schema...');
       const { stderr: v1Stderr } = await execAsync(
-        `node ${CLI_PATH} migrate --message "v1 migration"`,
+        `node ${CLI_PATH} migrate`,
       );
       expect(v1Stderr).toContain('Migration applied successfully');
 
@@ -778,7 +778,7 @@ export default {
       // Apply v2 migration (ora outputs to stderr)
       console.log('\nStep 3: Applying v2 migration...');
       const { stdout: migrateV2Stdout, stderr: migrateV2Stderr } = await execAsync(
-        `node ${CLI_PATH} migrate --message "v2 migration"`,
+        `node ${CLI_PATH} migrate`,
       );
       const migrateV2 = migrateV2Stdout + migrateV2Stderr;
       expect(migrateV2).toContain('Migration applied successfully');
@@ -810,7 +810,7 @@ export default {
       // Apply migration (ora outputs to stderr)
       console.log('\nStep 1: Applying migration...');
       const { stderr: migrateStderr } = await execAsync(
-        `node ${CLI_PATH} migrate --message "Rollback test"`,
+        `node ${CLI_PATH} migrate`,
       );
       expect(migrateStderr).toContain('Migration applied successfully');
 

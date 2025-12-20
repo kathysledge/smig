@@ -2,8 +2,6 @@
 
 Programmatic API for **smig**.
 
----
-
 ## Modules
 
 | Module | Description | Link |
@@ -12,13 +10,13 @@ Programmatic API for **smig**.
 | Migration Manager | Migration operations | [migration-manager](migration-manager.md) |
 | Surreal Client | Database connection | [surreal-client](surreal-client.md) |
 
----
-
 ## Quick reference
 
 ### Schema builders
 
-```javascript
+All the builders you can import:
+
+```typescript
 import {
   // Tables
   defineSchema,
@@ -43,7 +41,9 @@ import {
 
 ### Migration operations
 
-```javascript
+Manage migrations programmatically:
+
+```typescript
 import { MigrationManager } from 'smig';
 
 const manager = new MigrationManager(config);
@@ -57,7 +57,9 @@ await manager.close();
 
 ### Database client
 
-```javascript
+Low-level database access:
+
+```typescript
 import { SurrealClient } from 'smig';
 
 const client = new SurrealClient(config);

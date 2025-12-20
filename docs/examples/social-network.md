@@ -2,11 +2,11 @@
 
 A social platform with follows, posts, and likes using graph relations.
 
----
-
 ## Schema
 
-```javascript
+A social platform with users, posts, follows, and likes using SurrealDB's graph relations:
+
+```typescript
 import {
   defineSchema,
   defineRelation,
@@ -157,11 +157,11 @@ export default composeSchema({
 });
 ```
 
----
-
 ## Graph queries
 
 ### Follow a user
+
+Create a follow relationship between two users:
 
 ```sql
 RELATE user:alice -> follows -> user:bob;
@@ -169,11 +169,15 @@ RELATE user:alice -> follows -> user:bob;
 
 ### Unfollow
 
+Remove a follow relationship:
+
 ```sql
 DELETE follows WHERE in = user:alice AND out = user:bob;
 ```
 
 ### Get followers
+
+Get all users who follow a specific user:
 
 ```sql
 SELECT * FROM user:bob <- follows <- user;
@@ -181,11 +185,15 @@ SELECT * FROM user:bob <- follows <- user;
 
 ### Get following
 
+Get all users that a user follows:
+
 ```sql
 SELECT * FROM user:alice -> follows -> user;
 ```
 
 ### Check if following
+
+Check if one user follows another:
 
 ```sql
 SELECT * FROM follows 
@@ -194,17 +202,23 @@ WHERE in = user:alice AND out = user:bob;
 
 ### Like a post
 
+Create a like relationship:
+
 ```sql
 RELATE user:alice -> likes -> post:123;
 ```
 
 ### Unlike
 
+Remove a like:
+
 ```sql
 DELETE likes WHERE in = user:alice AND out = post:123;
 ```
 
 ### Get user's liked posts
+
+Get all posts a user has liked:
 
 ```sql
 SELECT * FROM user:alice -> likes -> post
@@ -213,6 +227,8 @@ LIMIT 20;
 ```
 
 ### Timeline (posts from followed users)
+
+Build a chronological feed of posts from people a user follows:
 
 ```sql
 SELECT * FROM post 
@@ -223,6 +239,8 @@ LIMIT 50;
 
 ### Mutual follows (friends)
 
+Find users who both follow each other:
+
 ```sql
 LET $following = (SELECT VALUE out FROM follows WHERE in = user:alice);
 LET $followers = (SELECT VALUE in FROM follows WHERE out = user:alice);
@@ -231,13 +249,13 @@ RETURN array::intersect($following, $followers);
 
 ### Friends of friends
 
+Discover new people through your network:
+
 ```sql
 SELECT DISTINCT out FROM user:alice -> follows -> user -> follows -> user
 WHERE out != user:alice 
 AND out NOT IN (SELECT VALUE out FROM follows WHERE in = user:alice);
 ```
-
----
 
 ## See also
 

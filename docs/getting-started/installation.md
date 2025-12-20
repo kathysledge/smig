@@ -1,119 +1,330 @@
 # Installation
 
-**smig** can be installed using any Node.js package manager.
+This guide covers installing **smig** and setting up your project.
 
----
+## Prerequisites
 
-## Package managers
+Before installing **smig**, you need:
 
-### Bun (recommended)
+- **Node.js 18+** or **Bun 1.0+**
+- **SurrealDB 3.0+**
+
+### Installing SurrealDB
+
+If you don't have SurrealDB:
+
+```bash
+# macOS
+brew install surrealdb/tap/surreal
+
+# Linux (curl)
+curl -sSf https://install.surrealdb.com | sh
+
+# Windows (PowerShell)
+iwr https://install.surrealdb.com -useb | iex
+```
+
+See [surrealdb.com/install](https://surrealdb.com/install) for more options.
+
+## Installing smig
+
+Choose your package manager:
+
+::: code-group
+
+```bash [bun]
+bun add -D smig
+```
+
+```bash [npm]
+npm install --save-dev smig
+```
+
+```bash [pnpm]
+pnpm add -D smig
+```
+
+```bash [yarn]
+yarn add -D smig
+```
+
+:::
+
+We recommend Bun — it's faster and **smig** is tested primarily with Bun.
+
+## Project setup
+
+### Quick setup
+
+Run the init command:
+
+```bash
+bun smig init
+```
+
+This creates:
+
+- `schema.ts` — Your schema definition
+- `smig.config.ts` — Database connection settings
+
+### Manual setup
+
+If you prefer to set things up yourself:
+
+**1. Create `smig.config.ts`:**
+
+```typescript
+export default {
+  // Where your schema is defined
+  schema: './schema.ts',
+  
+  // Database connection
+  url: 'ws://localhost:8000',
+  namespace: 'test',
+  database: 'myapp',
+  username: 'root',
+  password: 'root',
+};
+```
+
+**2. Create `schema.ts`:**
+
+```typescript
+import { defineSchema, string, datetime, composeSchema } from 'smig';
+
+const users = defineSchema({
+  table: 'user',
+  fields: {
+    email: string().required(),
+    name: string(),
+    createdAt: datetime().default('time::now()'),
+  },
+});
+
+export default composeSchema({
+  models: { user: users },
+});
+```
+
+## Verifying the installation
+
+### Check smig is installed
+
+Verify the installation worked:
+
+```bash
+bun smig --version
+```
+
+### Check database connection
+
+Start SurrealDB:
+
+```bash
+surreal start --user root --pass root memory
+```
+
+In another terminal:
+
+```bash
+bun smig test
+```
+
+You should see:
+
+```
+✅ Database connection successful
+```
+
+## Configuration options
+
+### Basic config
+
+A minimal configuration for local development:
+
+```typescript
+// smig.config.ts
+export default {
+  schema: './schema.ts',
+  url: 'ws://localhost:8000',
+  namespace: 'test',
+  database: 'myapp',
+  username: 'root',
+  password: 'root',
+};
+```
+
+### With environments
+
+Use environment variables for secure configuration:
+
+```typescript
+export default {
+  schema: './schema.ts',
+  url: 'ws://localhost:8000',
+  namespace: 'dev',
+  database: 'myapp',
+  username: 'root',
+  password: 'root',
+  
+  environments: {
+    staging: {
+      url: process.env.STAGING_DB_URL,
+      namespace: 'staging',
+      database: 'myapp',
+      username: process.env.STAGING_DB_USER,
+      password: process.env.STAGING_DB_PASS,
+    },
+    production: {
+      url: process.env.PROD_DB_URL,
+      namespace: 'prod',
+      database: 'myapp',
+      username: process.env.PROD_DB_USER,
+      password: process.env.PROD_DB_PASS,
+    },
+  },
+};
+```
+
+Use with `--env`:
+
+```bash
+bun smig migrate --env production
+```
+
+### Using environment variables
+
+**smig** automatically reads `.env` files:
+
+```bash
+# .env
+SMIG_URL=ws://localhost:8000
+SMIG_NAMESPACE=test
+SMIG_DATABASE=myapp
+SMIG_USERNAME=root
+SMIG_PASSWORD=root
+```
+
+## TypeScript support
+
+**smig** natively supports TypeScript schema files with zero configuration. No build step required — just use `.ts` extension:
+
+```typescript
+// schema.ts
+import type { SurrealDBSchema } from 'smig';
+import { defineSchema, string, datetime, composeSchema } from 'smig';
+
+const users = defineSchema({
+  table: 'user',
+  fields: {
+    email: string().required(),
+    name: string(),
+    createdAt: datetime().default('time::now()'),
+  },
+});
+
+const schema: SurrealDBSchema = composeSchema({
+  models: { user: users },
+});
+
+export default schema;
+```
+
+Update your config to point to the TypeScript file:
+
+```typescript
+// smig.config.ts
+export default {
+  schema: './schema.ts',
+  // ...
+};
+```
+
+### Supported file extensions
+
+**smig** automatically handles all common JavaScript and TypeScript extensions:
+
+| Extension | Description |
+|-----------|-------------|
+| `.ts` | TypeScript |
+| `.mts` | TypeScript (ES modules) |
+| `.cts` | TypeScript (CommonJS) |
+| `.js` | JavaScript |
+| `.mjs` | JavaScript (ES modules) |
+| `.cjs` | JavaScript (CommonJS) |
+
+::: tip How it works
+**smig** uses [jiti](https://github.com/unjs/jiti) to compile TypeScript on-the-fly. You don't need `ts-node`, `tsx`, or any other runtime — it just works.
+:::
+
+## Project structure
+
+A typical project structure:
+
+```
+myapp/
+├── schema.ts           # Your schema definition
+├── smig.config.ts      # Connection settings
+├── package.json
+└── src/
+    └── ...             # Your application code
+```
+
+For larger projects:
+
+```
+myapp/
+├── db/
+│   ├── schema/
+│   │   ├── index.js    # Main schema (composeSchema)
+│   │   ├── user.js     # User table
+│   │   ├── post.js     # Post table
+│   │   └── relations/
+│   │       ├── follows.js
+│   │       └── likes.js
+│   ├── functions/
+│   │   └── utils.js    # Database functions
+│   └── analyzers/
+│       └── search.js   # Full-text search config
+├── smig.config.ts
+└── src/
+    └── ...
+```
+
+## Troubleshooting
+
+### "Connection refused"
+
+SurrealDB isn't running. Start it:
+
+```bash
+surreal start --user root --pass root memory
+```
+
+### "Invalid credentials"
+
+Check username/password in your config matches SurrealDB's startup flags.
+
+### "Module not found: smig"
+
+Make sure **smig** is in `devDependencies`:
 
 ```bash
 bun add -D smig
 ```
 
-### npm
+### ESM import errors
 
-```bash
-npm install -D smig
-```
+**smig** uses ES modules. Ensure your `package.json` has:
 
-### pnpm
-
-```bash
-pnpm add -D smig
-```
-
-### Yarn
-
-```bash
-yarn add -D smig
-```
-
----
-
-## Global installation
-
-For system-wide CLI access:
-
-```bash
-# Bun
-bun add -g smig
-
-# npm
-npm install -g smig
-
-# pnpm
-pnpm add -g smig
-```
-
-Then run commands directly:
-
-```bash
-smig init
-smig diff
-smig push
-```
-
----
-
-## Local installation (recommended)
-
-For project-specific installation, add to your `package.json` scripts:
-
-```json
+```typescripton
 {
-  "scripts": {
-    "db:init": "smig init",
-    "db:diff": "smig diff",
-    "db:push": "smig push",
-    "db:status": "smig status",
-    "db:rollback": "smig rollback"
-  }
+  "type": "module"
 }
 ```
 
-Then run with your package manager:
-
-```bash
-bun run db:diff --message "Add new table"
-bun run db:push
-```
-
----
-
-## Requirements
-
-### Runtime
-
-- **Node.js 18+** or **Bun 1.0+**
-- ES Modules support (smig uses ESM)
-
-### SurrealDB
-
-- **SurrealDB 3.0+** (v3.0.0-beta.1 or later)
-- Running instance accessible via WebSocket or HTTP
-
-### Optional
-
-- **TypeScript 5.0+** for type checking (optional but recommended)
-
----
-
-## Verify installation
-
-```bash
-# Check smig version
-smig --version
-
-# Check SurrealDB connection
-smig status
-```
-
----
-
 ## Next steps
 
-- [Quick start](index.md) - Get running in 5 minutes
-- [Your first migration](first-migration.md) - Create your first schema
+Ready to create your first migration?
 
+[Your first migration ›](/getting-started/first-migration)

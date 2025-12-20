@@ -51,7 +51,7 @@ describe('SurrealClient', () => {
       database: 'test',
       username: 'root',
       password: 'root',
-      schema: './schema.js',
+      schema: './schema.ts',
     });
 
     // Set connected state for tests that need it

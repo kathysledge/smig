@@ -1,0 +1,2 @@
+#V2
+DEFINE TABLE test SCHEMAFULL; DEFINE FIELD displayName ON TABLE test TYPE option<string>; INFO FOR TABLE test;

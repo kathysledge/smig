@@ -1,158 +1,134 @@
-# Quick start
+# Getting started
 
-Get up and running with **smig** in under 5 minutes.
+This section helps you go from zero to working migrations. By the end, you'll have **smig** installed, configured, and running against your SurrealDB database.
 
----
+## What you'll learn
 
-## Prerequisites
+1. **[Installation](/getting-started/installation)** — How to add **smig** to your project
+2. **[Your first migration](/getting-started/first-migration)** — Creating and applying your first schema
 
-- **Node.js 18+** or **Bun 1.0+**
-- **SurrealDB 3.0+** running locally or remotely
-
----
-
-## Step 1: Install smig
+If you just want to see it work, here's the shortest path:
 
 ```bash
-# Using bun (recommended)
+# Install smig
 bun add -D smig
 
-# Using npm
-npm install -D smig
+# Create starter files
+bun smig init
 
-# Using pnpm  
-pnpm add -D smig
+# Start SurrealDB (if not running)
+surreal start --user root --pass root memory
+
+# Apply the example schema
+bun smig migrate
 ```
 
-See [Installation](installation.md) for additional options.
+Done! You now have a `user` and `post` table in your database.
 
----
+## Before you begin
 
-## Step 2: Initialize your project
+### You'll need
+
+- **Node.js 18+** or **Bun 1.0+** (we recommend Bun — it's faster)
+- **SurrealDB 3.0+** installed and accessible
+
+### Checking your setup
+
+Verify your environment is ready:
 
 ```bash
-smig init
+# Check Node.js or Bun
+node --version   # Should be 18.0.0 or higher
+bun --version    # Should be 1.0.0 or higher
+
+# Check SurrealDB
+surreal version  # Should be 3.0.0 or higher
 ```
 
-This creates two files:
+If you don't have SurrealDB, see [surrealdb.com/install](https://surrealdb.com/install).
 
-**`schema.js`** - Your schema definition:
+## Quick overview
 
-```javascript
-import {
-  string,
-  datetime,
-  bool,
-  index,
-  defineSchema,
-  composeSchema,
-} from 'smig';
+**smig** works in three steps:
 
-const userSchema = defineSchema({
+### 1. Define your schema
+
+You describe your database structure in a JavaScript file:
+
+```typescript
+// schema.ts
+import { defineSchema, string, datetime, composeSchema } from 'smig';
+
+const users = defineSchema({
   table: 'user',
   fields: {
-    name: string().required(),
-    email: string().assert('string::is_email($value)'),
-    isActive: bool().default(true),
+    email: string().required(),
+    name: string(),
     createdAt: datetime().default('time::now()'),
-  },
-  indexes: {
-    email: index(['email']).unique(),
   },
 });
 
 export default composeSchema({
-  models: { user: userSchema },
+  models: { user: users },
 });
 ```
 
-**`smig.config.js`** - Your database configuration:
+### 2. Configure your connection
 
-```javascript
+A config file tells **smig** how to connect:
+
+```typescript
+// smig.config.ts
 export default {
   url: 'ws://localhost:8000',
   namespace: 'test',
   database: 'test',
   username: 'root',
   password: 'root',
-  schema: './schema.js',
+  schema: './schema.ts',
 };
 ```
 
----
+### 3. Run migrations
 
-## Step 3: Start SurrealDB
-
-If you don't have SurrealDB running:
+Apply your schema to the database:
 
 ```bash
-surreal start --user root --pass root memory
+bun smig migrate
 ```
 
----
+**smig** compares your schema to the database, generates the necessary SQL, and applies it.
 
-## Step 4: Generate your first migration
+## Next steps
 
-```bash
-smig diff --message "Initial schema"
-```
+Ready to set things up properly?
 
-You'll see output like:
+<div class="vp-card-container">
 
-```
-Generating migration...
+[**Installation** ›](/getting-started/installation)
 
--- New table: user
-DEFINE TABLE user TYPE NORMAL SCHEMAFULL;
-DEFINE FIELD name ON TABLE user TYPE string ASSERT $value != NONE;
-DEFINE FIELD email ON TABLE user TYPE string ASSERT string::is_email($value);
-DEFINE FIELD isActive ON TABLE user TYPE bool DEFAULT true;
-DEFINE FIELD createdAt ON TABLE user TYPE datetime DEFAULT time::now();
-DEFINE INDEX email ON TABLE user FIELDS email UNIQUE;
+All the ways to install **smig** and configure your project.
 
-Migration generated successfully!
-```
+[**Your first migration** ›](/getting-started/first-migration)
 
----
+A detailed walkthrough of creating, previewing, and applying migrations.
 
-## Step 5: Apply the migration
+</div>
 
-```bash
-smig push
-```
+## Common questions
 
-Output:
+### Do I need TypeScript?
 
-```
-Applying migration...
-Migration applied successfully!
+No. **smig** works with plain JavaScript. TypeScript is supported and gives you better autocomplete, but it's optional.
 
-Current state:
-  Tables: user
-  Migrations: 1 applied
-```
+### Does smig work with existing databases?
 
----
+Yes! When you run `bun smig migrate` against an existing database, it only generates changes for what's different. It won't duplicate tables that already exist.
 
-## What's next?
+### What if I make a mistake?
 
-- [Your first migration](first-migration.md) - Deeper dive into the migration workflow
-- [Schema design](../guides/schema-design.md) - Learn to design effective schemas
-- [CLI commands](../guides/cli-commands.md) - Master the command-line tools
-- [Schema reference](../schema-reference/index.md) - Explore all schema options
+Every migration is reversible. Run `bun smig rollback` to undo the last migration. See [Understanding migrations](/guides/migrations) for details.
 
----
+### Can I see what SQL will run before applying?
 
-## Common commands
-
-| Command | Description |
-|---------|-------------|
-| `smig init` | Initialize a new project |
-| `smig diff` | Generate migration from schema changes |
-| `smig push` | Apply pending migrations |
-| `smig status` | Show migration status |
-| `smig rollback` | Undo the last migration |
-| `smig mermaid` | Generate ER diagram |
-
-See [CLI commands](../guides/cli-commands.md) for the complete reference.
-
+Yes. Run `bun smig diff` to preview the SQL without applying it. When you're happy, run `bun smig migrate` to apply.

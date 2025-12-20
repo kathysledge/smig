@@ -39,7 +39,7 @@ export default {
   password: '${TEST_DATABASES.db1.password}',
   namespace: '${TEST_DATABASES.db1.namespace}',
   database: '${TEST_DATABASES.db1.database}',
-  schema: './tests/integration/fixtures/schema.js',
+  schema: './tests/integration/fixtures/schema.ts',
   environments: {
     test_env1: {
       database: 'test_env1_db',
@@ -72,7 +72,7 @@ export default {
   password: 'root',
   namespace: 'test',
   database: 'default_db',
-  schema: './tests/integration/fixtures/schema.js',
+  schema: './tests/integration/fixtures/schema.ts',
   environments: {
     production: {
       database: 'production_db',
@@ -99,7 +99,7 @@ export default {
   password: 'root',
   namespace: 'test',
   database: 'default_db',
-  schema: './tests/integration/fixtures/schema.js'
+  schema: './tests/integration/fixtures/schema.ts'
 };`;
 
       fs.writeFileSync(TEST_CONFIG_PATH, configContent);
@@ -113,7 +113,7 @@ export default {
     it('should generate migration for new table', async () => {
       // Create test schema
       const schemaContent = `
-import { defineSchema, composeSchema, string, int, datetime } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, int, datetime } from '../../../dist/schema/concise-schema.ts';
 
 export default composeSchema({
   models: {
@@ -156,7 +156,7 @@ export default {
     it('should detect no changes when schema matches database', async () => {
       // Create minimal schema
       const schemaContent = `
-import { composeSchema } from '../../../dist/schema/concise-schema.js';
+import { composeSchema } from '../../../dist/schema/concise-schema.ts';
 
 export default composeSchema({
   models: {},
@@ -187,7 +187,7 @@ export default {
     it('should apply migration and track it in _migrations table', async () => {
       // Create test schema
       const schemaContent = `
-import { defineSchema, composeSchema, string, datetime } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, datetime } from '../../../dist/schema/concise-schema.ts';
 
 export default composeSchema({
   models: {
@@ -219,7 +219,7 @@ export default {
       fs.writeFileSync(TEST_CONFIG_PATH, configContent);
 
       // Apply migration with message
-      const { stdout } = await execAsync(`node ${CLI_PATH} migrate --message "Add article table"`);
+      const { stdout } = await execAsync(`node ${CLI_PATH} migrate`);
 
       // The migrate command should either succeed or indicate no changes needed
       // Both are valid outcomes for this test
@@ -260,7 +260,7 @@ export default {
   password: '${TEST_DATABASES.db1.password}',
   namespace: '${TEST_DATABASES.db1.namespace}',
   database: '${TEST_DATABASES.db1.database}',
-  schema: './tests/integration/fixtures/empty-schema.js'
+  schema: './tests/integration/fixtures/empty-schema.ts'
 };`;
 
       fs.writeFileSync(TEST_CONFIG_PATH, configContent);
@@ -268,10 +268,10 @@ export default {
       // Create empty schema
       createTestSchema(
         `
-import { composeSchema } from '../../../dist/schema/concise-schema.js';
+import { composeSchema } from '../../../dist/schema/concise-schema.ts';
 export default composeSchema({ models: {}, relations: {} });
       `,
-        'empty-schema.js',
+        'empty-schema.ts',
       );
 
       // Check status
@@ -292,16 +292,16 @@ export default {
   password: '${TEST_DATABASES.db1.password}',
   namespace: '${TEST_DATABASES.db1.namespace}',
   database: '${TEST_DATABASES.db1.database}',
-  schema: './tests/integration/fixtures/empty-schema.js'
+  schema: './tests/integration/fixtures/empty-schema.ts'
 };`;
 
       fs.writeFileSync(TEST_CONFIG_PATH, configContent);
       createTestSchema(
         `
-import { composeSchema } from '../../../dist/schema/concise-schema.js';
+import { composeSchema } from '../../../dist/schema/concise-schema.ts';
 export default composeSchema({ models: {}, relations: {} });
       `,
-        'empty-schema.js',
+        'empty-schema.ts',
       );
 
       // Test rollback command (this will likely fail due to no migrations, but should show proper error)
@@ -325,16 +325,16 @@ export default composeSchema({ models: {}, relations: {} });
         SMIG_PASSWORD: TEST_DATABASES.db1.password,
         SMIG_NAMESPACE: TEST_DATABASES.db1.namespace,
         SMIG_DATABASE: TEST_DATABASES.db1.database,
-        SMIG_SCHEMA: './tests/integration/fixtures/env-schema.js',
+        SMIG_SCHEMA: './tests/integration/fixtures/env-schema.ts',
       };
 
       // Create schema file
       createTestSchema(
         `
-import { composeSchema } from '../../../dist/schema/concise-schema.js';
+import { composeSchema } from '../../../dist/schema/concise-schema.ts';
 export default composeSchema({ models: {}, relations: {} });
       `,
-        'env-schema.js',
+        'env-schema.ts',
       );
 
       // Test config command with environment variables
@@ -354,17 +354,17 @@ export default {
   password: '${TEST_DATABASES.db1.password}',
   namespace: '${TEST_DATABASES.db1.namespace}',
   database: '${TEST_DATABASES.db1.database}',
-  schema: './tests/integration/fixtures/debug-schema.js'
+  schema: './tests/integration/fixtures/debug-schema.ts'
 };`;
 
       fs.writeFileSync(TEST_CONFIG_PATH, configContent);
 
       createTestSchema(
         `
-import { composeSchema } from '../../../dist/schema/concise-schema.js';
+import { composeSchema } from '../../../dist/schema/concise-schema.ts';
 export default composeSchema({ models: {}, relations: {} });
       `,
-        'debug-schema.js',
+        'debug-schema.ts',
       );
 
       // Run command with debug flag
@@ -387,7 +387,7 @@ export default composeSchema({ models: {}, relations: {} });
     it('should display help information correctly', async () => {
       const { stdout } = await execAsync(`node ${CLI_PATH} --help`);
 
-      expect(stdout).toContain('Automatic SurrealDB migrations with a concise DSL');
+      expect(stdout).toContain('Automatic SurrealDB 3.x migrations with a type-safe schema DSL');
       expect(stdout).toContain('migrate');
       expect(stdout).toContain('generate');
       expect(stdout).toContain('status');

@@ -69,7 +69,7 @@ describe('MigrationManager', () => {
       database: 'test',
       username: 'root',
       password: 'root',
-      schema: './schema.js',
+      schema: './schema.ts',
     });
   });
 
@@ -215,7 +215,7 @@ describe('MigrationManager', () => {
       expect(diff.up).toContain('DEFINE TABLE user SCHEMAFULL');
       expect(diff.up).toContain('DEFINE FIELD name ON TABLE user TYPE string');
       expect(diff.up).toContain('DEFINE FIELD email ON TABLE user TYPE string');
-      expect(diff.up).toContain('DEFINE INDEX email ON TABLE user COLUMNS email UNIQUE');
+      expect(diff.up).toContain('DEFINE INDEX email ON TABLE user FIELDS email UNIQUE');
       expect(diff.down).toContain('REMOVE TABLE user');
     });
 
@@ -343,34 +343,7 @@ describe('MigrationManager', () => {
   });
 
   describe('Migration Management', () => {
-    it('should record migration with message', async () => {
-      const migration = {
-        id: 'test-migration',
-        up: 'CREATE TABLE test',
-        down: 'DROP TABLE test',
-        checksum: 'sha256.abc123',
-        downChecksum: 'sha256.def456',
-        message: 'Test migration',
-      };
-
-      mockClient.create.mockResolvedValue({ id: 'test-migration' });
-
-      await migrationManager.recordMigration(migration);
-
-      expect(mockClient.create).toHaveBeenCalledWith(
-        '_migrations',
-        expect.objectContaining({
-          up: 'CREATE TABLE test',
-          down: 'DROP TABLE test',
-          checksum: 'sha256.abc123',
-          downChecksum: 'sha256.def456',
-          message: 'Test migration',
-          appliedAt: expect.any(Date),
-        }),
-      );
-    });
-
-    it('should record migration without message', async () => {
+    it('should record migration', async () => {
       const migration = {
         id: 'test-migration',
         up: 'CREATE TABLE test',
@@ -390,7 +363,6 @@ describe('MigrationManager', () => {
           down: 'DROP TABLE test',
           checksum: 'sha256.abc123',
           downChecksum: 'sha256.def456',
-          message: undefined, // Should be undefined for SurrealDB NONE
           appliedAt: expect.any(Date),
         }),
       );
@@ -404,7 +376,6 @@ describe('MigrationManager', () => {
           down: 'DROP TABLE test1',
           checksum: 'sha256.abc123',
           timestamp: '2023-01-01T00:00:00Z',
-          message: 'First migration',
         },
         {
           id: 'migration2',
@@ -412,7 +383,6 @@ describe('MigrationManager', () => {
           down: 'DROP TABLE test2',
           checksum: 'sha256.def456',
           timestamp: '2023-01-02T00:00:00Z',
-          message: undefined,
         },
       ];
 
@@ -422,8 +392,6 @@ describe('MigrationManager', () => {
 
       expect(mockClient.select).toHaveBeenCalledWith('_migrations');
       expect(migrations).toHaveLength(2);
-      expect(migrations[0].message).toBe('First migration');
-      expect(migrations[1].message).toBeUndefined();
     });
   });
 

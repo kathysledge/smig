@@ -1,306 +1,419 @@
 # Relations
 
-Define graph edges between records with `defineRelation()`.
+Relations are how you connect records in SurrealDB. Unlike traditional foreign keys, SurrealDB relations are first-class graph edges — they can have their own fields and be queried in either direction.
 
----
+## What is a relation?
 
-## When to use relations
+In a social network, users follow other users. In a traditional database, you'd create a junction table:
 
-| Use case | Solution |
-|----------|----------|
-| One-to-one | Record field: `author: record('user')` |
-| One-to-many | Record field: `author: record('user')` |
-| Many-to-many | **Relation table** |
-| Edge with data | **Relation table** |
-| Graph traversal | **Relation table** |
+```sql
+CREATE TABLE follows (
+  follower_id INT,
+  following_id INT,
+  created_at TIMESTAMP
+);
+```
 
----
+In SurrealDB, this becomes a **relation** — a special kind of table that connects two records:
 
-## Basic usage
-
-```javascript
+```typescript
 import { defineRelation, datetime } from 'smig';
 
-const followsRelation = defineRelation({
+const follows = defineRelation({
   name: 'follows',
   from: 'user',
   to: 'user',
+  fields: {
+    since: datetime().default('time::now()'),
+  },
 });
 ```
 
-**Generated SurrealQL:**
+The power of relations is that you can traverse them:
 
 ```sql
-DEFINE TABLE follows TYPE RELATION IN user OUT user SCHEMAFULL;
-DEFINE FIELD in ON TABLE follows TYPE record<user> ASSERT $value != NONE;
-DEFINE FIELD out ON TABLE follows TYPE record<user> ASSERT $value != NONE;
+-- Who does Alice follow?
+SELECT ->follows->user FROM user WHERE name = 'Alice';
+
+-- Who follows Alice?
+SELECT <-follows<-user FROM user WHERE name = 'Alice';
 ```
 
----
+## Creating relations
 
-## Options
+### Basic relation
 
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `name` | `string` | Yes | Relation table name |
-| `from` | `string` | Yes | Source table |
-| `to` | `string` | Yes | Target table |
-| `enforced` | `boolean` | No | Enforce referential integrity |
-| `fields` | `object` | No | Additional edge fields |
-| `indexes` | `object` | No | Relation indexes |
-| `events` | `object` | No | Relation events |
+A simple relation connecting two table types:
 
----
+```typescript
+import { defineRelation } from 'smig';
 
-## Enforced relations
-
-Ensure referenced records exist:
-
-```javascript
-const followsRelation = defineRelation({
-  name: 'follows',
-  from: 'user',
-  to: 'user',
-  enforced: true,  // Cannot follow non-existent users
-});
-```
-
-**Generated:**
-
-```sql
-DEFINE TABLE follows TYPE RELATION IN user OUT user ENFORCED SCHEMAFULL;
-```
-
----
-
-## Edge attributes
-
-Add data to the relationship itself:
-
-```javascript
-const likesRelation = defineRelation({
+const likes = defineRelation({
   name: 'likes',
   from: 'user',
   to: 'post',
-  fields: {
-    likedAt: datetime().default('time::now()'),
-    reaction: string().default('like'),  // like, love, laugh, etc.
-  },
 });
 ```
 
----
-
-## Relation indexes
-
-```javascript
-const followsRelation = defineRelation({
-  name: 'follows',
-  from: 'user',
-  to: 'user',
-  fields: {
-    followedAt: datetime().default('time::now()'),
-  },
-  indexes: {
-    // Prevent duplicate follows
-    unique: index(['in', 'out']).unique(),
-    
-    // Query followers efficiently
-    byFollower: index(['in', 'followedAt']),
-    byFollowed: index(['out', 'followedAt']),
-  },
-});
-```
-
----
-
-## Relation events
-
-```javascript
-const followsRelation = defineRelation({
-  name: 'follows',
-  from: 'user',
-  to: 'user',
-  fields: {
-    followedAt: datetime().default('time::now()'),
-  },
-  events: {
-    updateCounts: event('update_counts')
-      .onCreate()
-      .when('$event = "CREATE"')
-      .thenDo(`{
-        UPDATE $after.in SET followingCount += 1;
-        UPDATE $after.out SET followerCount += 1;
-      }`),
-      
-    decrementCounts: event('decrement_counts')
-      .onDelete()
-      .when('$event = "DELETE"')
-      .thenDo(`{
-        UPDATE $before.in SET followingCount -= 1;
-        UPDATE $before.out SET followerCount -= 1;
-      }`),
-  },
-});
-```
-
----
-
-## Creating relations in queries
-
-Once defined, create relations using the `RELATE` statement:
+This generates:
 
 ```sql
--- User 1 follows User 2
-RELATE user:1 -> follows -> user:2;
-
--- With edge data
-RELATE user:1 -> likes -> post:5 SET reaction = "love";
+DEFINE TABLE likes TYPE RELATION IN user OUT post SCHEMAFULL;
+DEFINE FIELD in ON TABLE likes TYPE record<user> ASSERT $value != NONE;
+DEFINE FIELD out ON TABLE likes TYPE record<post> ASSERT $value != NONE;
 ```
 
----
+### Relation with fields
+
+Relations can have their own data:
+
+```typescript
+const reviewed = defineRelation({
+  name: 'reviewed',
+  from: 'user',
+  to: 'product',
+  fields: {
+    rating: int().required().assert('$value >= 1 AND $value <= 5'),
+    comment: string(),
+    createdAt: datetime().default('time::now()'),
+  },
+});
+```
+
+### Self-referential relations
+
+Connect records of the same type:
+
+```typescript
+const follows = defineRelation({
+  name: 'follows',
+  from: 'user',
+  to: 'user',
+  fields: {
+    since: datetime().default('time::now()'),
+    notifications: bool().default(true),
+  },
+});
+```
+
+### Multiple target types
+
+Relations can connect to different table types:
+
+```typescript
+const mentions = defineRelation({
+  name: 'mentions',
+  from: 'comment',
+  to: ['user', 'post', 'product'],  // Can mention any of these
+});
+```
+
+## Creating relation records
+
+Use the arrow syntax:
+
+```sql
+-- Alice follows Bob
+RELATE user:alice->follows->user:bob SET since = time::now();
+
+-- With fields
+RELATE user:alice->reviewed->product:laptop SET rating = 5, comment = 'Great laptop!';
+```
+
+Or using CREATE:
+
+```sql
+CREATE follows SET in = user:alice, out = user:bob, since = time::now();
+```
 
 ## Querying relations
 
+### Outbound traversal
+
+Follow relations forward with the `->` arrow:
+
 ```sql
--- Get all users that user:1 follows
-SELECT * FROM user:1 -> follows -> user;
+-- Posts that Alice likes
+SELECT ->likes->post FROM user:alice;
 
--- Get all followers of user:1
-SELECT * FROM user <- follows <- user:1;
-
--- Get posts liked by user:1 with reaction
-SELECT *, <-likes<-user.reaction FROM post WHERE <-likes<-user CONTAINS user:1;
-
--- Graph traversal: friends of friends
-SELECT * FROM user:1 -> follows -> user -> follows -> user;
+-- Users that Alice follows
+SELECT ->follows->user.name FROM user:alice;
 ```
 
----
+### Inbound traversal
+
+Follow relations backward with the `<-` arrow:
+
+```sql
+-- Users who like this post
+SELECT <-likes<-user FROM post:xyz;
+
+-- Users who follow Alice
+SELECT <-follows<-user.name FROM user:alice;
+```
+
+### Get the relation itself
+
+Access the relation record (edge) with its fields:
+
+```sql
+-- All follow relationships for Alice
+SELECT ->follows FROM user:alice;
+
+-- With relation fields
+SELECT ->reviewed.rating, ->reviewed.comment, ->reviewed->product.name FROM user:alice;
+```
+
+### Filter by relation fields
+
+Add WHERE clauses to filter by relation attributes:
+
+```sql
+-- 5-star reviews from Alice
+SELECT ->reviewed WHERE rating = 5 ->product FROM user:alice;
+```
+
+## Relation options
+
+### Enforced referential integrity
+
+Prevent orphaned relations:
+
+```typescript
+const follows = defineRelation({
+  name: 'follows',
+  from: 'user',
+  to: 'user',
+  enforced: true,  // Delete relation if user is deleted
+});
+```
+
+### Permissions
+
+Control who can create relations:
+
+```typescript
+const follows = defineRelation({
+  name: 'follows',
+  from: 'user',
+  to: 'user',
+  permissions: `
+    FOR select FULL
+    FOR create, delete WHERE in = $auth.id
+  `,
+});
+```
+
+This allows:
+- Anyone can see who follows who
+- Users can only create/delete follows from themselves
+
+### Indexes on relations
+
+Speed up relation queries with indexes:
+
+```typescript
+const follows = defineRelation({
+  name: 'follows',
+  from: 'user',
+  to: 'user',
+  fields: {
+    since: datetime().default('time::now()'),
+  },
+  indexes: {
+    since: index(['since']),
+  },
+});
+```
+
+### Events on relations
+
+Trigger actions when relations are created or deleted:
+
+```typescript
+const follows = defineRelation({
+  name: 'follows',
+  from: 'user',
+  to: 'user',
+  events: {
+    notify: event('on_follow')
+      .onCreate()
+      .then('CREATE notification SET user = $after.out, message = "New follower!"'),
+  },
+});
+```
 
 ## Common patterns
 
-### Follow/unfollow
+### Social follow
 
-```javascript
-const followsRelation = defineRelation({
+A complete follow system with permissions and metadata:
+
+```typescript
+const follows = defineRelation({
   name: 'follows',
   from: 'user',
   to: 'user',
-  enforced: true,
   fields: {
-    followedAt: datetime().default('time::now()'),
+    since: datetime().default('time::now()'),
+    muted: bool().default(false),
     notifications: bool().default(true),
   },
   indexes: {
-    unique: index(['in', 'out']).unique(),
+    since: index(['since']),
+  },
+  permissions: `
+    FOR select FULL
+    FOR create WHERE in = $auth.id AND out != $auth.id
+    FOR update, delete WHERE in = $auth.id
+  `,
+});
+```
+
+### Purchase history
+
+Track what users have bought with order details:
+
+```typescript
+const purchased = defineRelation({
+  name: 'purchased',
+  from: 'user',
+  to: 'product',
+  fields: {
+    quantity: int().default(1),
+    price: decimal().required(),
+    purchasedAt: datetime().default('time::now()'),
+    orderId: record('order'),
   },
 });
 ```
 
-### Likes with reactions
+### Hierarchical data
 
-```javascript
-const likesRelation = defineRelation({
+Model parent-child relationships (e.g., categories):
+
+```typescript
+const parentOf = defineRelation({
+  name: 'parent_of',
+  from: 'category',
+  to: 'category',
+});
+
+// Query: Get all descendants
+// SELECT ->parent_of->category.* FROM category:electronics;
+```
+
+### Weighted edges
+
+Relations with scores for recommendations or analytics:
+
+```typescript
+const interacted = defineRelation({
+  name: 'interacted',
+  from: 'user',
+  to: 'item',
+  fields: {
+    weight: float().default(1.0),
+    type: string(),  // 'view', 'click', 'purchase'
+    timestamp: datetime().default('time::now()'),
+  },
+});
+```
+
+## Relations vs. record fields
+
+When should you use a relation vs. a `record()` field?
+
+### Use a relation when:
+
+- You need to traverse in both directions
+- The connection has its own data (rating, timestamp, etc.)
+- You want to query the connections as a collection
+- The relationship is many-to-many
+
+### Use a record field when:
+
+- It's a simple parent-child reference
+- You only query in one direction
+- It's a one-to-many relationship with no extra data
+
+```typescript
+// Record field: Post has one author
+fields: {
+  author: record('user').required(),
+}
+
+// Relation: User likes many posts, post is liked by many users
+const likes = defineRelation({
   name: 'likes',
   from: 'user',
-  to: ['post', 'comment'],  // Can like posts or comments
-  fields: {
-    reaction: string().default('like'),
-    likedAt: datetime().default('time::now()'),
-  },
-  indexes: {
-    unique: index(['in', 'out']).unique(),
-  },
+  to: 'post',
 });
 ```
 
-### Membership with roles
+## Renaming relations
 
-```javascript
-const memberOfRelation = defineRelation({
-  name: 'member_of',
+Use `was` to track previous relation names:
+
+```typescript
+const connections = defineRelation({
+  name: 'connections',
+  was: 'follows',  // Renamed from 'follows'
   from: 'user',
-  to: 'organization',
-  fields: {
-    role: string().default('member'),
-    joinedAt: datetime().default('time::now()'),
-    invitedBy: option(record('user')),
-  },
-  indexes: {
-    unique: index(['in', 'out']).unique(),
-    byRole: index(['out', 'role']),
-  },
+  to: 'user',
 });
 ```
-
----
 
 ## Complete example
 
-```javascript
-import { defineRelation, defineSchema, composeSchema } from 'smig';
+A social network with multiple relation types:
 
-const userSchema = defineSchema({
+```typescript
+import { defineSchema, defineRelation, string, datetime, int, bool, index, event, composeSchema } from 'smig';
+
+const user = defineSchema({
   table: 'user',
   fields: {
     name: string().required(),
-    followerCount: int().default(0),
-    followingCount: int().default(0),
+    avatar: string(),
   },
 });
 
-const postSchema = defineSchema({
+const post = defineSchema({
   table: 'post',
   fields: {
-    author: record('user').required(),
     content: string().required(),
-    likeCount: int().default(0),
+    author: record('user').required(),
+    createdAt: datetime().default('time::now()'),
   },
 });
 
-const followsRelation = defineRelation({
+const follows = defineRelation({
   name: 'follows',
   from: 'user',
   to: 'user',
-  enforced: true,
   fields: {
-    followedAt: datetime().default('time::now()'),
-  },
-  indexes: {
-    unique: index(['in', 'out']).unique(),
+    since: datetime().default('time::now()'),
   },
 });
 
-const likesRelation = defineRelation({
+const likes = defineRelation({
   name: 'likes',
   from: 'user',
   to: 'post',
   fields: {
     likedAt: datetime().default('time::now()'),
-  },
-  indexes: {
-    unique: index(['in', 'out']).unique(),
-  },
-  events: {
-    incrementLikes: event('increment_likes')
-      .onCreate()
-      .when('$event = "CREATE"')
-      .thenDo('UPDATE $after.out SET likeCount += 1'),
   },
 });
 
 export default composeSchema({
-  models: { user: userSchema, post: postSchema },
-  relations: { follows: followsRelation, likes: likesRelation },
+  models: { user, post },
+  relations: { follows, likes },
 });
 ```
 
----
+## Related
 
-## See also
-
-- [Tables](tables.md) - Regular table definitions
-- [Fields](fields.md) - Record references
-- [Social network example](../examples/social-network.md)
-
+- [Tables](/schema-reference/tables) — The records being connected
+- [Fields](/schema-reference/fields) — Record reference fields
+- [Social network example](/examples/social-network) — Complete social app schema

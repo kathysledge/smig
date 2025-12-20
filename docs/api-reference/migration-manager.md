@@ -2,11 +2,11 @@
 
 Programmatic API for migration operations.
 
----
-
 ## Basic usage
 
-```javascript
+Create a manager, connect, and perform operations:
+
+```typescript
 import { MigrationManager } from 'smig';
 
 const config = {
@@ -33,9 +33,9 @@ const status = await manager.getStatus();
 await manager.close();
 ```
 
----
-
 ## Constructor
+
+Create a new migration manager instance:
 
 ```typescript
 new MigrationManager(config: DatabaseConfig)
@@ -50,8 +50,6 @@ new MigrationManager(config: DatabaseConfig)
 | `database` | `string` | Yes | Database name |
 | `username` | `string` | Yes | Auth username |
 | `password` | `string` | Yes | Auth password |
-
----
 
 ## Methods
 
@@ -172,13 +170,11 @@ Get current database schema.
 async introspectSchema(): Promise<DatabaseSchema>
 ```
 
----
-
 ## Events
 
 The migration manager emits events during operations:
 
-```javascript
+```typescript
 manager.on('migration:start', (migration) => {
   console.log('Applying:', migration.message);
 });
@@ -192,15 +188,15 @@ manager.on('migration:error', (error, migration) => {
 });
 ```
 
----
-
 ## Example: CI/CD integration
 
-```javascript
+A complete deployment script:
+
+```typescript
 import { MigrationManager, loadConfig, loadSchema } from 'smig';
 
 async function deploy() {
-  const config = await loadConfig('./smig.config.js');
+  const config = await loadConfig('./smig.config.ts');
   const schema = await loadSchema(config.schema);
   
   const manager = new MigrationManager(config);
@@ -233,8 +229,6 @@ async function deploy() {
 
 deploy();
 ```
-
----
 
 ## See also
 

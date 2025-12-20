@@ -2,11 +2,11 @@
 
 Low-level database client for SurrealDB operations.
 
----
-
 ## Basic usage
 
-```javascript
+Connect, query, and close:
+
+```typescript
 import { SurrealClient } from 'smig';
 
 const client = new SurrealClient({
@@ -25,9 +25,9 @@ console.log(users);
 await client.close();
 ```
 
----
-
 ## Constructor
+
+Create a new client instance:
 
 ```typescript
 new SurrealClient(config: DatabaseConfig)
@@ -42,8 +42,6 @@ new SurrealClient(config: DatabaseConfig)
 | `database` | `string` | Yes | Database name |
 | `username` | `string` | Yes | Auth username |
 | `password` | `string` | Yes | Auth password |
-
----
 
 ## Methods
 
@@ -76,7 +74,7 @@ async query<T = unknown>(
 
 **Example:**
 
-```javascript
+```typescript
 // Simple query
 const users = await client.query('SELECT * FROM user');
 
@@ -103,7 +101,7 @@ async execute(queries: string[]): Promise<void>
 
 **Example:**
 
-```javascript
+```typescript
 await client.execute([
   'DEFINE TABLE user SCHEMAFULL;',
   'DEFINE FIELD email ON user TYPE string;',
@@ -130,15 +128,13 @@ interface DatabaseInfo {
 }
 ```
 
----
-
 ## Connection management
 
 ### Reconnection
 
 The client automatically reconnects on connection loss:
 
-```javascript
+```typescript
 const client = new SurrealClient({
   ...config,
   reconnect: true,        // Enable auto-reconnect (default: true)
@@ -149,17 +145,19 @@ const client = new SurrealClient({
 
 ### Connection state
 
-```javascript
+Check if connected before querying:
+
+```typescript
 if (client.isConnected()) {
   await client.query('SELECT * FROM user');
 }
 ```
 
----
-
 ## Error handling
 
-```javascript
+Handle connection and query errors gracefully:
+
+```typescript
 import { SurrealClient, ConnectionError, QueryError } from 'smig';
 
 try {
@@ -175,8 +173,6 @@ try {
   }
 }
 ```
-
----
 
 ## See also
 

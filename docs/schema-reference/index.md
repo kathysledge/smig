@@ -1,94 +1,172 @@
 # Schema reference
 
-Complete reference for all **smig** schema definitions.
+This is the complete reference for everything you can define with **smig**. Each page covers one type of database entity — what it is, when you'd use it, and every option available.
 
----
+## How this reference is organized
 
-## Core concepts
+Each page follows the same structure:
 
-| Concept | Description | Link |
-|---------|-------------|------|
-| Tables | Define data structures with fields, indexes, and events | [Tables](tables.md) |
-| Fields | Column definitions with types, defaults, and validation | [Fields](fields.md) |
-| Indexes | Performance optimization and constraints | [Indexes](indexes.md) |
-| Events | Triggers for business logic automation | [Events](events.md) |
-| Relations | Graph edges between records | [Relations](relations.md) |
+1. **What is it?** — Plain explanation of the concept
+2. **When would you use it?** — Practical scenarios
+3. **Basic usage** — Minimal working example
+4. **All options** — Complete list with examples
+5. **Generated SQL** — What **smig** produces
+6. **Related** — Links to connected topics
 
----
+## Tables and fields
 
-## Extended features
+The foundation of your database:
 
-| Feature | Description | Link |
-|---------|-------------|------|
-| Functions | Reusable database functions | [Functions](functions.md) |
-| Analyzers | Full-text search configuration | [Analyzers](analyzers.md) |
-| Access | Authentication and authorization | [Access](access.md) |
-| Params | Global database parameters | [Params](params.md) |
-| Sequences | Auto-increment values | [Sequences](sequences.md) |
-| Config | GraphQL and API configuration | [Config](config.md) |
+| Topic | What it covers |
+|-------|----------------|
+| [Tables](/schema-reference/tables) | Creating tables, schema modes, table types, changefeeds |
+| [Fields](/schema-reference/fields) | Data types, defaults, validation, computed values |
+| [Indexes](/schema-reference/indexes) | Unique constraints, search, vector indexes |
+| [Events](/schema-reference/events) | Triggers that run on data changes |
 
----
+## Relationships
+
+SurrealDB's graph capabilities:
+
+| Topic | What it covers |
+|-------|----------------|
+| [Relations](/schema-reference/relations) | Connecting records with edge tables |
+
+## Database logic
+
+Reusable code and configuration:
+
+| Topic | What it covers |
+|-------|----------------|
+| [Functions](/schema-reference/functions) | Custom database functions with parameters |
+| [Analyzers](/schema-reference/analyzers) | Full-text search tokenizers and filters |
+
+## Security and access
+
+Authentication and authorization:
+
+| Topic | What it covers |
+|-------|----------------|
+| [Access](/schema-reference/access) | JWT, RECORD, and BEARER authentication |
+
+## System configuration
+
+Database-level settings:
+
+| Topic | What it covers |
+|-------|----------------|
+| [Params](/schema-reference/params) | Global configuration parameters |
+| [Sequences](/schema-reference/sequences) | Auto-incrementing values |
+| [Config](/schema-reference/config) | GraphQL and API configuration |
 
 ## Quick examples
 
-### Table with fields and indexes
+### A complete table
 
-```javascript
-import { defineSchema, string, datetime, bool, index } from 'smig';
+A blog post with fields, indexes, and an event:
 
-const userSchema = defineSchema({
-  table: 'user',
+```typescript
+import { defineSchema, string, datetime, int, bool, index, event } from 'smig';
+
+const posts = defineSchema({
+  table: 'post',
   fields: {
-    email: string().required().assert('string::is_email($value)'),
-    name: string().required(),
-    isActive: bool().default(true),
+    title: string().required(),
+    content: string(),
+    author: record('user').required(),
+    viewCount: int().default(0).readonly(),
+    isPublished: bool().default(false),
     createdAt: datetime().default('time::now()'),
+    updatedAt: datetime(),
   },
   indexes: {
-    email: index(['email']).unique(),
+    author: index(['author']),
+    published: index(['isPublished', 'createdAt']),
+    title: index(['title']).search('english'),
+  },
+  events: {
+    trackViews: event('track_views')
+      .onUpdate()
+      .when('$before.viewCount != $after.viewCount')
+      .then('CREATE analytics SET post = $after.id, views = $after.viewCount'),
   },
 });
 ```
 
-### Relation with attributes
+### A relation (graph edge)
 
-```javascript
+A social follow relationship with metadata:
+
+```typescript
 import { defineRelation, datetime, int } from 'smig';
 
-const likesRelation = defineRelation({
-  name: 'likes',
+const follows = defineRelation({
+  name: 'follows',
   from: 'user',
-  to: 'post',
+  to: 'user',
   fields: {
-    likedAt: datetime().default('time::now()'),
-    weight: int().default(1),
+    since: datetime().default('time::now()'),
+    notifications: bool().default(true),
   },
 });
 ```
 
-### Composing a schema
+### Custom function
 
-```javascript
-import { composeSchema, fn, analyzer, access } from 'smig';
+A reusable database function:
+
+```typescript
+import { fn } from 'smig';
+
+const daysSince = fn('fn::days_since')
+  .params({ date: 'datetime' })
+  .returns('int')
+  .body('RETURN math::floor((time::now() - $date) / 86400);');
+```
+
+### Authentication
+
+User signup and signin:
+
+```typescript
+import { access } from 'smig';
+
+const userAuth = access('user')
+  .type('RECORD')
+  .signup('CREATE user SET email = $email, password = crypto::argon2::generate($password)')
+  .signin('SELECT * FROM user WHERE email = $email AND crypto::argon2::compare(password, $password)')
+  .session('7d');
+```
+
+## Composing it all together
+
+Individual schemas are combined with `composeSchema`:
+
+```typescript
+import { composeSchema } from 'smig';
 
 export default composeSchema({
-  models: { user: userSchema, post: postSchema },
-  relations: { likes: likesRelation },
-  functions: { daysSince: daysSinceFunction },
-  analyzers: { english: englishAnalyzer },
-  access: { account: accountAccess },
+  // Tables
+  models: {
+    user: userSchema,
+    post: postSchema,
+  },
+  
+  // Graph relations
+  relations: {
+    follows: followsRelation,
+    likes: likesRelation,
+  },
+  
+  // Database functions
+  functions: [daysSince, formatDate],
+  
+  // Full-text analyzers
+  analyzers: [englishAnalyzer],
+  
+  // Authentication methods
+  scopes: [userAuth, adminAuth],
 });
 ```
 
----
-
-## SurrealQL mapping
-
-| smig API | SurrealQL generated |
-|----------|---------------------|
-| `defineSchema({ table: 'user' })` | `DEFINE TABLE user TYPE NORMAL SCHEMAFULL` |
-| `string().required()` | `TYPE string ASSERT $value != NONE` |
-| `index(['email']).unique()` | `DEFINE INDEX ... FIELDS email UNIQUE` |
-| `event('name').onCreate()` | `DEFINE EVENT name ON ... WHEN ...` |
-| `defineRelation({ from, to })` | `DEFINE TABLE ... TYPE RELATION IN ... OUT ...` |
-
+This single export is what **smig** uses to generate migrations.

@@ -1,39 +1,96 @@
 # Guides
 
-In-depth guides for getting the most out of **smig**.
+These guides explain concepts in depth. Unlike the reference documentation (which tells you *what* you can do), these guides explain *how* and *why*.
 
----
+## Understanding smig
 
-## Core concepts
+### [Schema design](/guides/schema-design)
 
-### [Schema design](schema-design.md)
-Learn patterns for designing effective, maintainable database schemas. Covers normalization, naming conventions, and SurrealDB-specific considerations.
+How to structure your schema for maintainability and performance. Covers naming conventions, organizing fields, when to use relations vs. arrays, and common patterns.
 
-### [Understanding migrations](migrations.md)
-Deep dive into how migrations work, including the diffing algorithm, rollback generation, and migration history tracking.
+### [Understanding migrations](/guides/migrations)
 
-### [CLI commands](cli-commands.md)
-Complete reference for all command-line tools with examples and options.
+What happens when you run `bun smig migrate`. How changes are detected, how rollbacks work, what gets stored in the `_migrations` table, and how to handle tricky scenarios.
 
----
+## Working with smig
 
-## Advanced topics
+### [CLI commands](/guides/cli-commands)
 
-### [Multi-environment workflows](multi-environment.md)
-Configure different database connections for development, staging, and production. Environment variables and configuration management.
+Complete reference for the command-line interface. Every command, every flag, with examples.
 
-### [Best practices](best-practices.md)
-Production-ready patterns including CI/CD integration, team workflows, and error handling strategies.
+### [Multi-environment](/guides/multi-environment)
 
----
+Managing development, staging, and production databases. Configuration files, environment variables, and deployment workflows.
 
-## Quick reference
+## Best practices
 
-| Guide | Best for |
-|-------|----------|
-| [Schema design](schema-design.md) | Architects, new projects |
-| [Migrations](migrations.md) | Understanding the system |
-| [CLI commands](cli-commands.md) | Day-to-day development |
-| [Multi-environment](multi-environment.md) | DevOps, deployment |
-| [Best practices](best-practices.md) | Production readiness |
+### [Best practices](/guides/best-practices)
 
+Lessons learned from real projects. Performance tips, security considerations, team workflows, and common mistakes to avoid.
+
+## Quick answers
+
+### How do I preview changes without applying them?
+
+Run `diff` with dry-run to see what would change:
+
+```bash
+bun smig diff
+```
+
+This shows the SQL that would run, without running it.
+
+### How do I undo a migration?
+
+Use the rollback command:
+
+```bash
+bun smig rollback
+```
+
+This undoes the last applied migration.
+
+### How do I see what's been applied?
+
+Check the migration status:
+
+```bash
+bun smig status
+```
+
+This shows all migrations and whether the database is up to date.
+
+### How do I rename a table without losing data?
+
+Use the `was` property:
+
+```typescript
+const customers = defineSchema({
+  table: 'customers',
+  was: 'users',  // Previously named 'users'
+  fields: { ... },
+});
+```
+
+**smig** will generate `ALTER TABLE users RENAME TO customers` instead of dropping and recreating.
+
+### How do I connect to a remote database?
+
+Update `smig.config.ts`:
+
+```typescript
+export default {
+  url: 'wss://your-surrealdb-server.com',
+  namespace: 'production',
+  database: 'myapp',
+  username: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  schema: './schema.ts',
+};
+```
+
+Or use command-line flags:
+
+```bash
+bun smig migrate --url wss://server.com --namespace prod --database myapp
+```

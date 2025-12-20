@@ -144,10 +144,14 @@ export type {
  * This is the primary API for defining database schemas.
  */
 export {
+  // Authentication/access
+  access,
+  // Entity builders
   analyzer,
   any,
   array,
   bool,
+  bytes,
   commonEvents as ce,
   // Common patterns with descriptive aliases
   commonFields as cf,
@@ -167,10 +171,17 @@ export {
   // Schema element builders
   index,
   int,
+  literal,
+  number,
   object,
   option,
+  // Param builder
+  param,
+  range,
   record,
   scope,
+  // Set type (like array but unique elements)
+  set,
   // Field type builders
   string,
   uuid,

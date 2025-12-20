@@ -2,11 +2,11 @@
 
 A basic blog application with users, posts, and comments.
 
----
-
 ## Schema
 
-```javascript
+A complete blog schema with users, posts, and nested comments:
+
+```typescript
 import {
   defineSchema,
   composeSchema,
@@ -95,9 +95,9 @@ export default composeSchema({
 });
 ```
 
----
-
 ## Generated SurrealQL
+
+Running `bun smig migrate` generates this SQL:
 
 ```sql
 -- Users
@@ -149,11 +149,11 @@ DEFINE INDEX author ON TABLE comment FIELDS author, createdAt;
 DEFINE INDEX parent ON TABLE comment FIELDS parent;
 ```
 
----
-
 ## Example queries
 
 ### Create a user
+
+Register a new author:
 
 ```sql
 CREATE user SET
@@ -163,6 +163,8 @@ CREATE user SET
 ```
 
 ### Create and publish a post
+
+Create a draft and then publish it (triggers the `publishedAt` event):
 
 ```sql
 CREATE post SET
@@ -178,6 +180,8 @@ UPDATE post:abc123 SET published = true;
 
 ### Search posts
 
+Use full-text search on title and content:
+
 ```sql
 SELECT * FROM post
 WHERE content @@ "SurrealDB database"
@@ -186,6 +190,8 @@ LIMIT 10;
 ```
 
 ### Get post with comments
+
+Fetch a post with all its comments in one query:
 
 ```sql
 SELECT 
@@ -197,6 +203,8 @@ WHERE slug = "getting-started-surrealdb";
 
 ### Threaded comments
 
+Get top-level comments with their nested replies:
+
 ```sql
 -- Get top-level comments with replies
 SELECT 
@@ -206,8 +214,6 @@ FROM comment
 WHERE post = post:abc123 AND parent = NONE
 ORDER BY createdAt;
 ```
-
----
 
 ## See also
 

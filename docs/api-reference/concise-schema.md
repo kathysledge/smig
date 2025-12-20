@@ -2,7 +2,33 @@
 
 Fluent builder API for defining SurrealDB schemas.
 
----
+## TypeScript support
+
+**smig** provides full TypeScript support with type inference:
+
+```typescript
+import type { SurrealDBSchema } from 'smig';
+import { defineSchema, string, datetime, composeSchema } from 'smig';
+
+// Type-safe schema definition
+const users = defineSchema({
+  table: 'user',
+  fields: {
+    email: string().required(),
+    name: string(),
+    createdAt: datetime().default('time::now()'),
+  },
+});
+
+// Explicit type annotation for exports
+const schema: SurrealDBSchema = composeSchema({
+  models: { user: users },
+});
+
+export default schema;
+```
+
+TypeScript schema files (`.ts`, `.mts`, `.cts`) are loaded automatically without any build step.
 
 ## defineSchema()
 
@@ -25,7 +51,9 @@ function defineSchema(config: {
 
 ### Example
 
-```javascript
+A basic table with fields and an index:
+
+```typescript
 const userSchema = defineSchema({
   table: 'user',
   fields: {
@@ -37,8 +65,6 @@ const userSchema = defineSchema({
   },
 });
 ```
-
----
 
 ## defineRelation()
 
@@ -59,7 +85,9 @@ function defineRelation(config: {
 
 ### Example
 
-```javascript
+A social follow relationship:
+
+```typescript
 const followsRelation = defineRelation({
   name: 'follows',
   from: 'user',
@@ -70,8 +98,6 @@ const followsRelation = defineRelation({
   },
 });
 ```
-
----
 
 ## composeSchema()
 
@@ -93,7 +119,9 @@ function composeSchema(config: {
 
 ### Example
 
-```javascript
+Combine tables, relations, and functions:
+
+```typescript
 export default composeSchema({
   models: { user: userSchema, post: postSchema },
   relations: { follows: followsRelation },
@@ -101,8 +129,6 @@ export default composeSchema({
   analyzers: { english: englishAnalyzer },
 });
 ```
-
----
 
 ## Field builders
 
@@ -144,8 +170,6 @@ export default composeSchema({
 | `.reference()` | Foreign key constraint |
 | `.onDelete(action)` | Reference delete behavior |
 
----
-
 ## index()
 
 Create an index definition.
@@ -174,8 +198,6 @@ function index(columns: string[]): IndexBuilder;
 | `.concurrently()` | Non-blocking creation |
 | `.where(condition)` | Conditional count |
 
----
-
 ## event()
 
 Create an event (trigger) definition.
@@ -194,8 +216,6 @@ function event(name: string): EventBuilder;
 | `.when(condition)` | When condition |
 | `.thenDo(action)` | Action to execute |
 
----
-
 ## fn()
 
 Create a function definition.
@@ -213,8 +233,6 @@ function fn(name: string): FunctionBuilder;
 | `.body(code)` | Function body |
 | `.permissions(rule)` | Access control |
 
----
-
 ## analyzer()
 
 Create an analyzer definition.
@@ -230,8 +248,6 @@ function analyzer(name: string): AnalyzerBuilder;
 | `.tokenizers([...])` | Tokenizer list |
 | `.filters([...])` | Filter list |
 | `.function(name)` | Custom tokenizer |
-
----
 
 ## access()
 
@@ -254,8 +270,6 @@ function access(name: string): AccessBuilder;
 | `.token(duration)` | Token TTL |
 | `.authenticate(expr)` | Auth check |
 
----
-
 ## param()
 
 Create a parameter definition.
@@ -270,8 +284,6 @@ function param(name: string): ParamBuilder;
 |--------|-------------|
 | `.value(expr)` | Parameter value |
 | `.permissions(rule)` | Access control |
-
----
 
 ## sequence()
 
@@ -289,28 +301,29 @@ function sequence(name: string): SequenceBuilder;
 | `.batch(n)` | Batch size |
 | `.timeout(duration)` | Batch timeout |
 
----
-
 ## Common patterns
 
 Predefined helpers for common use cases.
 
 ### commonFields (cf)
 
-```javascript
+Pre-built field patterns for common use cases:
+
+```typescript
 import { cf } from 'smig';
 
 const fields = {
   createdAt: cf.timestamp(),      // datetime().value('time::now()')
   metadata: cf.metadata(),         // option('object')
-  tags: cf.tags(),                // option('array<string>')
   owner: cf.owner('user'),        // record('user')
 };
 ```
 
 ### commonIndexes (ci)
 
-```javascript
+Pre-built index patterns for common use cases:
+
+```typescript
 import { ci } from 'smig';
 
 const indexes = {
@@ -322,7 +335,9 @@ const indexes = {
 
 ### commonEvents (ce)
 
-```javascript
+Pre-built event patterns for common use cases:
+
+```typescript
 import { ce } from 'smig';
 
 const events = {
@@ -330,8 +345,6 @@ const events = {
   cascade: ce.cascadeDelete('user', 'post', 'authorId'),
 };
 ```
-
----
 
 ## See also
 

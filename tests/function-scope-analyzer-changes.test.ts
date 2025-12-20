@@ -72,7 +72,7 @@ describe('Function, Scope, and Analyzer Change Detection', () => {
       database: 'test',
       username: 'root',
       password: 'root',
-      schema: './schema.js',
+      schema: './schema.ts',
     });
   });
 

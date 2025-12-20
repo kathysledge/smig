@@ -1,221 +1,298 @@
 # Indexes
 
-Define indexes for query optimization and constraints.
+Indexes make queries faster. They also let you enforce uniqueness, perform full-text search, and run similarity searches on vector embeddings.
 
----
+## Why use indexes?
 
-## Index types
+Without an index, finding a user by email requires scanning every record in the table. With an index, the database can jump directly to the right record.
 
-| Type | Use case | Builder |
-|------|----------|---------|
-| Standard | Basic lookups and sorting | `index([...])` |
-| Unique | Enforce uniqueness | `index([...]).unique()` |
-| HNSW | Vector similarity search | `index([...]).hnsw()` |
-| Fulltext | Text search with ranking | `index([...]).fulltext()` |
-| Count | Aggregation optimization | `index([...]).count()` |
+Common reasons to add an index:
 
----
+- **Speed up queries** — Any field you filter or sort by frequently
+- **Enforce uniqueness** — Emails, usernames, or any value that must be unique
+- **Full-text search** — Searching through text content
+- **Vector similarity** — Finding similar items by embedding (for AI/ML)
 
 ## Basic usage
 
-```javascript
-import { index } from 'smig';
+Create an index with the `index()` function and add it to your schema:
 
-const indexes = {
-  // Simple index
-  email: index(['email']),
-  
-  // Unique constraint
-  username: index(['username']).unique(),
-  
-  // Composite index
-  byUserDate: index(['userId', 'createdAt']),
-};
+```typescript
+import { defineSchema, string, index } from 'smig';
+
+const users = defineSchema({
+  table: 'user',
+  fields: {
+    email: string().required(),
+    name: string(),
+  },
+  indexes: {
+    email: index(['email']).unique(),
+  },
+});
 ```
 
-**Generated SurrealQL:**
+This creates:
 
 ```sql
-DEFINE INDEX email ON TABLE user FIELDS email;
-DEFINE INDEX username ON TABLE user FIELDS username UNIQUE;
-DEFINE INDEX byUserDate ON TABLE user FIELDS userId, createdAt;
+DEFINE INDEX email ON TABLE user FIELDS email UNIQUE;
 ```
 
----
+## Index types
 
-## Unique indexes
+### BTREE (default)
 
-Enforce that values are unique across all records:
+The standard index type. Good for exact matches and range queries.
 
-```javascript
-indexes: {
-  email: index(['email']).unique(),
-  
-  // Composite unique (unique combination)
-  userPost: index(['userId', 'postId']).unique(),
-}
+```typescript
+// Speeds up: WHERE email = 'x'
+emailIndex: index(['email'])
+
+// Composite index: WHERE author = x AND createdAt > y
+authorDate: index(['author', 'createdAt'])
 ```
 
----
+### UNIQUE
 
-## HNSW vector indexes
+Ensures no two records have the same value:
 
-For AI/ML applications with embedding vectors:
+```typescript
+email: index(['email']).unique()
+username: index(['username']).unique()
 
-```javascript
-indexes: {
-  embedding: index(['embedding'])
-    .hnsw()
-    .dimension(384)
-    .dist('cosine'),
-}
+// Composite unique: pair must be unique
+userRole: index(['userId', 'roleId']).unique()
 ```
 
-**Generated SurrealQL:**
+### HASH
 
-```sql
-DEFINE INDEX embedding ON TABLE post FIELDS embedding 
-  HNSW DIMENSION 384 DIST COSINE;
+Fast for exact matches, but can't do range queries:
+
+```typescript
+apiKey: index(['apiKey']).hash()
 ```
 
-### HNSW options
+Use when you only ever query with `=`, never `<`, `>`, or `BETWEEN`.
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `.dimension(n)` | Vector dimensions (required) | - |
-| `.dist(metric)` | Distance metric | `'euclidean'` |
-| `.type(vectorType)` | Element type | `'f32'` |
-| `.m(n)` | Max connections per node | `12` |
-| `.m0(n)` | Max connections at layer 0 | `24` |
-| `.efConstruction(n)` | Build-time candidate list size | `100` |
-| `.lm(n)` | Level multiplier | `0.3` |
-| `.extendCandidates()` | Enable extended candidates | `false` |
-| `.keepPrunedConnections()` | Keep pruned connections | `false` |
+## Full-text search
+
+The SEARCH index type enables full-text searching:
+
+```typescript
+// Basic full-text search
+content: index(['title', 'body']).search()
+
+// With a specific analyzer
+content: index(['title', 'body']).search('english')
+
+// With highlights (for showing matched terms)
+content: index(['title', 'body']).search('english').highlights()
+```
+
+### BM25 scoring
+
+Fine-tune relevance ranking:
+
+```typescript
+content: index(['title', 'body'])
+  .search('english')
+  .bm25(1.2, 0.75)  // k1, b parameters
+```
+
+### Caching options
+
+For large datasets, configure caching:
+
+```typescript
+content: index(['title', 'body'])
+  .search('english')
+  .docIdsCache(1000000)
+  .docLengthsCache(1000000)
+  .postingsCache(1000000)
+  .termsCache(1000000)
+```
+
+## Vector indexes (AI/ML)
+
+SurrealDB 3 supports vector similarity search with two algorithms:
+
+### HNSW (recommended for most cases)
+
+HNSW (Hierarchical Navigable Small World) is efficient for high-dimensional vectors:
+
+```typescript
+// OpenAI ada-002 embeddings (1536 dimensions)
+embedding: index(['embedding'])
+  .hnsw(1536)
+  .dist('COSINE')
+
+// With tuning parameters
+embedding: index(['embedding'])
+  .hnsw(1536)
+  .dist('COSINE')
+  .efc(200)    // efConstruction: build quality vs speed
+  .m(16)      // max connections per node
+```
+
+### MTREE
+
+M-Tree is better for lower-dimensional data or when you need exact results:
+
+```typescript
+// 3D coordinates
+location: index(['coordinates'])
+  .mtree(3)
+  .dist('EUCLIDEAN')
+  .capacity(40)
+```
 
 ### Distance metrics
 
 | Metric | Use case |
 |--------|----------|
-| `'euclidean'` | Default, L2 distance |
-| `'cosine'` | Text embeddings, normalized vectors |
-| `'manhattan'` | L1 distance |
-| `'chebyshev'` | L∞ distance |
-| `'hamming'` | Binary vectors |
-| `'jaccard'` | Set similarity |
-| `'pearson'` | Correlation-based |
-| `'minkowski'` | Generalized (requires order) |
+| `'COSINE'` | Text embeddings, normalized vectors |
+| `'EUCLIDEAN'` | Spatial data, general purpose |
+| `'MANHATTAN'` | Grid-based distances |
+| `'CHEBYSHEV'` | Maximum coordinate difference |
+| `'HAMMING'` | Binary vectors |
+| `'JACCARD'` | Set similarity |
+| `'PEARSON'` | Correlation |
+| `'MINKOWSKI'` | Generalized distance |
 
-### Vector types
+### Complete vector search example
 
-| Type | Description |
-|------|-------------|
-| `'f64'` | 64-bit float |
-| `'f32'` | 32-bit float (default) |
-| `'i64'` | 64-bit integer |
-| `'i32'` | 32-bit integer |
-| `'i16'` | 16-bit integer |
+Here's a document table with both vector and full-text search:
 
-### Complete HNSW example
+```typescript
+import { defineSchema, string, array, index } from 'smig';
 
-```javascript
-indexes: {
-  embedding: index(['embedding'])
-    .hnsw()
-    .dimension(1536)        // OpenAI embedding size
-    .dist('cosine')
-    .type('f32')
-    .m(16)
-    .m0(32)
-    .efConstruction(200)
-    .extendCandidates()
-    .keepPrunedConnections(),
-}
+const documents = defineSchema({
+  table: 'document',
+  fields: {
+    title: string().required(),
+    content: string(),
+    embedding: array('float').comment('1536-dim OpenAI embedding'),
+  },
+  indexes: {
+    // Vector similarity search
+    semantic: index(['embedding'])
+      .hnsw(1536)
+      .dist('COSINE')
+      .efc(200)
+      .m(16)
+      .comment('Semantic search index'),
+    
+    // Also add full-text for keyword search
+    fulltext: index(['title', 'content'])
+      .search('english')
+      .highlights(),
+  },
+});
 ```
 
----
-
-## Full-text search indexes
-
-For text search with relevance ranking:
-
-```javascript
-indexes: {
-  content: index(['title', 'body'])
-    .fulltext()
-    .analyzer('english')
-    .highlights(),
-}
-```
-
-**Generated SurrealQL:**
+Query with:
 
 ```sql
-DEFINE INDEX content ON TABLE post FIELDS title, body 
-  FULLTEXT ANALYZER english BM25(1.2, 0.75) HIGHLIGHTS;
+SELECT * FROM document
+WHERE embedding <|10,100|> $query_embedding
+ORDER BY embedding <|10,100|> $query_embedding;
 ```
 
-### Fulltext options
+## Composite indexes
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `.analyzer(name)` | Text analyzer to use | `'default'` |
-| `.bm25(k1, b)` | BM25 ranking parameters | `(1.2, 0.75)` |
-| `.vs()` | Use vector scoring instead | - |
-| `.highlights()` | Enable result highlighting | `false` |
+Index multiple fields together:
 
-### BM25 parameters
+```typescript
+// For queries: WHERE author = x AND createdAt > y
+authorDate: index(['author', 'createdAt'])
 
-- **k1** (default 1.2): Term frequency saturation
-- **b** (default 0.75): Length normalization
-
-```javascript
-// Favor exact matches
-index(['content']).fulltext().bm25(1.5, 0.5)
-
-// Favor longer documents
-index(['content']).fulltext().bm25(1.2, 0.25)
+// For queries: WHERE category = x AND isPublished = true ORDER BY createdAt
+categoryPublished: index(['category', 'isPublished', 'createdAt'])
 ```
 
----
+The field order matters. Put the most selective field first.
 
-## Count indexes
+## Index modifiers
 
-Optimize aggregation queries:
+### Concurrent creation
 
-```javascript
-indexes: {
-  byStatus: index(['status']).count(),
-  
-  // With condition
-  activeUsers: index(['role']).count().where('isActive = true'),
-}
+Build the index without blocking writes:
+
+```typescript
+email: index(['email']).unique().concurrently()
 ```
 
----
+### If not exists
 
-## Concurrent index creation
+Only create if the index doesn't already exist:
 
-Build indexes without blocking writes:
-
-```javascript
-indexes: {
-  email: index(['email']).unique().concurrently(),
-}
+```typescript
+email: index(['email']).ifNotExists()
 ```
 
----
+### Comments
+
+Document the index purpose:
+
+```typescript
+email: index(['email'])
+  .unique()
+  .comment('Ensures unique email addresses')
+```
+
+## Rename tracking
+
+When renaming an index, use `.was()`:
+
+```typescript
+// Previously named 'emailIndex'
+userEmail: index(['email']).unique().was('emailIndex')
+```
+
+This generates:
+
+```sql
+ALTER INDEX emailIndex ON TABLE user RENAME TO userEmail;
+```
+
+## What to index
+
+### Do index
+
+- Fields used in `WHERE` clauses
+- Fields used in `ORDER BY`
+- Fields used in `GROUP BY`
+- Unique constraints (emails, usernames)
+- Foreign keys you query frequently
+
+### Don't index
+
+- Fields rarely queried
+- Fields with very few distinct values (e.g., boolean flags on large tables)
+- Large text fields (use full-text search instead)
+
+### Trade-offs
+
+Indexes speed up reads but slow down writes (the index must be updated). Don't add indexes you don't need.
 
 ## Complete example
 
-```javascript
-const postSchema = defineSchema({
+A post table with unique constraints, query optimization, and search indexes:
+
+```typescript
+import { defineSchema, string, int, bool, datetime, array, index } from 'smig';
+
+const posts = defineSchema({
   table: 'post',
   fields: {
-    author: record('user').required(),
     title: string().required(),
-    content: string().required(),
+    slug: string().required(),
+    content: string(),
+    author: record('user').required(),
+    tags: array('string'),
+    isPublished: bool().default(false),
+    viewCount: int().default(0),
     embedding: array('float'),
-    status: string().default('draft'),
     createdAt: datetime().default('time::now()'),
   },
   indexes: {
@@ -223,32 +300,27 @@ const postSchema = defineSchema({
     slug: index(['slug']).unique(),
     
     // Query optimization
-    byAuthor: index(['author', 'createdAt']),
-    byStatus: index(['status', 'createdAt']),
+    author: index(['author']),
+    publishedDate: index(['isPublished', 'createdAt']),
     
     // Full-text search
-    search: index(['title', 'content'])
-      .fulltext()
-      .analyzer('english')
+    content: index(['title', 'content'])
+      .search('english')
       .highlights(),
     
     // Vector similarity
     semantic: index(['embedding'])
-      .hnsw()
-      .dimension(384)
-      .dist('cosine'),
+      .hnsw(1536)
+      .dist('COSINE'),
     
-    // Aggregation
-    statusCount: index(['status']).count(),
+    // Tags (if you query by tag)
+    tags: index(['tags']),
   },
 });
 ```
 
----
+## Related
 
-## See also
-
-- [Tables](tables.md) - Table definitions
-- [Analyzers](analyzers.md) - Text analyzer configuration
-- [AI embeddings example](../examples/ai-embeddings.md)
-
+- [Fields](/schema-reference/fields) — The data being indexed
+- [Analyzers](/schema-reference/analyzers) — Configure full-text search
+- [AI embeddings example](/examples/ai-embeddings) — Complete vector search setup

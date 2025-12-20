@@ -1,250 +1,371 @@
 # Fields
 
-Define table columns with type-safe field builders.
+Fields are the columns in your tables. They define what data each record can hold, what type that data is, and any rules it must follow.
 
----
+## What are fields for?
 
-## Field types
+Every table needs fields. A `user` table might have:
 
-| Type | Builder | SurrealDB type |
-|------|---------|----------------|
-| String | `string()` | `string` |
-| Integer | `int()` | `int` |
-| Float | `float()` | `float` |
-| Decimal | `decimal()` | `decimal` |
-| Boolean | `bool()` | `bool` |
-| Datetime | `datetime()` | `datetime` |
-| Duration | `duration()` | `duration` |
-| UUID | `uuid()` | `uuid` |
-| Array | `array(type)` | `array<type>` |
-| Object | `object()` | `object` |
-| Record | `record(table)` | `record<table>` |
-| Option | `option(type)` | `option<type>` |
-| Geometry | `geometry()` | `geometry` |
-| Any | `any()` | `any` |
+- An `email` field (text, must be unique)
+- A `name` field (text)
+- A `createdAt` field (timestamp, set automatically)
 
----
+In **smig**, you define these with simple builder functions:
 
-## Basic usage
-
-```javascript
-import { string, int, bool, datetime } from 'smig';
-
-const fields = {
+```typescript
+fields: {
+  email: string().required(),
   name: string(),
-  age: int(),
-  isActive: bool(),
-  createdAt: datetime(),
-};
+  createdAt: datetime().default('time::now()'),
+}
 ```
 
----
+## All field types
 
-## Modifiers
+### Text and strings
 
-All field types support these modifiers:
+| Builder | SurrealDB type | When to use it |
+|---------|----------------|----------------|
+| `string()` | `string` | Names, emails, descriptions — any text |
+| `uuid()` | `uuid` | Unique identifiers |
+| `bytes()` | `bytes` | Binary data (files, images) |
 
-| Modifier | Description | Example |
-|----------|-------------|---------|
-| `.required()` | Must have a value | `string().required()` |
-| `.default(value)` | Static default | `bool().default(true)` |
-| `.value(expr)` | Dynamic value (on write) | `datetime().value('time::now()')` |
-| `.computed(expr)` | Computed on read | `int().computed('array::len(items)')` |
-| `.assert(condition)` | Validation rule | `int().assert('$value >= 0')` |
-| `.readonly()` | Cannot be modified | `string().readonly()` |
-| `.flexible()` | Accept any subtype | `object().flexible()` |
-| `.permissions(rule)` | Field-level access | `string().permissions('NONE')` |
+### Numbers
 
----
+| Builder | SurrealDB type | When to use it |
+|---------|----------------|----------------|
+| `int()` | `int` | Whole numbers (counts, ages) |
+| `float()` | `float` | Decimal numbers (scores, measurements) |
+| `decimal()` | `decimal` | Precise decimals (money) |
+| `number()` | `number` | Either int or float |
 
-## String fields
+### True/false
 
-```javascript
-// Basic
-name: string()
+| Builder | SurrealDB type | When to use it |
+|---------|----------------|----------------|
+| `bool()` | `bool` | On/off states, flags |
 
-// Required
+### Time
+
+| Builder | SurrealDB type | When to use it |
+|---------|----------------|----------------|
+| `datetime()` | `datetime` | Points in time (timestamps) |
+| `duration()` | `duration` | Lengths of time (timeouts, intervals) |
+
+### Collections
+
+| Builder | SurrealDB type | When to use it |
+|---------|----------------|----------------|
+| `array('type')` | `array<type>` | Lists of things |
+| `set('type')` | `set<type>` | Unique lists (no duplicates) |
+| `object()` | `object` | Nested key-value data |
+
+### References
+
+| Builder | SurrealDB type | When to use it |
+|---------|----------------|----------------|
+| `record('table')` | `record<table>` | Link to another record |
+| `option(type)` | `option<type>` | Optional value (might be null) |
+| `any()` | `any` | Accept anything |
+
+### Spatial
+
+| Builder | SurrealDB type | When to use it |
+|---------|----------------|----------------|
+| `geometry()` | `geometry` | Points, lines, polygons |
+
+### Special
+
+| Builder | SurrealDB type | When to use it |
+|---------|----------------|----------------|
+| `literal(...)` | Literal union | Enum-like values |
+| `range()` | `range` | Numeric ranges |
+| `nullType()` | `null` | Explicit null |
+
+## Making fields required
+
+By default, fields are optional. To require a value:
+
+```typescript
 email: string().required()
-
-// With validation
-email: string()
-  .required()
-  .assert('string::is_email($value)')
-
-// Length constraints
-username: string()
-  .required()
-  .length(3, 20)  // min 3, max 20 chars
-
-// Pattern matching
-slug: string()
-  .assert('$value = /^[a-z0-9-]+$/')
 ```
 
----
+This adds an assertion that rejects `NONE`:
 
-## Numeric fields
-
-```javascript
-// Integer
-count: int()
-count: int().default(0)
-count: int().range(0, 100)  // 0-100 inclusive
-
-// Float
-score: float()
-score: float().min(0).max(10)
-
-// Decimal (for money)
-price: decimal()
-price: decimal().assert('$value >= 0')
+```sql
+DEFINE FIELD email ON TABLE user TYPE string ASSERT $value != NONE;
 ```
 
----
+## Default values
 
-## Boolean fields
+### Static defaults
 
-```javascript
-isActive: bool()
+Values that are the same every time:
+
+```typescript
 isActive: bool().default(true)
-isVerified: bool().default(false)
+role: string().default('user')
+viewCount: int().default(0)
 ```
 
----
+### Dynamic defaults
 
-## Date and time
+Values computed when the record is created:
 
-```javascript
-// Static default
+```typescript
 createdAt: datetime().default('time::now()')
-
-// Dynamic (updates on every write)
-updatedAt: datetime().value('time::now()')
-
-// Duration
-timeout: duration().default('30s')
-sessionLength: duration().default('7d')
-```
-
----
-
-## UUID fields
-
-```javascript
-// Auto-generated UUID v7 (time-ordered)
 id: uuid().default('rand::uuid::v7()')
-
-// UUID v4 (random)
-token: uuid().default('rand::uuid::v4()')
 ```
 
----
+### Always updating
 
-## Array fields
+Values recomputed on every write (not just creation):
 
-```javascript
-// Array of strings
-tags: array('string').default([])
-
-// Array of integers
-scores: array('int')
-
-// Array of records
-followers: array(record('user')).default([])
-
-// Nested arrays
-matrix: array('array<int>')
+```typescript
+updatedAt: datetime().defaultAlways('time::now()')
 ```
 
----
+## Validation with assert
 
-## Record references
+The `.assert()` method adds conditions that values must pass:
 
-```javascript
-// Single table reference
-author: record('user')
-author: record('user').required()
+```typescript
+// Email format
+email: string().assert('string::is_email($value)')
 
-// Optional reference
-parentComment: option(record('comment'))
+// Length limits
+username: string().assert('string::len($value) >= 3 AND string::len($value) <= 20')
 
-// Union type (multiple tables)
-target: record(['post', 'comment', 'user'])
+// Number ranges
+age: int().assert('$value >= 0 AND $value <= 150')
 
-// Any record
-subject: record()
+// Regex patterns
+slug: string().assert('string::matches($value, /^[a-z0-9-]+$/)')
+```
 
-// With foreign key constraint
-author: record('user')
+You can combine multiple assertions:
+
+```typescript
+password: string()
   .required()
-  .reference()
-  .onDelete('cascade')
+  .assert('string::len($value) >= 8')
+  .comment('Must be at least 8 characters')
 ```
 
-### Foreign key options
+## Computed values
 
-| Option | Behavior |
-|--------|----------|
-| `'cascade'` | Delete this record when referenced record is deleted |
-| `'reject'` | Prevent deletion of referenced record |
-| `'ignore'` | Do nothing (orphan the reference) |
-| `'unset'` | Set field to null |
+### Computed on write
 
----
+Use `.value()` for values computed when data is saved:
 
-## Optional fields
+```typescript
+// Slug generated from title
+slug: string().value('string::slug(title)')
 
-```javascript
-// Explicitly optional
-bio: option('string')
-avatar: option('string')
-
-// Optional record
-manager: option(record('user'))
-
-// Optional with default
-nickname: option('string').default(null)
+// Lowercase email
+normalizedEmail: string().value('string::lowercase(email)')
 ```
 
----
+### Computed on read
 
-## Computed fields
+Use `.computed()` for values calculated when queried:
 
-```javascript
-// Computed on read (deferred)
+```typescript
+// Full name from parts
 fullName: string().computed('string::concat(firstName, " ", lastName)')
 
 // Count from array
 followerCount: int().computed('array::len(followers)')
-
-// Complex computation
-score: float().computed(`
-  array::len(votes.positive) -
-  (<float> array::len(votes.negative) / 2)
-`)
 ```
 
----
+The difference: `.value()` stores the result, `.computed()` calculates every time.
+
+## Read-only fields
+
+Fields that can only be set once:
+
+```typescript
+id: uuid().default('rand::uuid::v7()').readonly()
+createdAt: datetime().default('time::now()').readonly()
+```
+
+Attempts to update these fields will be rejected.
+
+## Flexible typing
+
+Allow any structure within an object:
+
+```typescript
+metadata: object().flexible()
+```
+
+This accepts any nested data without validation.
+
+## Record references
+
+Link to records in other tables:
+
+```typescript
+// Single table
+author: record('user')
+
+// Required reference
+author: record('user').required()
+
+// Multiple possible tables
+target: record(['post', 'comment'])
+
+// Any table
+subject: record()
+```
+
+### Foreign key constraints
+
+SurrealDB 3 supports referential integrity:
+
+```typescript
+author: record('user')
+  .required()
+  .references('user')
+  .onDelete('CASCADE')
+```
+
+| Action | What happens when referenced record is deleted |
+|--------|-----------------------------------------------|
+| `'CASCADE'` | This record is also deleted |
+| `'SET NULL'` | This field becomes null |
+| `'SET DEFAULT'` | This field reverts to its default |
+| `'RESTRICT'` | Deletion is prevented |
+
+## Optional fields
+
+Explicitly mark a field as optional (can be null):
+
+```typescript
+bio: option('string')
+avatar: option('string')
+manager: option(record('user'))
+```
+
+## Arrays and sets
+
+### Arrays
+
+Ordered lists that can have duplicates:
+
+```typescript
+tags: array('string')
+scores: array('int')
+followers: array(record('user'))
+```
+
+With length constraints:
+
+```typescript
+// At least 1, at most 10
+tags: array('string', 1, 10)
+```
+
+### Sets
+
+Unordered lists with unique values:
+
+```typescript
+// Unique tags only
+categories: set('string')
+
+// With constraints
+permissions: set('string', 0, 5)
+```
 
 ## Nested fields
 
 Use dot notation for nested object fields:
 
-```javascript
+```typescript
 fields: {
   'address.street': string(),
   'address.city': string(),
   'address.zip': string(),
+  
   'settings.theme': string().default('light'),
-  'settings.notifications': bool().default(true),
+  'settings.emailNotifications': bool().default(true),
 }
 ```
 
----
+This creates a nested structure:
+
+```typescripton
+{
+  "address": {
+    "street": "...",
+    "city": "...",
+    "zip": "..."
+  },
+  "settings": {
+    "theme": "light",
+    "emailNotifications": true
+  }
+}
+```
+
+## Comments
+
+Document your fields:
+
+```typescript
+email: string()
+  .required()
+  .comment('Primary contact email, must be unique')
+```
+
+Comments appear in the generated SQL and database introspection.
+
+## Rename tracking
+
+When you rename a field, use `.was()` so **smig** generates a rename instead of drop/create:
+
+```typescript
+// Field was previously called 'name'
+fullName: string().was('name')
+
+// Multiple previous names
+contactEmail: string().was(['email', 'emailAddress'])
+```
+
+This generates:
+
+```sql
+ALTER FIELD name ON TABLE user RENAME TO fullName;
+```
+
+Instead of dropping the field and losing data.
+
+## Permissions
+
+Restrict who can read or write a field:
+
+```typescript
+// Hide from everyone except owners
+password: string().permissions('NONE')
+
+// Allow reads, restrict writes
+role: string().permissions('FOR select FULL FOR update WHERE $auth.role = "admin"')
+
+// Complex permissions
+salary: decimal().permissions(`
+  FOR select WHERE $auth.role IN ["hr", "admin"]
+  FOR update WHERE $auth.role = "hr"
+`)
+```
 
 ## Complete example
 
-```javascript
+A comprehensive user schema demonstrating multiple field types and modifiers:
+
+```typescript
+import { defineSchema, string, int, bool, datetime, uuid, array, record, option } from 'smig';
+
 const userSchema = defineSchema({
   table: 'user',
   fields: {
@@ -253,33 +374,33 @@ const userSchema = defineSchema({
     email: string().required().assert('string::is_email($value)'),
     
     // Profile
-    name: string().required().length(2, 100),
+    name: string().required(),
     bio: option('string'),
     avatar: option('string'),
     
-    // Settings
+    // Settings (nested)
     'settings.theme': string().default('light'),
-    'settings.emailNotifications': bool().default(true),
+    'settings.notifications': bool().default(true),
     
     // Status
     isActive: bool().default(true),
     role: string().default('user'),
     
-    // Timestamps
-    createdAt: datetime().default('time::now()').readonly(),
-    updatedAt: datetime().value('time::now()'),
+    // Social
+    followers: array(record('user')).default([]),
     
     // Computed
-    displayName: string().computed('name ?? email'),
+    followerCount: int().computed('array::len(followers)'),
+    
+    // Timestamps
+    createdAt: datetime().default('time::now()').readonly(),
+    updatedAt: datetime().defaultAlways('time::now()'),
   },
 });
 ```
 
----
+## Related
 
-## See also
-
-- [Tables](tables.md) - Table definitions
-- [Indexes](indexes.md) - Indexing fields
-- [Relations](relations.md) - Record relationships
-
+- [Tables](/schema-reference/tables) — Where fields live
+- [Indexes](/schema-reference/indexes) — Speed up field queries
+- [Relations](/schema-reference/relations) — Record references in depth

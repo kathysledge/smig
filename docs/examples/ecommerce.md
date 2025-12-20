@@ -2,11 +2,11 @@
 
 An online store with products, orders, and inventory management.
 
----
-
 ## Schema
 
-```javascript
+A full e-commerce schema with categories, products, customers, and orders with inventory management:
+
+```typescript
 import {
   defineSchema,
   composeSchema,
@@ -184,11 +184,11 @@ export default composeSchema({
 });
 ```
 
----
-
 ## Example queries
 
 ### Create a product
+
+Add a new product with pricing and stock:
 
 ```sql
 CREATE product SET
@@ -204,6 +204,8 @@ CREATE product SET
 ```
 
 ### Place an order
+
+Create an order (triggers inventory reduction automatically):
 
 ```sql
 CREATE order SET
@@ -227,6 +229,8 @@ CREATE order SET
 
 ### Get order with product details
 
+Fetch an order with its product information:
+
 ```sql
 SELECT 
   *,
@@ -237,6 +241,8 @@ WHERE orderNumber = 10001;
 
 ### Low stock products
 
+Find products that need restocking:
+
 ```sql
 SELECT * FROM product
 WHERE stock <= lowStockThreshold AND isActive = true
@@ -245,6 +251,8 @@ ORDER BY stock ASC;
 
 ### Top customers
 
+Find your biggest spenders:
+
 ```sql
 SELECT * FROM customer
 ORDER BY totalSpent DESC
@@ -252,6 +260,8 @@ LIMIT 10;
 ```
 
 ### Sales by category
+
+Aggregate revenue by product category:
 
 ```sql
 SELECT 
@@ -262,8 +272,6 @@ FROM order
 WHERE status = "completed"
 GROUP BY category;
 ```
-
----
 
 ## See also
 

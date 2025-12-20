@@ -2,14 +2,14 @@
 
 How **smig** generates and manages database migrations.
 
----
-
 ## How migrations work
+
+The migration lifecycle is a simple three-step process:
 
 ```mermaid
 flowchart TB
     subgraph input [Inputs]
-        Schema[Your Schema<br/>schema.js]
+        Schema[Your Schema<br/>schema.ts]
         DB[(Current Database<br/>State)]
     end
     
@@ -34,8 +34,6 @@ flowchart TB
     Generate --> Down
 ```
 
----
-
 ## The diffing algorithm
 
 **smig** compares your schema definition against the current database state and generates the minimal set of changes:
@@ -46,13 +44,32 @@ flowchart TB
 |-------------|--------------|-----------------|
 | New table | `DEFINE TABLE` | `REMOVE TABLE` |
 | Removed table | `REMOVE TABLE` | `DEFINE TABLE` |
+| Renamed table | `ALTER TABLE RENAME` | `ALTER TABLE RENAME` |
 | New field | `DEFINE FIELD` | `REMOVE FIELD` |
 | Removed field | `REMOVE FIELD` | `DEFINE FIELD` |
-| Modified field | `DEFINE FIELD OVERWRITE` | `DEFINE FIELD OVERWRITE` |
+| Renamed field | `ALTER FIELD RENAME` | `ALTER FIELD RENAME` |
+| Modified field (1-3 props) | `ALTER FIELD ...` | `ALTER FIELD ...` |
+| Modified field (4+ props) | `DEFINE FIELD OVERWRITE` | `DEFINE FIELD OVERWRITE` |
 | New index | `DEFINE INDEX` | `REMOVE INDEX` |
 | Removed index | `REMOVE INDEX` | `DEFINE INDEX` |
 | New event | `DEFINE EVENT` | `REMOVE EVENT` |
 | Modified event | `DEFINE EVENT OVERWRITE` | `DEFINE EVENT OVERWRITE` |
+
+### Smart ALTER statements
+
+**smig** uses granular `ALTER` statements when possible, which is more efficient than redefining entire fields:
+
+```sql
+-- For single property changes, use ALTER
+ALTER FIELD status ON TABLE user DEFAULT 'active';
+ALTER FIELD email ON TABLE user ASSERT string::is_email($value);
+
+-- For many changes at once, use OVERWRITE
+DEFINE FIELD OVERWRITE profile ON TABLE user
+  FLEXIBLE TYPE object
+  DEFAULT {}
+  READONLY;
+```
 
 ### Field modification detection
 
@@ -63,8 +80,6 @@ flowchart TB
 - Computed value expression
 - Assertion conditions
 - Permissions
-
----
 
 ## Migration history
 
@@ -88,44 +103,52 @@ Each migration includes SHA-256 checksums of both the up and down scripts. This 
 - Migration files match what was applied
 - Corruption is detected early
 
----
-
 ## Migration lifecycle
 
-### 1. Generation (`smig diff`)
+### 1. Preview changes (`bun smig generate`)
+
+Compare your schema definition with the database and preview the migration:
 
 ```bash
-smig diff --message "Add user roles"
+bun smig generate
 ```
 
 - Parses your schema file
 - Connects to database and introspects current state
 - Computes differences
-- Generates forward and rollback SQL
-- Saves to `_migrations` table (not yet applied)
+- Shows forward and rollback SQL
 
-### 2. Application (`smig push`)
+### 2. Apply changes (`bun smig migrate`)
+
+Apply schema changes to your database:
 
 ```bash
-smig push
+# Preview changes without applying
+bun smig migrate --dry-run
+
+# Apply changes
+bun smig migrate
 ```
 
-- Retrieves pending migrations
-- Executes forward SQL in a transaction
-- Updates `appliedAt` timestamp
-- Verifies checksums
+What happens during `migrate`:
 
-### 3. Rollback (`smig rollback`)
+- Loads your schema file
+- Compares to current database state
+- Executes forward SQL
+- Records the migration in `_migrations` table
+- Stores checksums for integrity verification
+
+### 3. Rollback (`bun smig rollback`)
+
+Undo the most recent migration:
 
 ```bash
-smig rollback
+bun smig rollback
 ```
 
 - Retrieves most recent migration
 - Executes rollback SQL
 - Removes migration record
-
----
 
 ## Handling failures
 
@@ -139,30 +162,32 @@ If a migration fails partway through:
 
 ### Recovery options
 
+Commands to diagnose and recover from issues:
+
 ```bash
 # Retry the failed migration
-smig push --force
+bun smig migrate
 
 # Rollback to clean state
-smig rollback --force
+bun smig rollback
 
 # Manual intervention
 # Edit the database directly, then sync
-smig diff --dry-run  # See current differences
+bun smig generate  # See current differences
 ```
-
----
 
 ## Safe migration practices
 
-### Always review before pushing
+### Always review before applying
+
+Look at what will change before applying:
 
 ```bash
-# Generate and review
-smig diff --message "Big change" --dry-run
+# Preview changes
+bun smig migrate --dry-run
 
 # Then apply
-smig push
+bun smig migrate
 ```
 
 ### Use transactions
@@ -171,12 +196,14 @@ smig push
 
 ### Backup before major changes
 
+Protect your data before significant schema updates:
+
 ```bash
 # Export current state
 surreal export --conn ws://localhost:8000 backup.surql
 
 # Apply migration
-smig push
+bun smig migrate
 
 # If needed, restore
 surreal import --conn ws://localhost:8000 backup.surql
@@ -184,15 +211,15 @@ surreal import --conn ws://localhost:8000 backup.surql
 
 ### Test in staging first
 
+Verify migrations work before production:
+
 ```bash
 # Apply to staging
-smig push --config ./staging.config.js
+bun smig migrate --config ./staging.config.js
 
 # Verify, then production
-smig push --config ./production.config.js
+bun smig migrate --config ./production.config.js
 ```
-
----
 
 ## See also
 

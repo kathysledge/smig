@@ -1,94 +1,85 @@
 # Examples
 
-Complete schema examples for common use cases.
+Complete, working schemas for common applications. Each example is ready to copy and adapt for your own projects.
 
----
+## Application examples
 
-## Available examples
+### [Simple blog](/examples/blog)
 
-| Example | Description | Highlights |
-|---------|-------------|------------|
-| [Simple blog](blog.md) | Basic blog with posts and comments | Tables, fields, indexes |
-| [Social network](social-network.md) | Users, follows, likes | Relations, events, graph queries |
-| [E-commerce](ecommerce.md) | Products, orders, payments | Sequences, computed fields |
-| [AI embeddings](ai-embeddings.md) | Vector search with HNSW | Vector indexes, semantic search |
+A straightforward blog with:
+- Users, posts, and comments
+- Full-text search on content
+- Basic permissions
 
----
+Good for learning the fundamentals.
 
-## Quick examples
+### [Social network](/examples/social-network)
 
-### Minimal schema
+A Twitter-like application featuring:
+- User profiles and follows (graph relations)
+- Posts, likes, and comments
+- Feed generation
+- Notifications
 
-```javascript
-import { defineSchema, composeSchema, string, bool, datetime, index } from 'smig';
+Good for understanding graph relations and events.
 
-const todoSchema = defineSchema({
-  table: 'todo',
-  fields: {
-    title: string().required(),
-    completed: bool().default(false),
-    createdAt: datetime().default('time::now()'),
-  },
-  indexes: {
-    completed: index(['completed', 'createdAt']),
-  },
-});
+### [E-commerce](/examples/ecommerce)
+
+An online store with:
+- Products, categories, and inventory
+- Shopping cart and orders
+- User reviews
+- Order status tracking
+
+Good for understanding business logic and sequences.
+
+## Advanced examples
+
+### [AI embeddings](/examples/ai-embeddings)
+
+Semantic search with vector embeddings:
+- OpenAI/Cohere embedding storage
+- HNSW vector indexes
+- Hybrid search (vector + full-text)
+- Recommendation system
+
+Good for AI/ML applications.
+
+## How to use these examples
+
+### Quick start
+
+1. Copy the schema code into your `schema.ts`
+2. Run `bun smig migrate`
+3. Start building your application
+
+### Adapting for your needs
+
+Each example includes comments explaining design decisions. Feel free to:
+- Remove features you don't need
+- Add fields for your use case
+- Change field types or validation
+
+### Combining examples
+
+You can merge patterns from different examples:
+
+```typescript
+import { composeSchema } from 'smig';
+import { userSchema, postSchema } from './blog';
+import { productSchema, orderSchema } from './ecommerce';
+import { embeddingSchema } from './ai';
 
 export default composeSchema({
-  models: { todo: todoSchema },
+  models: {
+    ...blogModels,
+    ...ecommerceModels,
+    ...aiModels,
+  },
+  relations: { ... },
 });
 ```
 
-### With relations
+## Request an example
 
-```javascript
-import { defineSchema, defineRelation, composeSchema } from 'smig';
-
-const user = defineSchema({
-  table: 'user',
-  fields: {
-    name: string().required(),
-    email: string().required(),
-  },
-});
-
-const post = defineSchema({
-  table: 'post',
-  fields: {
-    author: record('user').required(),
-    content: string().required(),
-  },
-});
-
-const likes = defineRelation({
-  name: 'likes',
-  from: 'user',
-  to: 'post',
-  fields: {
-    likedAt: datetime().default('time::now()'),
-  },
-});
-
-export default composeSchema({
-  models: { user, post },
-  relations: { likes },
-});
-```
-
----
-
-## Running examples
-
-Each example can be applied to a fresh SurrealDB instance:
-
-```bash
-# Start SurrealDB
-surreal start --user root --pass root memory
-
-# Initialize smig with example schema
-smig init --schema ./examples/blog-schema.js
-
-# Apply the schema
-smig push
-```
-
+Don't see what you're looking for? [Open a discussion](https://github.com/kathysledge/smig/discussions) and tell us what you're building. We'd love to add more examples.

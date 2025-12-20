@@ -1,16 +1,36 @@
-# Access
+# Access (authentication)
 
-Define authentication methods with `access()`.
+Access definitions control how users authenticate with your database. You can define signup flows, login logic, and session management directly in your schema.
 
----
+## What is an access definition?
 
-## Basic usage
+In SurrealDB, authentication is handled through ACCESS definitions. These specify:
 
-```javascript
+- **How users sign up** — What record gets created
+- **How users sign in** — How credentials are verified
+- **Session duration** — How long a login lasts
+
+With **smig**, you define these in code alongside your schema.
+
+## Access types
+
+SurrealDB 3 supports three authentication types:
+
+| Type | When to use it |
+|------|----------------|
+| `RECORD` | User accounts stored in a table (most common) |
+| `JWT` | External identity providers (OAuth, SSO) |
+| `BEARER` | API keys and service accounts |
+
+## RECORD authentication
+
+The most common pattern — users sign up and sign in with credentials stored in your database:
+
+```typescript
 import { access } from 'smig';
 
-const accountAccess = access('account')
-  .record()
+const userAuth = access('user')
+  .type('RECORD')
   .signup(`
     CREATE user SET
       email = $email,
@@ -18,17 +38,17 @@ const accountAccess = access('account')
       createdAt = time::now()
   `)
   .signin(`
-    SELECT * FROM user
-    WHERE email = $email
-    AND crypto::argon2::compare(password, $password)
+    SELECT * FROM user WHERE
+      email = $email AND
+      crypto::argon2::compare(password, $password)
   `)
   .session('7d');
 ```
 
-**Generated SurrealQL:**
+This generates:
 
 ```sql
-DEFINE ACCESS account ON DATABASE TYPE RECORD
+DEFINE ACCESS user ON DATABASE TYPE RECORD
   SIGNUP (
     CREATE user SET
       email = $email,
@@ -36,302 +56,254 @@ DEFINE ACCESS account ON DATABASE TYPE RECORD
       createdAt = time::now()
   )
   SIGNIN (
-    SELECT * FROM user
-    WHERE email = $email
-    AND crypto::argon2::compare(password, $password)
+    SELECT * FROM user WHERE
+      email = $email AND
+      crypto::argon2::compare(password, $password)
   )
   DURATION FOR SESSION 7d;
 ```
 
----
+### How it works
 
-## Access types
+1. **Signup**: Client sends `{ email, password }`, SurrealDB runs your SIGNUP query
+2. **Signin**: Client sends credentials, SurrealDB runs your SIGNIN query
+3. **Session**: If SIGNIN returns a record, the user gets a session token
 
-| Type | Description | Use case |
-|------|-------------|----------|
-| Record | User authentication | App users |
-| JWT | Token-based auth | API clients |
-| Bearer | API key auth | Service-to-service |
+### Password hashing
 
----
+Always hash passwords with Argon2:
 
-## Record access
+```typescript
+// In signup
+password = crypto::argon2::generate($password)
 
-For user signup/signin flows:
-
-```javascript
-access('account')
-  .record()
-  .signup('/* create user query */')
-  .signin('/* verify user query */')
-  .session('7d')
+// In signin
+crypto::argon2::compare(password, $password)
 ```
 
-### Options
+Never store or compare plain text passwords.
 
-| Method | Description | Required |
-|--------|-------------|----------|
-| `.record()` | Set type to record | Yes |
-| `.signup(query)` | User creation query | No |
-| `.signin(query)` | User verification query | Yes |
-| `.session(duration)` | Session length | No |
-| `.token(duration)` | Token TTL | No |
-| `.authenticate(expr)` | Additional auth check | No |
+## JWT authentication
 
-### Signup query
+For external identity providers (Auth0, Clerk, Firebase Auth):
 
-Available variables:
-- `$email`, `$password`, `$username`, etc. - Client-provided fields
-
-```javascript
-.signup(`
-  CREATE user SET
-    email = $email,
-    username = $username,
-    password = crypto::argon2::generate($password),
-    createdAt = time::now()
-`)
+```typescript
+const externalAuth = access('external')
+  .type('JWT')
+  .algorithm('RS256')
+  .key(`-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A...
+-----END PUBLIC KEY-----`);
 ```
 
-### Signin query
+The database verifies tokens signed by your identity provider.
 
-Must return exactly one record to succeed:
+### JWT with user lookup
 
-```javascript
-.signin(`
-  SELECT * FROM user
-  WHERE email = $email
-  AND crypto::argon2::compare(password, $password)
-`)
+Combine JWT with a user record:
+
+```typescript
+const oauthAuth = access('oauth')
+  .type('JWT')
+  .algorithm('RS256')
+  .key(process.env.JWT_PUBLIC_KEY)
+  .authenticate(`
+    SELECT * FROM user WHERE externalId = $token.sub
+  `);
 ```
 
----
+The `$token` variable contains the decoded JWT claims.
 
-## JWT access
+## BEARER authentication
 
-For external token verification:
+For API keys and service accounts:
 
-```javascript
-access('api')
-  .jwt()
-  .algorithm('HS256')
-  .key('your-secret-key')
-  .session('1h')
+```typescript
+const apiAccess = access('api')
+  .type('BEARER')
+  .session('365d');
 ```
 
-### JWT with JWKS
+Clients authenticate with a bearer token instead of credentials.
 
-Verify tokens from external providers:
+## Session configuration
 
-```javascript
-access('oauth')
-  .jwt()
-  .jwks('https://auth.example.com/.well-known/jwks.json')
-  .session('24h')
+### Duration
+
+How long sessions last:
+
+```typescript
+.session('7d')    // 7 days
+.session('24h')   // 24 hours
+.session('30m')   // 30 minutes
 ```
 
-### JWT algorithms
+### Token vs session
 
-| Algorithm | Type |
-|-----------|------|
-| `HS256`, `HS384`, `HS512` | HMAC |
-| `RS256`, `RS384`, `RS512` | RSA |
-| `ES256`, `ES384`, `ES512` | ECDSA |
-| `PS256`, `PS384`, `PS512` | RSA-PSS |
+You can set different durations for tokens and sessions:
 
----
-
-## Bearer access
-
-For API key authentication:
-
-```javascript
-access('api_key')
-  .bearer()
-  .forUser()  // or .forRecord()
-  .session('30d')
+```typescript
+.session('7d')     // Session (stored on server)
+.token('1h')       // Token (in JWT, for stateless verification)
 ```
 
----
+## Additional authentication
 
-## Duration options
+Run extra checks after signin:
 
-```javascript
-access('account')
-  .record()
-  .signin('/* ... */')
-  .session('7d')    // Session expires after 7 days
-  .token('1h')      // JWT tokens expire after 1 hour
-  .grant('30d')     // Refresh tokens expire after 30 days
-```
-
-Duration formats: `1h`, `30m`, `7d`, `1w`, `30s`
-
----
-
-## Authenticate clause
-
-Additional verification on each request:
-
-```javascript
-access('account')
-  .record()
-  .signin('/* ... */')
-  .authenticate('$auth.isActive = true')  // Check on every request
-```
-
----
-
-## Common patterns
-
-### Email/password authentication
-
-```javascript
-const accountAccess = access('account')
-  .record()
-  .signup(`
-    CREATE user SET
-      email = $email,
-      password = crypto::argon2::generate($password),
-      role = "user",
-      createdAt = time::now()
-  `)
-  .signin(`
-    SELECT * FROM user
-    WHERE email = $email
-    AND crypto::argon2::compare(password, $password)
-  `)
-  .session('7d')
-  .token('1h');
-```
-
-### Username or email signin
-
-```javascript
-const accountAccess = access('account')
-  .record()
-  .signin(`
-    SELECT * FROM user
-    WHERE (email = $identifier OR username = $identifier)
-    AND crypto::argon2::compare(password, $password)
+```typescript
+const strictAuth = access('user')
+  .type('RECORD')
+  .signup('...')
+  .signin('...')
+  .authenticate(`
+    SELECT * FROM $auth WHERE
+      isActive = true AND
+      isBanned = false AND
+      emailVerified = true
   `)
   .session('7d');
 ```
 
-### OAuth/SSO integration
+If the AUTHENTICATE query returns nothing, login fails even if SIGNIN succeeded.
 
-```javascript
-const oauthAccess = access('oauth')
-  .jwt()
-  .jwks('https://accounts.google.com/.well-known/jwks.json')
-  .authenticate(`
-    LET $user = SELECT * FROM user WHERE oauthId = $token.sub;
-    IF $user = NONE {
-      CREATE user SET
-        oauthId = $token.sub,
-        email = $token.email,
-        name = $token.name
-    };
-    RETURN $user
-  `)
-  .session('24h');
-```
+## Complete examples
 
-### API key access
+### User account system
 
-```javascript
-const apiAccess = access('api')
-  .bearer()
-  .forUser()
-  .session('365d');
-```
+A complete signup/signin system:
 
----
+```typescript
+import { access } from 'smig';
 
-## Using access in queries
-
-```sql
--- Signup
-SIGNUP [ account ] {
-  email: "user@example.com",
-  password: "secure123",
-  username: "johndoe"
-};
-
--- Signin  
-SIGNIN [ account ] {
-  email: "user@example.com",
-  password: "secure123"
-};
-```
-
-In your application:
-
-```javascript
-// Using surrealdb.js
-await db.signup({
-  access: 'account',
-  variables: {
-    email: 'user@example.com',
-    password: 'secure123',
-  },
-});
-
-await db.signin({
-  access: 'account',
-  variables: {
-    email: 'user@example.com',
-    password: 'secure123',
-  },
-});
-```
-
----
-
-## Complete example
-
-```javascript
-import { access, composeSchema } from 'smig';
-
-const accountAccess = access('account')
-  .record()
+const userAuth = access('account')
+  .type('RECORD')
   .signup(`
     CREATE user SET
       email = $email,
-      username = $username,
       password = crypto::argon2::generate($password),
-      role = "user",
+      name = $name,
+      role = 'user',
       isActive = true,
       createdAt = time::now()
   `)
   .signin(`
-    SELECT * FROM user
-    WHERE (email = $identifier OR username = $identifier)
-    AND crypto::argon2::compare(password, $password)
-    AND isActive = true
+    SELECT * FROM user WHERE
+      email = $email AND
+      crypto::argon2::compare(password, $password)
   `)
-  .authenticate('$auth.isActive = true')
-  .session('7d')
-  .token('1h');
+  .authenticate(`
+    SELECT * FROM $auth WHERE isActive = true
+  `)
+  .session('7d');
+```
 
-const apiAccess = access('api')
-  .bearer()
-  .forUser()
-  .session('365d');
+### Admin access
 
-export default composeSchema({
-  models: { /* ... */ },
-  access: {
-    account: accountAccess,
-    api: apiAccess,
+Separate access method for administrators:
+
+```typescript
+const adminAuth = access('admin')
+  .type('RECORD')
+  .signin(`
+    SELECT * FROM user WHERE
+      email = $email AND
+      crypto::argon2::compare(password, $password) AND
+      role = 'admin'
+  `)
+  .session('1h')
+  .comment('Admin access with shorter session');
+```
+
+### API key access
+
+Machine-to-machine authentication with bearer tokens:
+
+```typescript
+const apiAuth = access('api_key')
+  .type('BEARER')
+  .session('365d')
+  .comment('Long-lived API keys for integrations');
+```
+
+## Using access in your app
+
+### Signup
+
+Register new users through RECORD access:
+
+```typescript
+// JavaScript SDK
+await db.signup({
+  access: 'account',
+  variables: {
+    email: 'user@example.com',
+    password: 'secretpassword',
+    name: 'John Doe',
   },
 });
 ```
 
----
+### Signin
 
-## See also
+Authenticate existing users:
 
-- [Tables](tables.md) - Table permissions
-- [Best practices](../guides/best-practices.md) - Security patterns
+```typescript
+await db.signin({
+  access: 'account',
+  variables: {
+    email: 'user@example.com',
+    password: 'secretpassword',
+  },
+});
+```
 
+### The $auth variable
+
+After signin, queries can access `$auth` — the authenticated user's record:
+
+```sql
+-- Only return the current user's posts
+SELECT * FROM post WHERE author = $auth.id;
+
+-- In permissions
+FOR select WHERE owner = $auth.id
+```
+
+## Permissions with access
+
+Access works with table and field permissions:
+
+```typescript
+const posts = defineSchema({
+  table: 'post',
+  permissions: `
+    FOR select WHERE isPublished = true OR author = $auth.id
+    FOR create WHERE $auth.id != NONE
+    FOR update WHERE author = $auth.id
+    FOR delete WHERE author = $auth.id
+  `,
+  fields: {
+    title: string().required(),
+    author: record('user').default('$auth.id'),
+    // ...
+  },
+});
+```
+
+## Rename tracking
+
+When renaming an access definition:
+
+```typescript
+const customerAuth = access('customer')
+  .was('user_auth')  // Previously named 'user_auth'
+  .type('RECORD')
+  // ...
+```
+
+## Related
+
+- [Tables](/schema-reference/tables) — Set table-level permissions
+- [Fields](/schema-reference/fields) — Set field-level permissions
+- [Params](/schema-reference/params) — Store configuration like JWT keys
