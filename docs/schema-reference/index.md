@@ -1,6 +1,6 @@
 # Schema reference
 
-This is the complete reference for everything you can define with **smig**. Each page covers one type of database entity — what it is, when you'd use it, and every option available.
+This is the complete reference for everything you can define with **smig**. Each page covers one type of database entity — what it is, when you’d use it, and every option available.
 
 ## How this reference is organized
 
@@ -26,7 +26,7 @@ The foundation of your database:
 
 ## Relationships
 
-SurrealDB's graph capabilities:
+SurrealDB’s graph capabilities:
 
 | Topic | What it covers |
 |-------|----------------|

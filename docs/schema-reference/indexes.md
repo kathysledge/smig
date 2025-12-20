@@ -66,7 +66,7 @@ userRole: index(['userId', 'roleId']).unique()
 
 ### HASH
 
-Fast for exact matches, but can't do range queries:
+Fast for exact matches, but can’t do range queries:
 
 ```typescript
 apiKey: index(['apiKey']).hash()
@@ -161,7 +161,7 @@ location: index(['coordinates'])
 
 ### Complete vector search example
 
-Here's a document table with both vector and full-text search:
+Here’s a document table with both vector and full-text search:
 
 ```typescript
 import { defineSchema, string, array, index } from 'smig';
@@ -224,7 +224,7 @@ email: index(['email']).unique().concurrently()
 
 ### If not exists
 
-Only create if the index doesn't already exist:
+Only create if the index doesn’t already exist:
 
 ```typescript
 email: index(['email']).ifNotExists()
@@ -265,7 +265,7 @@ ALTER INDEX emailIndex ON TABLE user RENAME TO userEmail;
 - Unique constraints (emails, usernames)
 - Foreign keys you query frequently
 
-### Don't index
+### Don’t index
 
 - Fields rarely queried
 - Fields with very few distinct values (e.g., boolean flags on large tables)
@@ -273,7 +273,7 @@ ALTER INDEX emailIndex ON TABLE user RENAME TO userEmail;
 
 ### Trade-offs
 
-Indexes speed up reads but slow down writes (the index must be updated). Don't add indexes you don't need.
+Indexes speed up reads but slow down writes (the index must be updated). Don’t add indexes you don’t need.
 
 ## Complete example
 

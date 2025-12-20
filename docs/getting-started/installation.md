@@ -11,7 +11,7 @@ Before installing **smig**, you need:
 
 ### Installing SurrealDB
 
-If you don't have SurrealDB:
+If you don’t have SurrealDB:
 
 ```bash
 # macOS
@@ -50,7 +50,7 @@ yarn add -D smig
 
 :::
 
-We recommend Bun — it's faster and **smig** is tested primarily with Bun.
+We recommend Bun — it’s faster and **smig** is tested primarily with Bun.
 
 ## Project setup
 
@@ -251,7 +251,7 @@ export default {
 | `.cts` | TypeScript (CommonJS) |
 
 ::: tip How it works
-**smig** uses [jiti](https://github.com/unjs/jiti) to compile TypeScript on-the-fly. You don't need `ts-node`, `tsx`, or any other runtime — it just works.
+**smig** uses [jiti](https://github.com/unjs/jiti) to compile TypeScript on-the-fly. You don’t need `ts-node`, `tsx`, or any other runtime — it just works.
 :::
 
 ## Project structure
@@ -290,19 +290,19 @@ myapp/
 
 ## Troubleshooting
 
-### "Connection refused"
+### “Connection refused”
 
-SurrealDB isn't running. Start it:
+SurrealDB isn’t running. Start it:
 
 ```bash
 surreal start --user root --pass root memory
 ```
 
-### "Invalid credentials"
+### “Invalid credentials”
 
-Check username/password in your config matches SurrealDB's startup flags.
+Check username/password in your config matches SurrealDB’s startup flags.
 
-### "Module not found: smig"
+### “Module not found: smig”
 
 Make sure **smig** is in `devDependencies`:
 

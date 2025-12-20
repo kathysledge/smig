@@ -46,7 +46,7 @@ param('mode').value("'production'")
 
 ### Numbers
 
-Numeric values don't need quotes:
+Numeric values don’t need quotes:
 
 ```typescript
 param('max_retries').value('3')
@@ -203,7 +203,7 @@ UPDATE $maintenance_mode SET value = true;
 DEFINE PARAM $maintenance_mode VALUE true;
 ```
 
-This makes them useful for runtime configuration that doesn't require code deploys.
+This makes them useful for runtime configuration that doesn’t require code deploys.
 
 ## Param comments
 

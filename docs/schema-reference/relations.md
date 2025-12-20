@@ -4,7 +4,7 @@ Relations are how you connect records in SurrealDB. Unlike traditional foreign k
 
 ## What is a relation?
 
-In a social network, users follow other users. In a traditional database, you'd create a junction table:
+In a social network, users follow other users. In a traditional database, you’d create a junction table:
 
 ```surql
 CREATE TABLE follows (
@@ -333,9 +333,9 @@ When should you use a relation vs. a `record()` field?
 
 ### Use a record field when:
 
-- It's a simple parent-child reference
+- It’s a simple parent-child reference
 - You only query in one direction
-- It's a one-to-many relationship with no extra data
+- It’s a one-to-many relationship with no extra data
 
 ```typescript
 // Record field: Post has one author

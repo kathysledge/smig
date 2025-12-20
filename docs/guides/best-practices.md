@@ -109,7 +109,7 @@ indexes: {
 }
 ```
 
-### Don't over-index
+### Don’t over-index
 
 Each index:
 - Increases write latency
@@ -179,7 +179,7 @@ const likesRelation = defineRelation({
 
 ### Test in lower environments first
 
-Don't push directly to production:
+Don’t push directly to production:
 
 ```bash
 # 1. Apply to dev

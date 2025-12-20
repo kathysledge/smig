@@ -1,13 +1,13 @@
 # Getting started
 
-This section helps you go from zero to working migrations. By the end, you'll have **smig** installed, configured, and running against your SurrealDB database.
+This section helps you go from zero to working migrations. By the end, you’ll have **smig** installed, configured, and running against your SurrealDB database.
 
-## What you'll learn
+## What you’ll learn
 
 1. **[Installation](/getting-started/installation)** — How to add **smig** to your project
 2. **[Your first migration](/getting-started/first-migration)** — Creating and applying your first schema
 
-If you just want to see it work, here's the shortest path:
+If you just want to see it work, here’s the shortest path:
 
 ```bash
 # Install smig
@@ -27,7 +27,7 @@ Done! You now have a `user` and `post` table in your database.
 
 ## Before you begin
 
-### You'll need
+### You’ll need
 
 - **Bun 1.0+** (recommended) or **Node.js 18+**
 - **SurrealDB 3.0+** installed and accessible
@@ -45,7 +45,7 @@ node --version   # Should be 18.0.0 or higher (if not using Bun)
 surreal version  # Should be 3.0.0 or higher
 ```
 
-If you don't have SurrealDB, see [surrealdb.com/install](https://surrealdb.com/install).
+If you don’t have SurrealDB, see [surrealdb.com/install](https://surrealdb.com/install).
 
 ## Quick overview
 
@@ -123,7 +123,7 @@ TypeScript is recommended for the best developer experience with full autocomple
 
 ### Does smig work with existing databases?
 
-Yes! When you run `bun smig migrate` against an existing database, it only generates changes for what's different. It won't duplicate tables that already exist.
+Yes! When you run `bun smig migrate` against an existing database, it only generates changes for what’s different. It won’t duplicate tables that already exist.
 
 ### What if I make a mistake?
 
@@ -131,4 +131,4 @@ Every migration is reversible. Run `bun smig rollback` to undo the last migratio
 
 ### Can I see what SQL will run before applying?
 
-Yes. Run `bun smig diff` to preview the SQL without applying it. When you're happy, run `bun smig migrate` to apply.
+Yes. Run `bun smig diff` to preview the SQL without applying it. When you’re happy, run `bun smig migrate` to apply.

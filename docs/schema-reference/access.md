@@ -260,7 +260,7 @@ await db.signin({
 
 ### The $auth variable
 
-After signin, queries can access `$auth` — the authenticated user's record:
+After signin, queries can access `$auth` — the authenticated user’s record:
 
 ```surql
 -- Only return the current user's posts

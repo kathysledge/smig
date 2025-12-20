@@ -9,7 +9,7 @@ Instead of handling every side effect in your application code, events let you:
 - **Audit changes** — Log who changed what and when
 - **Sync data** — Update related records automatically
 - **Send notifications** — Trigger webhooks or create notification records
-- **Validate complex rules** — Reject changes that don't meet business requirements
+- **Validate complex rules** — Reject changes that don’t meet business requirements
 
 ## Creating an event
 
@@ -288,7 +288,7 @@ onPublish: event('on_publish')
 
 ## Order of execution
 
-Events run in the order they're defined. For predictable behavior:
+Events run in the order they’re defined. For predictable behavior:
 
 1. Validation events first
 2. Data modification events second
@@ -302,7 +302,7 @@ They run as part of the transaction. Long-running operations can slow down write
 
 ### No external calls
 
-Events can't make HTTP requests directly. Create a queue record and process externally:
+Events can’t make HTTP requests directly. Create a queue record and process externally:
 
 ```typescript
 // In database

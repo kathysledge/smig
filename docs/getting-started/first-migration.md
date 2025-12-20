@@ -1,8 +1,8 @@
 # Your first migration
 
-This guide walks through creating, previewing, and applying your first migration. By the end, you'll understand the complete workflow.
+This guide walks through creating, previewing, and applying your first migration. By the end, you’ll understand the complete workflow.
 
-## What we'll build
+## What we’ll build
 
 A simple user table with:
 - Email (required, unique)
@@ -11,7 +11,7 @@ A simple user table with:
 
 ## Step 1: Create the schema
 
-After running `bun smig init`, you have a `schema.ts` file. Let's modify it:
+After running `bun smig init`, you have a `schema.ts` file. Let’s modify it:
 
 ```typescript
 // schema.ts
@@ -40,7 +40,7 @@ export default composeSchema({
 });
 ```
 
-Let's break this down:
+Let’s break this down:
 
 - **`defineSchema`** — Creates a table definition
 - **`string().required()`** — A text field that must have a value
@@ -50,13 +50,13 @@ Let's break this down:
 
 ## Step 2: Preview the migration
 
-Before applying changes, let's see what SurrealQL (SQL) will be generated:
+Before applying changes, let’s see what SurrealQL (SQL) will be generated:
 
 ```bash
 bun smig diff
 ```
 
-You'll see output like:
+You’ll see output like:
 
 ```
 Up Migration (apply changes):
@@ -129,7 +129,7 @@ INFO FOR TABLE user;
 
 ## Step 5: Make a change
 
-Let's add a profile picture field. Update `schema.ts`:
+Let’s add a profile picture field. Update `schema.ts`:
 
 ```typescript
 const users = defineSchema({
@@ -165,7 +165,7 @@ Down Migration (rollback):
 REMOVE FIELD avatar ON TABLE user;
 ```
 
-**smig** detected only the new field — it won't recreate existing definitions.
+**smig** detected only the new field — it won’t recreate existing definitions.
 
 Apply it:
 
@@ -209,7 +209,7 @@ Applied migrations: 1
 
 ## Common questions
 
-### The diff shows changes I didn't make
+### The diff shows changes I didn’t make
 
 SurrealDB may format things differently than **smig**. This is normal for:
 - Whitespace differences
@@ -227,7 +227,7 @@ Or use `bun smig rollback` to undo the last migration first.
 
 ### Can I edit migration files?
 
-**smig** doesn't create migration files — it generates SQL on the fly by comparing your schema to the database. This means:
+**smig** doesn’t create migration files — it generates SQL on the fly by comparing your schema to the database. This means:
 - No migration files to manage
 - Always generates minimal changes
 - Schema file is the single source of truth

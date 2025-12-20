@@ -4,9 +4,9 @@ Sequences generate auto-incrementing numbers. Use them for order numbers, invoic
 
 ## What are sequences for?
 
-Sometimes UUIDs aren't the right choice:
+Sometimes UUIDs aren’t the right choice:
 
-- **Order numbers** — Customers expect "Order #10042", not "Order #a7b3c9d2-..."
+- **Order numbers** — Customers expect “Order #10042”, not “Order #a7b3c9d2-...”
 - **Invoice IDs** — Sequential numbers for accounting
 - **Serial numbers** — Manufacturing or tracking codes
 - **Human-readable IDs** — Short, memorable identifiers
@@ -85,7 +85,7 @@ sequence('high_volume')
 
 ### In field defaults
 
-Reference the sequence in a field's default value:
+Reference the sequence in a field’s default value:
 
 ```typescript
 import { defineSchema, int, string, sequence } from 'smig';
@@ -158,7 +158,7 @@ orderNumber: int()
 
 ### Invoice numbering with prefix
 
-Generate formatted invoice numbers like "INV-2025-000001":
+Generate formatted invoice numbers like “INV-2025-000001”:
 
 ```typescript
 const invoiceSeq = sequence('invoice_seq').start(1);
@@ -220,7 +220,7 @@ const accounts = defineSchema({
 
 ## Sequence comments
 
-Document your sequence's purpose:
+Document your sequence’s purpose:
 
 ```typescript
 const orderSeq = sequence('order_seq')
@@ -240,7 +240,7 @@ Sequences can have gaps:
 
 Sequences are fast but require database roundtrips. For extremely high volume:
 - Use `cache()` to preallocate numbers
-- Consider UUIDs if strict sequence isn't required
+- Consider UUIDs if strict sequence isn’t required
 
 ### Uniqueness
 

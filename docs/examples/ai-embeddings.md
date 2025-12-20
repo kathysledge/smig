@@ -2,7 +2,7 @@
 
 Build a semantic search system with vector embeddings. This example shows how to store OpenAI embeddings, create HNSW indexes, and perform similarity searches.
 
-## What we're building
+## What we’re building
 
 A document search system that:
 - Stores documents with their embeddings
@@ -12,7 +12,7 @@ A document search system that:
 
 ## The schema
 
-Here's the complete schema for a semantic search system with documents, embeddings, and search functions:
+Here’s the complete schema for a semantic search system with documents, embeddings, and search functions:
 
 ```typescript
 import { 
@@ -339,7 +339,7 @@ async function hybridSearch(query) {
 
 ### Chunking long documents
 
-For documents longer than the embedding model's context window:
+For documents longer than the embedding model’s context window:
 
 ```typescript
 const chunks = defineSchema({

@@ -388,7 +388,7 @@ fn('fn::days_since')
 
 ## Complete example
 
-Here's a complete set of functions for a user validation and feed system:
+Here’s a complete set of functions for a user validation and feed system:
 
 ```typescript
 import { fn, defineSchema, string, record, composeSchema } from 'smig';

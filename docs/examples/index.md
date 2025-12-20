@@ -56,7 +56,7 @@ Good for AI/ML applications.
 ### Adapting for your needs
 
 Each example includes comments explaining design decisions. Feel free to:
-- Remove features you don't need
+- Remove features you don’t need
 - Add fields for your use case
 - Change field types or validation
 
@@ -82,4 +82,4 @@ export default composeSchema({
 
 ## Request an example
 
-Don't see what you're looking for? [Open a discussion](https://github.com/kathysledge/smig/discussions) and tell us what you're building. We'd love to add more examples.
+Don’t see what you’re looking for? [Open a discussion](https://github.com/kathysledge/smig/discussions) and tell us what you’re building. We’d love to add more examples.

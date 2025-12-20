@@ -116,9 +116,9 @@ mutation {
 
 ## Best practices
 
-### Expose only what's needed
+### Expose only what’s needed
 
-Don't expose internal tables:
+Don’t expose internal tables:
 
 ```typescript
 config('graphql')
@@ -151,7 +151,7 @@ const devConfig = config('graphql')
 
 ## Config comments
 
-Document your config's purpose:
+Document your config’s purpose:
 
 ```typescript
 const graphqlConfig = config('graphql')

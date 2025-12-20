@@ -99,7 +99,7 @@ DEFINE FIELD downChecksum ON _migrations TYPE string;
 
 Each migration includes SHA-256 checksums of both the up and down scripts. This ensures:
 
-- Migrations haven't been modified after application
+- Migrations haven’t been modified after application
 - Migration files match what was applied
 - Corruption is detected early
 

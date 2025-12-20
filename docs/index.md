@@ -16,7 +16,7 @@ hero:
 features:
   - icon: 🎯
     title: Define once, migrate anywhere
-    details: Write your schema in TypeScript. smig generates the SurrealQL and tracks what's changed.
+    details: Write your schema in TypeScript. smig generates the SurrealQL and tracks what’s changed.
   - icon: 🔄
     title: Automatic rollbacks
     details: Every migration comes with a reverse migration. One command to undo changes.
@@ -28,7 +28,7 @@ features:
     details: Zero-config TypeScript support. Just use .ts files — no build step required.
 ---
 
-<img src="/homepage-banner.jpg" alt="bun smig - Automatic schema migrations for SurrealDB" data-zoomable style="width: 100%; border-radius: 12px; margin: 2rem 0;" />
+<img src="/homepage-banner.jpg” alt="Cartoon of Asterix and Obelix using smig to control an AI machine” data-zoomable style="width: 100%; border-radius: 12px; margin: 2rem 0;” />
 
 <div class="two-column-layout">
 <div class="main-column">
@@ -67,16 +67,16 @@ DEFINE INDEX email ON TABLE user FIELDS email UNIQUE;
 
 ## Why smig?
 
-### If you're evaluating tools
+### If you’re evaluating tools
 
-**smig** is the only migration tool built specifically for SurrealDB 3. It understands SurrealDB's unique features:
+**smig** is the only migration tool built specifically for SurrealDB 3. It understands SurrealDB’s unique features:
 
-- **Graph relations** — First-class support for SurrealDB's relation tables
+- **Graph relations** — First-class support for SurrealDB’s relation tables
 - **Vector indexes** — HNSW and MTREE for AI/ML similarity search
 - **Full-text search** — Custom analyzers with tokenizers and filters
 - **Multi-model** — Tables, documents, and graphs in one schema
 
-### If you're a developer
+### If you’re a developer
 
 The API is designed to feel natural:
 
@@ -113,16 +113,16 @@ flowchart LR
 ```
 
 1. **You write** a schema file describing your tables, fields, indexes
-2. **smig compares** your schema to what's in the database
+2. **smig compares** your schema to what’s in the database
 3. **smig generates** the SQL needed to sync them up
 4. **You run** `bun smig migrate` to apply the changes
-5. **smig records** the migration so it knows what's been applied
+5. **smig records** the migration so it knows what’s been applied
 
 ## What can you define?
 
 **smig** covers nearly everything in SurrealDB 3:
 
-| What | Why you'd use it |
+| What | Why you’d use it |
 |------|------------------|
 | [Tables](/schema-reference/tables) | Store your data |
 | [Fields](/schema-reference/fields) | Define columns with types and validation |

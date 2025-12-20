@@ -6,7 +6,7 @@ Helpful links, references, and ways to get involved with **smig**.
 
 - [GitHub repository](https://github.com/kathysledge/smig) — Source code, issues, discussions
 - [npm package](https://www.npmjs.com/package/smig) — Package registry
-- [Changelog](https://github.com/kathysledge/smig/blob/main/CHANGELOG.md) — What's new in each version
+- [Changelog](https://github.com/kathysledge/smig/blob/main/CHANGELOG.md) — What’s new in each version
 
 ## SurrealDB resources
 
@@ -26,7 +26,7 @@ Helpful links, references, and ways to get involved with **smig**.
 
 ### Have a question?
 
-[Start a discussion](https://github.com/kathysledge/smig/discussions) on GitHub. We're happy to help with:
+[Start a discussion](https://github.com/kathysledge/smig/discussions) on GitHub. We’re happy to help with:
 - How to model specific schemas
 - Migration strategies
 - Feature requests

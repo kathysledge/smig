@@ -4,7 +4,7 @@ A social platform with follows, posts, and likes using graph relations.
 
 ## Schema
 
-A social platform with users, posts, follows, and likes using SurrealDB's graph relations:
+A social platform with users, posts, follows, and likes using SurrealDB’s graph relations:
 
 ```typescript
 import {
@@ -216,7 +216,7 @@ Remove a like:
 DELETE likes WHERE in = user:alice AND out = post:123;
 ```
 
-### Get user's liked posts
+### Get user’s liked posts
 
 Get all posts a user has liked:
 

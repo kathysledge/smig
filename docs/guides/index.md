@@ -50,7 +50,7 @@ bun smig rollback
 
 This undoes the last applied migration.
 
-### How do I see what's been applied?
+### How do I see what’s been applied?
 
 Check the migration status:
 

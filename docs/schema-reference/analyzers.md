@@ -4,9 +4,9 @@ Analyzers configure how SurrealDB processes text for full-text search. They cont
 
 ## What is an analyzer?
 
-When you search for "running shoes" in a product database, you probably want to find:
-- Products with "running" and "shoes"
-- Products with "runner" or "runners" (stemming)
+When you search for “running shoes” in a product database, you probably want to find:
+- Products with “running” and “shoes”
+- Products with “runner” or “runners” (stemming)
 - Products regardless of capitalization
 
 An analyzer defines these text processing rules:
@@ -303,7 +303,7 @@ const myTokenizer = fn('fn::my_tokenizer')
 
 ## Analyzer comments
 
-Document your analyzer's purpose:
+Document your analyzer’s purpose:
 
 ```typescript
 const english = analyzer('english')

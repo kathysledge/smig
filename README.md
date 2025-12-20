@@ -1,6 +1,6 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/kathysledge/smig/raw/main/media/smig-logo-dark.svg">
-  <img alt="smig 'S' logo" src="https://github.com/kathysledge/smig/raw/main/media/smig-logo-light.svg">
+  <img alt="smig ‘S’ logo" src="https://github.com/kathysledge/smig/raw/main/media/smig-logo-light.svg">
 </picture>
 
 ### SurrealDB schema management with automatic migrations
@@ -158,9 +158,3 @@ See [CHANGELOG.md](CHANGELOG.md) for version history.
 ## License
 
 ISC © [Chris Harris](https://github.com/kathysledge)
-
----
-
-<a href="https://ko-fi.com/kathysledge">
-  <img alt="Buy me a coffee" width="420" src="https://github.com/kathysledge/smig/raw/main/media/buy-me-a-coffee-button.avif">
-</a>

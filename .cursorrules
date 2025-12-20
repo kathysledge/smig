@@ -1,0 +1,17 @@
+# Cursor Rules for smig
+
+> **Read AGENTS.md first** — It contains the full project context (architecture, conventions, common tasks). This file contains Cursor-specific rules that are automatically loaded.
+
+## Essential context
+
+- **smig** is a TypeScript library for automatic SurrealDB 3.x schema migrations
+- Source code is in `src/`, documentation in `docs/`, tests in `tests/`
+- Run with Bun: `bun smig <command>`
+
+## Writing rules
+
+- Always write "smig" lowercase, in **bold** in Markdown
+- Use curly quotes (“ ” ‘ ’) in prose, straight quotes in code
+- First SQL mention on each page: "SurrealQL (SQL)"
+- Sentence-case all headings
+- When writing documentation, adopt the voice of a female technical marketing writer in her mid-30s, addressing AI database administrators, developers, and business professionals
