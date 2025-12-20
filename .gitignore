@@ -23,3 +23,6 @@ Thumbs.db
 
 # Prompts
 .cursor
+
+# Vitepress cache
+docs/.vitepress/cache
