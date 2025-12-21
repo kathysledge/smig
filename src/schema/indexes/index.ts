@@ -60,37 +60,78 @@ export type IndexType = 'BTREE' | 'HASH' | 'SEARCH' | 'MTREE' | 'HNSW';
  *   .capacity(40);
  * ```
  */
+/**
+ * Internal state for index builder.
+ */
+interface IndexBuilderState {
+  columns: string[];
+  unique: boolean;
+  type: IndexType;
+  // Search options
+  analyzer: string | null;
+  highlights: boolean;
+  bm25: { k1?: number; b?: number } | null;
+  docLengthsOrder: number | null;
+  docIdsOrder: number | null;
+  postingsOrder: number | null;
+  termsOrder: number | null;
+  docIdsCacheSize: number | null;
+  docIdsCache: number | null;
+  docLengthsCacheSize: number | null;
+  docLengthsCache: number | null;
+  postingsCacheSize: number | null;
+  postingsCache: number | null;
+  termsCacheSize: number | null;
+  termsCache: number | null;
+  // Vector index options
+  dimension: number | null;
+  dist: DistanceMetric | null;
+  // MTREE-specific
+  capacity: number | null;
+  // HNSW-specific
+  efc: number | null;
+  m: number | null;
+  m0: number | null;
+  lm: number | null;
+  // Metadata
+  comments: string[];
+  previousNames: string[];
+  ifNotExists: boolean;
+  overwrite: boolean;
+  concurrently: boolean;
+}
+
 export class SurrealQLIndex {
-  private index: Record<string, unknown> = {
+  private index: IndexBuilderState = {
     columns: [],
     unique: false,
     type: 'BTREE',
     // Search options
     analyzer: null,
     highlights: false,
-    bm25: null, // { k1?: number, b?: number }
-    docLengthsOrder: null, // number
-    docIdsOrder: null, // number
-    postingsOrder: null, // number
-    termsOrder: null, // number
-    docIdsCacheSize: null, // number
-    docIdsCache: null, // number
-    docLengthsCacheSize: null, // number
-    docLengthsCache: null, // number
-    postingsCacheSize: null, // number
-    postingsCache: null, // number
-    termsCacheSize: null, // number
-    termsCache: null, // number
+    bm25: null,
+    docLengthsOrder: null,
+    docIdsOrder: null,
+    postingsOrder: null,
+    termsOrder: null,
+    docIdsCacheSize: null,
+    docIdsCache: null,
+    docLengthsCacheSize: null,
+    docLengthsCache: null,
+    postingsCacheSize: null,
+    postingsCache: null,
+    termsCacheSize: null,
+    termsCache: null,
     // Vector index options (MTREE/HNSW)
     dimension: null,
     dist: null,
     // MTREE-specific
     capacity: null,
     // HNSW-specific
-    efc: null, // efConstruction
-    m: null, // maxConnections
-    m0: null, // maxConnections at layer 0
-    lm: null, // levelMultiplier
+    efc: null,
+    m: null,
+    m0: null,
+    lm: null,
     // Metadata
     comments: [],
     // Rename tracking
@@ -357,8 +398,7 @@ export class SurrealQLIndex {
 
   /** Adds a documentation comment for the index */
   comment(text: string) {
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic index builder requires flexible typing
-    (this.index as any).comments.push(text);
+    this.index.comments.push(text);
     return this;
   }
 
@@ -370,7 +410,7 @@ export class SurrealQLIndex {
    */
   was(names: string | string[]) {
     const nameArray = Array.isArray(names) ? names : [names];
-    (this.index.previousNames as string[]).push(...nameArray);
+    this.index.previousNames.push(...nameArray);
     return this;
   }
 

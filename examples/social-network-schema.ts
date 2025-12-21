@@ -5,7 +5,6 @@ import {
   composeSchema,
   defineRelation,
   defineSchema,
-  event,
   index,
   int,
   option,
@@ -130,4 +129,3 @@ export default composeSchema({
     like: likeRelation,
   },
 });
-

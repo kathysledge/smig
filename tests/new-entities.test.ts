@@ -187,31 +187,8 @@ describe('New Entity Builders (SurrealDB 3.x)', () => {
       expect(seq.start).toBe(1000);
     });
 
-    it('should set step/increment', () => {
-      const seq = sequence('counter').step(5).build();
-      expect(seq.step).toBe(5);
-    });
-
-    it('should set min/max bounds', () => {
-      const seq = sequence('limited').min(1).max(9999).build();
-      expect(seq.min).toBe(1);
-      expect(seq.max).toBe(9999);
-    });
-
-    it('should enable cycle', () => {
-      const seq = sequence('cycling').max(100).cycle().build();
-      expect(seq.cycle).toBe(true);
-    });
-
-    it('should disable cycle explicitly', () => {
-      const seq = sequence('no_cycle').max(100).noCycle().build();
-      expect(seq.cycle).toBe(false);
-    });
-
-    it('should set cache size', () => {
-      const seq = sequence('cached').cache(20).build();
-      expect(seq.cache).toBe(20);
-    });
+    // Note: step, min, max, cycle, noCycle, cache methods are not supported in SurrealDB 3.x
+    // Only START is supported for sequences
 
     it('should track previous names', () => {
       const seq = sequence('new_seq').was('old_seq').build();

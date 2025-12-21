@@ -10,6 +10,29 @@ import { Surreal } from 'surrealdb';
 import type { DatabaseConfig, Migration, MigrationStatus } from '../types/schema';
 
 /**
+ * Type alias for SurrealDB query results.
+ * The SDK returns Query objects that need .collect(), resulting in arrays.
+ */
+type QueryResult = unknown[];
+
+/**
+ * Type alias for the SurrealDB Query object with collect method.
+ * SDK v2 returns Query objects that need .collect() to get results.
+ */
+interface CollectableQuery {
+  collect(): Promise<QueryResult>;
+}
+
+/**
+ * Type for database query result rows that may have a result property.
+ * Used for schema introspection queries.
+ */
+interface QueryResultRow {
+  result?: unknown[];
+  [key: string]: unknown;
+}
+
+/**
  * High-level client wrapper for SurrealDB database operations.
  *
  * The SurrealClient provides a simplified interface for connecting to and interacting with
@@ -169,8 +192,7 @@ export class SurrealClient {
 
     try {
       // SurrealDB SDK v2 returns a Query object that needs .collect() to get results
-      // biome-ignore lint/suspicious/noExplicitAny: SDK v2 Query type is not properly exported
-      const queryResult = this.client.query(query) as any;
+      const queryResult = this.client.query(query) as unknown as CollectableQuery;
       const result = await queryResult.collect();
       return result;
     } catch (error) {
@@ -217,16 +239,14 @@ export class SurrealClient {
 
       const query = `INSERT INTO ${table} { ${fields} } RETURN *`;
       // SurrealDB SDK v2 returns a Query object that needs .collect() to get results
-      // biome-ignore lint/suspicious/noExplicitAny: SDK v2 Query type is not properly exported
-      const queryResult = this.client.query(query) as any;
+      const queryResult = this.client.query(query) as unknown as CollectableQuery;
       const result = await queryResult.collect();
 
       // Extract the created record from the result
       // SDK v2 returns nested arrays: [[record]]
-      // biome-ignore lint/suspicious/noExplicitAny: Query results are dynamically typed
-      const resultArray = result as any[];
+      const resultArray = result as QueryResult;
       if (resultArray && resultArray.length > 0 && Array.isArray(resultArray[0])) {
-        return resultArray[0][0];
+        return (resultArray[0] as unknown[])[0];
       }
       return resultArray?.[0];
     } catch (error) {
@@ -253,13 +273,11 @@ export class SurrealClient {
       // Use raw SELECT query for SurrealDB v3 compatibility
       const query = `SELECT * FROM ${target}`;
       // SurrealDB SDK v2 returns a Query object that needs .collect() to get results
-      // biome-ignore lint/suspicious/noExplicitAny: SDK v2 Query type is not properly exported
-      const queryResult = this.client.query(query) as any;
+      const queryResult = this.client.query(query) as unknown as CollectableQuery;
       const result = await queryResult.collect();
 
       // Extract records from the result - SDK v2 returns nested arrays: [[records]]
-      // biome-ignore lint/suspicious/noExplicitAny: Query results are dynamically typed
-      const resultArray = result as any[];
+      const resultArray = result as QueryResult;
       if (resultArray && resultArray.length > 0 && Array.isArray(resultArray[0])) {
         return resultArray[0];
       }
@@ -299,13 +317,11 @@ export class SurrealClient {
       // Use raw DELETE query for SurrealDB v3 compatibility
       const query = `DELETE ${target} RETURN BEFORE`;
       // SurrealDB SDK v2 returns a Query object that needs .collect() to get results
-      // biome-ignore lint/suspicious/noExplicitAny: SDK v2 Query type is not properly exported
-      const queryResult = this.client.query(query) as any;
+      const queryResult = this.client.query(query) as unknown as CollectableQuery;
       const result = await queryResult.collect();
 
       // SDK v2 returns nested arrays: [[records]]
-      // biome-ignore lint/suspicious/noExplicitAny: Query results are dynamically typed
-      const resultArray = result as any[];
+      const resultArray = result as QueryResult;
       if (resultArray && resultArray.length > 0 && Array.isArray(resultArray[0])) {
         return resultArray[0];
       }
@@ -381,8 +397,7 @@ export class SurrealClient {
     `;
 
     const result = await this.executeQuery(query.replace('$table', `'${tableName}'`));
-    // biome-ignore lint/suspicious/noExplicitAny: Query results are dynamically typed from database
-    return (result as any[])[0]?.result || [];
+    return ((result as QueryResultRow[])[0]?.result as unknown[]) || [];
   }
 
   /**
@@ -406,8 +421,7 @@ export class SurrealClient {
     `;
 
     const result = await this.executeQuery(query.replace('$table', `'${tableName}'`));
-    // biome-ignore lint/suspicious/noExplicitAny: Query results are dynamically typed from database
-    return (result as any[])[0]?.result || [];
+    return ((result as QueryResultRow[])[0]?.result as unknown[]) || [];
   }
 
   /**
@@ -429,8 +443,7 @@ export class SurrealClient {
     `;
 
     const result = await this.executeQuery(query.replace('$table', `'${tableName}'`));
-    // biome-ignore lint/suspicious/noExplicitAny: Query results are dynamically typed from database
-    return (result as any[])[0]?.result || [];
+    return ((result as QueryResultRow[])[0]?.result as unknown[]) || [];
   }
 
   /**
@@ -466,15 +479,17 @@ export class SurrealClient {
       `;
 
       const result = await this.executeQuery(query);
-      // biome-ignore lint/suspicious/noExplicitAny: Query results are dynamically typed from database
-      const migrations = (result as any[])[0]?.result || [];
+      const migrations =
+        ((result as QueryResultRow[])[0]?.result as Record<string, unknown>[]) || [];
 
       const migrationList = migrations.map((m: Record<string, unknown>) => ({
-        id: m.id,
+        id: m.id as string,
         appliedAt: new Date(m.applied_at as string | number | Date),
-        checksum: m.checksum,
-        up: m.up_sql,
-        down: m.down_sql,
+        checksum: m.checksum as string,
+        downChecksum: (m.down_checksum as string) || '',
+        up: m.up_sql as string,
+        down: m.down_sql as string,
+        message: m.message as string | undefined,
       }));
 
       return {
@@ -551,13 +566,12 @@ export class SurrealClient {
    * Formats schema query results into a human-readable string representation.
    */
   private formatSchemaQuery(result: unknown): string {
-    // biome-ignore lint/suspicious/noExplicitAny: Query results are dynamically typed from database
-    const resultArray = result as any[];
+    const resultArray = result as QueryResultRow[];
     if (!result || !resultArray[0] || !resultArray[0].result) {
       return '';
     }
 
-    const tables = resultArray[0].result;
+    const tables = resultArray[0].result as Array<{ name: string; schemafull?: boolean }>;
     const tableGroups: string[] = [];
 
     for (const table of tables) {

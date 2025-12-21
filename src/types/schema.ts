@@ -409,6 +409,158 @@ export interface DatabaseConfig {
 }
 
 // ============================================================================
+// INTROSPECTION TYPES
+// ============================================================================
+
+/**
+ * Field definition from database introspection.
+ * More flexible than SurrealField to handle variations in database output.
+ */
+export interface IntrospectedField {
+  name: string;
+  type?: string;
+  optional?: boolean;
+  readonly?: boolean;
+  flexible?: boolean;
+  ifNotExists?: boolean;
+  overwrite?: boolean;
+  default?: unknown;
+  value?: string | null;
+  assert?: string | null;
+  permissions?: string | null;
+  comment?: string | null;
+  comments?: string[];
+  previousName?: string | string[];
+}
+
+/**
+ * Index definition from database introspection.
+ */
+export interface IntrospectedIndex {
+  name: string;
+  columns?: string[];
+  unique?: boolean;
+  type?: string;
+  analyzer?: string | null;
+  highlights?: boolean;
+  comments?: string[];
+  previousNames?: string[];
+  ifNotExists?: boolean;
+  overwrite?: boolean;
+  concurrently?: boolean;
+  // HNSW-specific
+  dimension?: number;
+  dist?: string | null;
+  efc?: number;
+  m?: number;
+  m0?: number;
+  lm?: number;
+  // MTREE-specific
+  capacity?: number;
+  // BM25-specific
+  bm25?: { k1?: number; b?: number } | null;
+  // Cache options for SEARCH indexes
+  docIdsCache?: number | null;
+  docLengthsCache?: number | null;
+  postingsCache?: number | null;
+  termsCache?: number | null;
+}
+
+/**
+ * Event definition from database introspection.
+ */
+export interface IntrospectedEvent {
+  name: string;
+  type?: string;
+  when?: string | null;
+  thenStatement?: string | null;
+  then?: string | null;
+  comments?: string[];
+}
+
+/**
+ * Table definition from database introspection.
+ */
+export interface IntrospectedTable {
+  name: string;
+  schemafull?: boolean;
+  schemaless?: boolean;
+  permissions?: string | null;
+  fields?: IntrospectedField[];
+  indexes?: IntrospectedIndex[];
+  events?: IntrospectedEvent[];
+  comments?: string[];
+}
+
+/**
+ * Relation definition from database introspection.
+ */
+export interface IntrospectedRelation {
+  name: string;
+  from?: string;
+  to?: string;
+  schemafull?: boolean;
+  fields?: IntrospectedField[];
+  indexes?: IntrospectedIndex[];
+  events?: IntrospectedEvent[];
+  comments?: string[];
+}
+
+/**
+ * Function definition from database introspection.
+ */
+export interface IntrospectedFunction {
+  name: string;
+  parameters?: Array<{ name: string; type: string }>;
+  params?: Record<string, string>;
+  returnType?: string | null;
+  returns?: string | null;
+  body?: string;
+  comments?: string[];
+  permissions?: string | null;
+}
+
+/**
+ * Scope/Access definition from database introspection.
+ */
+export interface IntrospectedScope {
+  name: string;
+  type?: string;
+  session?: string | null;
+  duration?: string | null;
+  signup?: string | null;
+  signin?: string | null;
+  authenticate?: string | null;
+  comments?: string[];
+}
+
+/**
+ * Analyzer definition from database introspection.
+ */
+export interface IntrospectedAnalyzer {
+  name: string;
+  tokenizers?: string[];
+  filters?: string[];
+  comments?: string[];
+}
+
+/**
+ * Migration change record for tracking schema modifications.
+ */
+export interface MigrationChange {
+  type: string;
+  table: string;
+  operation: string;
+  details: MigrationChangeDetails;
+}
+
+/**
+ * Details about a specific migration change.
+ * Uses Record<string, unknown> to allow flexible schema introspection data.
+ */
+export type MigrationChangeDetails = Record<string, unknown>;
+
+// ============================================================================
 // VALIDATION SCHEMAS
 // ============================================================================
 

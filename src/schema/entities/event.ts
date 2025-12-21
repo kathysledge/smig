@@ -6,6 +6,20 @@
 import { processSurrealQL, validateIdentifier } from '../common/utils';
 
 /**
+ * Internal state for event builder.
+ */
+interface EventBuilderState {
+  name: string;
+  type: 'CREATE' | 'UPDATE' | 'DELETE' | null;
+  when: string | null;
+  thenStatement: string | null;
+  comments: string[];
+  previousNames: string[];
+  ifNotExists: boolean;
+  overwrite: boolean;
+}
+
+/**
  * Event (trigger) definition builder for SurrealDB tables.
  *
  * Events allow automatic execution of SurrealQL code in response to data changes,
@@ -38,7 +52,7 @@ import { processSurrealQL, validateIdentifier } from '../common/utils';
  * ```
  */
 export class SurrealQLEvent {
-  private event: Record<string, unknown> = {
+  private event: EventBuilderState = {
     name: '',
     type: null,
     when: null,
@@ -106,8 +120,7 @@ export class SurrealQLEvent {
   /** Adds a documentation comment for the event */
   comment(text: string) {
     if (text && text.trim() !== '') {
-      // biome-ignore lint/suspicious/noExplicitAny: Dynamic event builder requires flexible typing
-      (this.event as any).comments.push(text.trim());
+      this.event.comments.push(text.trim());
     }
     return this;
   }

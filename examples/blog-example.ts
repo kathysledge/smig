@@ -5,17 +5,17 @@
  * Demonstrates field validation, indexes, and events.
  */
 import {
-  defineSchema,
-  composeSchema,
-  string,
-  int,
-  bool,
-  datetime,
   array,
-  record,
-  option,
-  index,
+  bool,
+  composeSchema,
+  datetime,
+  defineSchema,
   event,
+  index,
+  int,
+  option,
+  record,
+  string,
 } from '../dist/schema/concise-schema.js';
 
 // Users
@@ -101,4 +101,3 @@ export default composeSchema({
   },
   relations: {},
 });
-

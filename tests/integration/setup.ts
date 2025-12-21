@@ -24,7 +24,9 @@ async function waitForPort(port: number, maxAttempts = 20): Promise<boolean> {
   for (let i = 0; i < maxAttempts; i++) {
     try {
       // Try to connect using curl or nc
-      await execAsync(`curl -s --max-time 1 http://localhost:${port}/health 2>/dev/null || nc -z localhost ${port} 2>/dev/null`);
+      await execAsync(
+        `curl -s --max-time 1 http://localhost:${port}/health 2>/dev/null || nc -z localhost ${port} 2>/dev/null`,
+      );
       return true;
     } catch {
       // Wait 100ms before retry

@@ -14,6 +14,29 @@ export interface FieldTrackingConfig {
 }
 
 /**
+ * Internal structure for field builder state.
+ */
+export interface FieldBuilderState {
+  type: string;
+  optional: boolean;
+  readonly: boolean;
+  flexible: boolean;
+  ifNotExists: boolean;
+  overwrite: boolean;
+  default: unknown;
+  value: string | null;
+  assert: string | null;
+  assertConditions: string[];
+  permissions: string | null;
+  comment: string | null;
+  comments: string[];
+  previousNames: string[];
+  reference: string | null;
+  onDelete: string | null;
+  defaultAlways: boolean;
+}
+
+/**
  * Base class for all SurrealDB field types.
  *
  * This abstract base class provides the foundation for all SurrealDB field type definitions,
@@ -53,7 +76,7 @@ export interface FieldTrackingConfig {
  * ```
  */
 export class SurrealQLFieldBase {
-  protected field: Record<string, unknown> = {
+  protected field: FieldBuilderState = {
     type: 'string',
     optional: false,
     readonly: false,
@@ -186,8 +209,7 @@ export class SurrealQLFieldBase {
    */
   assert(condition: string) {
     const processedCondition = processSurrealQL(condition);
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic field builder requires flexible typing
-    (this.field as any).assertConditions.push(processedCondition);
+    this.field.assertConditions.push(processedCondition);
 
     // Update the combined assert field
     this.updateCombinedAssert();
@@ -199,16 +221,14 @@ export class SurrealQLFieldBase {
    * This is called internally whenever assertions are modified.
    */
   private updateCombinedAssert() {
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic field builder requires flexible typing
-    const field = this.field as any;
-    if (field.assertConditions.length === 0) {
-      field.assert = null;
-    } else if (field.assertConditions.length === 1) {
-      field.assert = field.assertConditions[0];
+    if (this.field.assertConditions.length === 0) {
+      this.field.assert = null;
+    } else if (this.field.assertConditions.length === 1) {
+      this.field.assert = this.field.assertConditions[0];
     } else {
       // Wrap each condition in parentheses and join with AND
-      field.assert = field.assertConditions
-        .map((condition: string) => `(${condition})`)
+      this.field.assert = this.field.assertConditions
+        .map((condition) => `(${condition})`)
         .join(' AND ');
     }
   }

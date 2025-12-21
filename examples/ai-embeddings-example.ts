@@ -5,15 +5,15 @@
  * OpenAI embeddings, create HNSW indexes, and perform similarity searches.
  */
 import {
-  defineSchema,
-  composeSchema,
-  string,
-  float,
-  datetime,
-  array,
-  record,
-  index,
   analyzer,
+  array,
+  composeSchema,
+  datetime,
+  defineSchema,
+  float,
+  index,
+  record,
+  string,
 } from '../dist/schema/concise-schema.js';
 
 // Custom analyzer for technical content
@@ -45,18 +45,10 @@ const documents = defineSchema({
   },
   indexes: {
     // Vector similarity search (HNSW)
-    semantic: index(['embedding'])
-      .hnsw()
-      .dimension(1536)
-      .dist('COSINE')
-      .efc(200)
-      .m(16),
+    semantic: index(['embedding']).hnsw().dimension(1536).dist('COSINE').efc(200).m(16),
 
     // Full-text search (single column only)
-    contentSearch: index(['content'])
-      .search()
-      .analyzer('tech')
-      .highlights(),
+    contentSearch: index(['content']).search().analyzer('tech').highlights(),
 
     // Metadata indexes
     category: index(['category']),

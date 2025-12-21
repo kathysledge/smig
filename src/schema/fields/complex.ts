@@ -4,7 +4,28 @@
  */
 
 import { processSurrealQL } from '../common/utils';
-import { SurrealQLFieldBase } from './base';
+import { type FieldBuilderState, SurrealQLFieldBase } from './base';
+
+/**
+ * Interface for objects that have a build() method returning field definitions.
+ */
+interface Buildable {
+  build(): FieldBuilderState | Record<string, unknown>;
+}
+
+/**
+ * Internal structure for simple field builder state (used by SurrealQLAny, SurrealQLArray, SurrealQLSet).
+ */
+interface SimpleFieldState {
+  type: string;
+  optional: boolean;
+  default: unknown;
+  value: string | null;
+  assert: string | null;
+  assertConditions: string[];
+  comments: string[];
+  previousNames: string[];
+}
 
 /**
  * Option field type builder for SurrealDB.
@@ -28,8 +49,7 @@ import { SurrealQLFieldBase } from './base';
  * ```
  */
 export class SurrealQLOption extends SurrealQLFieldBase {
-  // biome-ignore lint/suspicious/noExplicitAny: Dynamic type parameter can be string or builder object
-  constructor(type?: string | any) {
+  constructor(type?: string | Buildable) {
     super();
     // Mark as optional since this is an option<T> type
     this.field.optional = true;
@@ -63,7 +83,7 @@ export class SurrealQLOption extends SurrealQLFieldBase {
  * ```
  */
 export class SurrealQLAny {
-  private field: Record<string, unknown> = {
+  private field: SimpleFieldState = {
     type: 'any',
     optional: false,
     default: null,
@@ -90,35 +110,31 @@ export class SurrealQLAny {
   }
   assert(condition: string) {
     const processedCondition = processSurrealQL(condition);
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic field builder requires flexible typing
-    (this.field as any).assertConditions.push(processedCondition);
+    this.field.assertConditions.push(processedCondition);
     this.updateCombinedAssert();
     return this;
   }
 
   private updateCombinedAssert() {
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic field builder requires flexible typing
-    const field = this.field as any;
-    if (field.assertConditions.length === 0) {
-      field.assert = null;
-    } else if (field.assertConditions.length === 1) {
-      field.assert = field.assertConditions[0];
+    if (this.field.assertConditions.length === 0) {
+      this.field.assert = null;
+    } else if (this.field.assertConditions.length === 1) {
+      this.field.assert = this.field.assertConditions[0];
     } else {
-      field.assert = field.assertConditions
-        .map((condition: string) => `(${condition})`)
+      this.field.assert = this.field.assertConditions
+        .map((condition) => `(${condition})`)
         .join(' AND ');
     }
   }
 
   comment(text: string) {
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic field builder requires flexible typing
-    (this.field as any).comments.push(text);
+    this.field.comments.push(text);
     return this;
   }
 
   was(names: string | string[]) {
     const nameArray = Array.isArray(names) ? names : [names];
-    (this.field.previousNames as string[]).push(...nameArray);
+    this.field.previousNames.push(...nameArray);
     return this;
   }
 
@@ -151,7 +167,7 @@ export class SurrealQLAny {
  * ```
  */
 export class SurrealQLArray<T extends string> {
-  private field: Record<string, unknown> = {
+  private field: SimpleFieldState = {
     type: 'array',
     optional: false,
     default: null,
@@ -162,15 +178,14 @@ export class SurrealQLArray<T extends string> {
     previousNames: [],
   };
 
-  // biome-ignore lint/suspicious/noExplicitAny: Dynamic type parameter can be string or builder object
-  constructor(type: T | any, minLength?: number, maxLength?: number) {
+  constructor(type: T | Buildable, minLength?: number, maxLength?: number) {
     // If type is an object with a build() method, call it to get the type string
     let typeStr: string;
     if (typeof type === 'object' && type !== null && typeof type.build === 'function') {
       const built = type.build();
-      typeStr = built.type;
+      typeStr = (built as { type: string }).type;
     } else {
-      typeStr = type;
+      typeStr = type as string;
     }
 
     // Handle array with length constraints (SurrealDB 3.x feature)
@@ -193,35 +208,31 @@ export class SurrealQLArray<T extends string> {
   }
   assert(condition: string) {
     const processedCondition = processSurrealQL(condition);
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic field builder requires flexible typing
-    (this.field as any).assertConditions.push(processedCondition);
+    this.field.assertConditions.push(processedCondition);
     this.updateCombinedAssert();
     return this;
   }
 
   private updateCombinedAssert() {
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic field builder requires flexible typing
-    const field = this.field as any;
-    if (field.assertConditions.length === 0) {
-      field.assert = null;
-    } else if (field.assertConditions.length === 1) {
-      field.assert = field.assertConditions[0];
+    if (this.field.assertConditions.length === 0) {
+      this.field.assert = null;
+    } else if (this.field.assertConditions.length === 1) {
+      this.field.assert = this.field.assertConditions[0];
     } else {
-      field.assert = field.assertConditions
-        .map((condition: string) => `(${condition})`)
+      this.field.assert = this.field.assertConditions
+        .map((condition) => `(${condition})`)
         .join(' AND ');
     }
   }
 
   comment(text: string) {
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic field builder requires flexible typing
-    (this.field as any).comments.push(text);
+    this.field.comments.push(text);
     return this;
   }
 
   was(names: string | string[]) {
     const nameArray = Array.isArray(names) ? names : [names];
-    (this.field.previousNames as string[]).push(...nameArray);
+    this.field.previousNames.push(...nameArray);
     return this;
   }
 
@@ -280,7 +291,7 @@ export class SurrealQLRecord extends SurrealQLFieldBase {
  * ```
  */
 export class SurrealQLSet<T extends string> {
-  private field: Record<string, unknown> = {
+  private field: SimpleFieldState = {
     type: 'set',
     optional: false,
     default: null,
@@ -291,14 +302,13 @@ export class SurrealQLSet<T extends string> {
     previousNames: [],
   };
 
-  // biome-ignore lint/suspicious/noExplicitAny: Dynamic type parameter can be string or builder object
-  constructor(type: T | any, minLength?: number, maxLength?: number) {
+  constructor(type: T | Buildable, minLength?: number, maxLength?: number) {
     let typeStr: string;
     if (typeof type === 'object' && type !== null && typeof type.build === 'function') {
       const built = type.build();
-      typeStr = built.type;
+      typeStr = (built as { type: string }).type;
     } else {
-      typeStr = type;
+      typeStr = type as string;
     }
 
     if (minLength !== undefined && maxLength !== undefined) {
@@ -320,35 +330,31 @@ export class SurrealQLSet<T extends string> {
   }
   assert(condition: string) {
     const processedCondition = processSurrealQL(condition);
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic field builder requires flexible typing
-    (this.field as any).assertConditions.push(processedCondition);
+    this.field.assertConditions.push(processedCondition);
     this.updateCombinedAssert();
     return this;
   }
 
   private updateCombinedAssert() {
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic field builder requires flexible typing
-    const field = this.field as any;
-    if (field.assertConditions.length === 0) {
-      field.assert = null;
-    } else if (field.assertConditions.length === 1) {
-      field.assert = field.assertConditions[0];
+    if (this.field.assertConditions.length === 0) {
+      this.field.assert = null;
+    } else if (this.field.assertConditions.length === 1) {
+      this.field.assert = this.field.assertConditions[0];
     } else {
-      field.assert = field.assertConditions
-        .map((condition: string) => `(${condition})`)
+      this.field.assert = this.field.assertConditions
+        .map((condition) => `(${condition})`)
         .join(' AND ');
     }
   }
 
   comment(text: string) {
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic field builder requires flexible typing
-    (this.field as any).comments.push(text);
+    this.field.comments.push(text);
     return this;
   }
 
   was(names: string | string[]) {
     const nameArray = Array.isArray(names) ? names : [names];
-    (this.field.previousNames as string[]).push(...nameArray);
+    this.field.previousNames.push(...nameArray);
     return this;
   }
 

@@ -5,20 +5,20 @@
  * Demonstrates sequences, events for inventory, and permissions.
  */
 import {
-  defineSchema,
-  composeSchema,
-  string,
-  int,
-  decimal,
-  bool,
-  datetime,
   array,
-  record,
-  option,
-  object,
-  index,
+  bool,
+  composeSchema,
+  datetime,
+  decimal,
+  defineSchema,
   event,
+  index,
+  int,
+  object,
+  option,
+  record,
   sequence,
+  string,
 } from '../dist/schema/concise-schema.js';
 
 // Categories
@@ -179,4 +179,3 @@ export default composeSchema({
   },
   relations: {},
 });
-

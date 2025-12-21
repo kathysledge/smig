@@ -96,6 +96,7 @@ describe('Migration Diff Generator', () => {
             fields: [{ name: 'email', type: 'string' }],
             indexes: [],
             events: [],
+            // biome-ignore lint/suspicious/noExplicitAny: Test fixture with partial schema
           } as any,
         ],
       });
@@ -210,6 +211,7 @@ describe('Migration Diff Generator', () => {
           {
             name: 'user',
             schemafull: true,
+            // biome-ignore lint/suspicious/noExplicitAny: Test fixture with partial schema
             fields: [{ name: 'fullName', type: 'string', previousName: 'userName' } as any],
             indexes: [],
             events: [],
@@ -287,6 +289,7 @@ describe('Migration Diff Generator', () => {
                 columns: ['email'],
                 unique: false,
                 previousName: 'idx_email',
+                // biome-ignore lint/suspicious/noExplicitAny: Test fixture with partial schema
               } as any,
             ],
             events: [],
@@ -337,6 +340,7 @@ describe('Migration Diff Generator', () => {
             was: 'fn::get_user',
             parameters: [],
             body: 'RETURN 1;',
+            // biome-ignore lint/suspicious/noExplicitAny: Test fixture with partial schema
           } as any,
         ],
       });
@@ -393,6 +397,7 @@ describe('Migration Diff Generator', () => {
                 type: 'HNSW',
                 dimension: 1536,
                 dist: 'COSINE',
+                // biome-ignore lint/suspicious/noExplicitAny: Test fixture with partial schema
               } as any,
             ],
             events: [],
@@ -433,6 +438,7 @@ describe('Migration Diff Generator', () => {
                 type: 'MTREE',
                 dimension: 3,
                 dist: 'EUCLIDEAN',
+                // biome-ignore lint/suspicious/noExplicitAny: Test fixture with partial schema
               } as any,
             ],
             events: [],
@@ -473,6 +479,7 @@ describe('Migration Diff Generator', () => {
                 type: 'SEARCH',
                 analyzer: 'english',
                 highlights: true,
+                // biome-ignore lint/suspicious/noExplicitAny: Test fixture with partial schema
               } as any,
             ],
             events: [],
@@ -495,6 +502,7 @@ describe('Migration Diff Generator', () => {
       const desired = {
         ...createSchema(),
         params: [{ name: 'app_version', value: "'2.0.0'" }],
+        // biome-ignore lint/suspicious/noExplicitAny: Test fixture with partial schema
       } as any;
 
       const diff = generateMigrationDiff(current, desired);
@@ -508,10 +516,12 @@ describe('Migration Diff Generator', () => {
       const current = {
         ...createSchema(),
         params: [{ name: 'max_retries', value: '3' }],
+        // biome-ignore lint/suspicious/noExplicitAny: Test fixture with partial schema
       } as any;
       const desired = {
         ...createSchema(),
         params: [{ name: 'max_retries', value: '5' }],
+        // biome-ignore lint/suspicious/noExplicitAny: Test fixture with partial schema
       } as any;
 
       const diff = generateMigrationDiff(current, desired);
@@ -531,6 +541,7 @@ describe('Migration Diff Generator', () => {
       const current = {
         ...createSchema(),
         params: [{ name: 'deprecated', value: "'old'" }],
+        // biome-ignore lint/suspicious/noExplicitAny: Test fixture with partial schema
       } as any;
       const desired = createSchema();
 
@@ -546,6 +557,7 @@ describe('Migration Diff Generator', () => {
       const desired = {
         ...createSchema(),
         sequences: [{ name: 'order_number', start: 10000, step: 1 }],
+        // biome-ignore lint/suspicious/noExplicitAny: Test fixture with partial schema
       } as any;
 
       const diff = generateMigrationDiff(current, desired);
@@ -559,6 +571,7 @@ describe('Migration Diff Generator', () => {
       const current = {
         ...createSchema(),
         sequences: [{ name: 'legacy_seq' }],
+        // biome-ignore lint/suspicious/noExplicitAny: Test fixture with partial schema
       } as any;
       const desired = createSchema();
 
@@ -574,6 +587,7 @@ describe('Migration Diff Generator', () => {
       const desired = {
         ...createSchema(),
         users: [{ name: 'admin', level: 'DATABASE', roles: ['OWNER'] }],
+        // biome-ignore lint/suspicious/noExplicitAny: Test fixture with partial schema
       } as any;
 
       const diff = generateMigrationDiff(current, desired);
@@ -587,6 +601,7 @@ describe('Migration Diff Generator', () => {
       const current = {
         ...createSchema(),
         users: [{ name: 'temp_user', level: 'DATABASE' }],
+        // biome-ignore lint/suspicious/noExplicitAny: Test fixture with partial schema
       } as any;
       const desired = createSchema();
 
@@ -723,10 +738,12 @@ describe('Migration Diff Generator', () => {
       const current = {
         ...createSchema(),
         params: [{ name: 'max_limit', value: '100' }],
+        // biome-ignore lint/suspicious/noExplicitAny: Test fixture with partial schema
       } as any;
       const desired = {
         ...createSchema(),
         params: [{ name: 'max_limit', value: '200' }],
+        // biome-ignore lint/suspicious/noExplicitAny: Test fixture with partial schema
       } as any;
 
       const diff = generateMigrationDiff(current, desired);

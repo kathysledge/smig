@@ -62,8 +62,7 @@ export class SurrealQLSequence {
   /** Adds a documentation comment */
   comment(text: string) {
     if (text && text.trim() !== '') {
-      // biome-ignore lint/suspicious/noExplicitAny: Dynamic comment array
-      (this.sequence.comments as any[]).push(text.trim());
+      (this.sequence.comments as string[]).push(text.trim());
     }
     return this;
   }

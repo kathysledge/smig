@@ -1,10 +1,4 @@
-import {
-  bool,
-  cf,
-  composeSchema,
-  defineSchema,
-  string,
-} from '../dist/schema/concise-schema.js';
+import { bool, cf, composeSchema, defineSchema, string } from '../dist/schema/concise-schema.js';
 
 /**
  * Minimal Example Schema
@@ -30,4 +24,3 @@ export default composeSchema({
   },
   relations: {},
 });
-

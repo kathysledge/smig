@@ -413,28 +413,25 @@ describe('SQL Generators', () => {
   });
 
   describe('Sequence Generator', () => {
-    it('should generate DEFINE SEQUENCE', () => {
+    it('should generate DEFINE SEQUENCE with START', () => {
       const sql = generateSequenceDefinition({
         name: 'order_number',
         start: 1000,
-        step: 1,
       });
       expect(sql).toContain('DEFINE SEQUENCE order_number');
       expect(sql).toContain('START 1000');
-      expect(sql).toContain('INCREMENT 1');
     });
 
-    it('should generate sequence with CYCLE', () => {
+    it('should generate basic sequence without START', () => {
       const sql = generateSequenceDefinition({
-        name: 'limited_seq',
-        min: 1,
-        max: 9999,
-        cycle: true,
+        name: 'basic_seq',
       });
-      expect(sql).toContain('MINVALUE 1');
-      expect(sql).toContain('MAXVALUE 9999');
-      expect(sql).toContain('CYCLE');
+      expect(sql).toContain('DEFINE SEQUENCE basic_seq');
+      expect(sql).not.toContain('START');
     });
+
+    // Note: INCREMENT, MINVALUE, MAXVALUE, CYCLE are not supported in SurrealDB 3.x
+    // Only START is supported for sequences
   });
 
   describe('Config Generator', () => {

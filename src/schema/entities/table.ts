@@ -330,6 +330,10 @@ export interface TableSchema {
   changefeedIncludeOriginal?: boolean;
   permissions?: unknown;
   previousNames?: string[];
+  // Definition options
+  ifNotExists?: boolean;
+  overwrite?: boolean;
+  comment?: string;
 }
 
 /**

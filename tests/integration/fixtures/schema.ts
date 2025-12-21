@@ -1,4 +1,4 @@
-import { defineSchema, composeSchema, string, int } from '../../../dist/schema/concise-schema.js';
+import { composeSchema, defineSchema, int, string } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -12,4 +12,3 @@ export default composeSchema({
   },
   relations: {},
 });
-

@@ -4,6 +4,35 @@
  */
 
 /**
+ * Interface for objects that have a build() method.
+ */
+interface BuildableObject {
+  build(): unknown;
+}
+
+/**
+ * Checks if an object has a build method.
+ */
+function isBuildable(obj: unknown): obj is BuildableObject {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'build' in obj &&
+    typeof (obj as BuildableObject).build === 'function'
+  );
+}
+
+/**
+ * Resolves a value that may be a builder object or a raw definition.
+ */
+function resolveBuilder<T>(value: T | BuildableObject): T {
+  if (isBuildable(value)) {
+    return value.build() as T;
+  }
+  return value as T;
+}
+
+/**
  * Type definition for a complete SurrealDB table model
  */
 export interface SurrealDBModel {
@@ -98,42 +127,15 @@ export function composeSchema(config: {
   return {
     tables: Object.values(config.models) as SurrealDBModel[],
     relations: config.relations ? (Object.values(config.relations) as SurrealDBRelation[]) : [],
-    functions: config.functions
-      ? // biome-ignore lint/suspicious/noExplicitAny: Dynamic builder objects
-        Object.values(config.functions).map((f: any) => (f.build ? f.build() : f))
-      : [],
-    scopes: config.scopes
-      ? // biome-ignore lint/suspicious/noExplicitAny: Dynamic builder objects
-        Object.values(config.scopes).map((s: any) => (s.build ? s.build() : s))
-      : [],
-    analyzers: config.analyzers
-      ? // biome-ignore lint/suspicious/noExplicitAny: Dynamic builder objects
-        Object.values(config.analyzers).map((a: any) => (a.build ? a.build() : a))
-      : [],
-    accesses: config.accesses
-      ? // biome-ignore lint/suspicious/noExplicitAny: Dynamic builder objects
-        Object.values(config.accesses).map((a: any) => (a.build ? a.build() : a))
-      : [],
-    params: config.params
-      ? // biome-ignore lint/suspicious/noExplicitAny: Dynamic builder objects
-        Object.values(config.params).map((p: any) => (p.build ? p.build() : p))
-      : [],
-    users: config.users
-      ? // biome-ignore lint/suspicious/noExplicitAny: Dynamic builder objects
-        Object.values(config.users).map((u: any) => (u.build ? u.build() : u))
-      : [],
-    models: config.surrealModels
-      ? // biome-ignore lint/suspicious/noExplicitAny: Dynamic builder objects
-        Object.values(config.surrealModels).map((m: any) => (m.build ? m.build() : m))
-      : [],
-    configs: config.configs
-      ? // biome-ignore lint/suspicious/noExplicitAny: Dynamic builder objects
-        Object.values(config.configs).map((c: any) => (c.build ? c.build() : c))
-      : [],
-    sequences: config.sequences
-      ? // biome-ignore lint/suspicious/noExplicitAny: Dynamic builder objects
-        Object.values(config.sequences).map((s: any) => (s.build ? s.build() : s))
-      : [],
+    functions: config.functions ? Object.values(config.functions).map(resolveBuilder) : [],
+    scopes: config.scopes ? Object.values(config.scopes).map(resolveBuilder) : [],
+    analyzers: config.analyzers ? Object.values(config.analyzers).map(resolveBuilder) : [],
+    accesses: config.accesses ? Object.values(config.accesses).map(resolveBuilder) : [],
+    params: config.params ? Object.values(config.params).map(resolveBuilder) : [],
+    users: config.users ? Object.values(config.users).map(resolveBuilder) : [],
+    models: config.surrealModels ? Object.values(config.surrealModels).map(resolveBuilder) : [],
+    configs: config.configs ? Object.values(config.configs).map(resolveBuilder) : [],
+    sequences: config.sequences ? Object.values(config.sequences).map(resolveBuilder) : [],
     comments: config.comments || [],
   };
 }

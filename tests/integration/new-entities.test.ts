@@ -105,7 +105,7 @@ export default composeSchema({
   models: {},
   relations: {},
   sequences: {
-    order_number: sequence('order_number').start(1000).step(1),
+    order_number: sequence('order_number').start(1000),
   }
 });`,
       );

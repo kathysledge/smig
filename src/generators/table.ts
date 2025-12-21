@@ -27,7 +27,7 @@ export function generateTableDefinition(
   const parts: string[] = ['DEFINE TABLE'];
 
   // IF NOT EXISTS
-  if (options.ifNotExists || (table as any).ifNotExists) {
+  if (options.ifNotExists || table.ifNotExists) {
     parts.push('IF NOT EXISTS');
   }
 
@@ -51,7 +51,7 @@ export function generateTableDefinition(
       if (table.to) {
         parts.push(`OUT ${table.to}`);
       }
-      if ((table as any).enforced) {
+      if (table.enforced) {
         parts.push('ENFORCED');
       }
     }
@@ -96,8 +96,8 @@ export function generateTableDefinition(
   }
 
   // Comment
-  if (options.includeComments && (table.comments?.length || (table as any).comment)) {
-    const comment = (table as any).comment || table.comments?.[0];
+  if (options.includeComments && (table.comments?.length || table.comment)) {
+    const comment = table.comment || table.comments?.[0];
     if (comment) {
       parts.push(`COMMENT "${comment.replace(/"/g, '\\"')}"`);
     }

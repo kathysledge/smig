@@ -15,7 +15,16 @@ import { SurrealClient } from '../database/surreal-client';
 import { generateIndexDefinition as generateIndexSQL } from '../generators/index-gen';
 import type {
   DatabaseConfig,
+  IntrospectedAnalyzer,
+  IntrospectedEvent,
+  IntrospectedField,
+  IntrospectedFunction,
+  IntrospectedIndex,
+  IntrospectedRelation,
+  IntrospectedScope,
+  IntrospectedTable,
   Migration,
+  MigrationChange,
   MigrationStatus,
   SurrealAnalyzer,
   SurrealDBSchema,
@@ -647,13 +656,7 @@ export class MigrationManager {
   async generateDiff(schema: SurrealDBSchema): Promise<{ up: string; down: string }> {
     const upChanges: string[] = [];
     const downChanges: string[] = [];
-    const changeLog: Array<{
-      type: string;
-      table: string;
-      operation: string;
-      // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection requires flexible types
-      details: any;
-    }> = [];
+    const changeLog: MigrationChange[] = [];
 
     upChanges.push(`-- Migration diff for ${new Date().toISOString()}`);
     upChanges.push('');
@@ -1172,7 +1175,7 @@ export class MigrationManager {
         case 'remove':
           // Rollback remove = recreate
           if (change.type === 'table' || change.type === 'relation') {
-            const currentTable = change.details.currentTable;
+            const currentTable = change.details.currentTable as IntrospectedTable | undefined;
 
             // Check if currentTable exists before proceeding
             if (!currentTable) {
@@ -1208,35 +1211,39 @@ export class MigrationManager {
             }
             downChanges.push('');
           } else if (change.type === 'function') {
-            const func = change.details.currentFunction;
+            const func = change.details.currentFunction as IntrospectedFunction | undefined;
             if (func) {
               downChanges.push(`-- Rollback: Recreate function ${change.table}`);
               downChanges.push(this.generateFunctionDefinition(func));
               downChanges.push('');
             }
           } else if (change.type === 'scope') {
-            const scope = change.details.currentScope;
+            const scope = change.details.currentScope as IntrospectedScope | undefined;
             if (scope) {
               downChanges.push(`-- Rollback: Recreate scope ${change.table}`);
               downChanges.push(this.generateScopeDefinition(scope));
               downChanges.push('');
             }
           } else if (change.type === 'analyzer') {
-            const analyzer = change.details.currentAnalyzer;
+            const analyzer = change.details.currentAnalyzer as IntrospectedAnalyzer | undefined;
             if (analyzer) {
               downChanges.push(`-- Rollback: Recreate analyzer ${change.table}`);
               downChanges.push(this.generateAnalyzerDefinition(analyzer));
               downChanges.push('');
             }
           } else if (change.type === 'param') {
-            const param = change.details.currentParam;
+            const param = change.details.currentParam as
+              | { name: string; value: unknown }
+              | undefined;
             if (param) {
               downChanges.push(`-- Rollback: Recreate param ${change.table}`);
               downChanges.push(`DEFINE PARAM $${param.name} VALUE ${param.value};`);
               downChanges.push('');
             }
           } else if (change.type === 'sequence') {
-            const seq = change.details.currentSequence;
+            const seq = change.details.currentSequence as
+              | { name: string; start?: number }
+              | undefined;
             if (seq) {
               downChanges.push(`-- Rollback: Recreate sequence ${change.table}`);
               let seqDef = `DEFINE SEQUENCE ${seq.name}`;
@@ -1251,7 +1258,9 @@ export class MigrationManager {
         case 'modify':
           // Rollback modifications - restore original state
           if (change.type === 'table' || change.type === 'relation') {
-            const currentTable = change.details.currentTable || change.details.currentRelation;
+            const currentTable = (change.details.currentTable || change.details.currentRelation) as
+              | IntrospectedTable
+              | undefined;
 
             // Check if currentTable exists before proceeding
             if (!currentTable) {
@@ -1266,16 +1275,15 @@ export class MigrationManager {
             );
 
             // Rollback field changes
-            for (const changeLine of change.details.fieldChanges) {
+            const fieldChanges = (change.details.fieldChanges || []) as string[];
+            for (const changeLine of fieldChanges) {
               if (changeLine.includes('DEFINE FIELD OVERWRITE')) {
                 // Extract field name and restore original definition
                 // Updated regex to support field names with dots (e.g., "emails.address")
                 const fieldMatch = changeLine.match(/DEFINE FIELD OVERWRITE ([^\s]+) ON TABLE/);
                 if (fieldMatch) {
                   const fieldName = fieldMatch[1];
-                  const originalField = currentTable.fields?.find(
-                    (f: Record<string, unknown>) => f.name === fieldName,
-                  );
+                  const originalField = currentTable.fields?.find((f) => f.name === fieldName);
                   if (originalField) {
                     downChanges.push(`-- Restore field ${fieldName} to original state`);
                     downChanges.push(this.generateFieldDefinition(change.table, originalField));
@@ -1296,9 +1304,7 @@ export class MigrationManager {
                 const fieldMatch = changeLine.match(/REMOVE FIELD ([^\s]+) ON TABLE/);
                 if (fieldMatch) {
                   const fieldName = fieldMatch[1];
-                  const originalField = currentTable.fields?.find(
-                    (f: Record<string, unknown>) => f.name === fieldName,
-                  );
+                  const originalField = currentTable.fields?.find((f) => f.name === fieldName);
                   if (originalField) {
                     downChanges.push(`-- Restore removed field ${fieldName}`);
                     downChanges.push(this.generateFieldDefinition(change.table, originalField));
@@ -1308,7 +1314,8 @@ export class MigrationManager {
             }
 
             // Rollback index changes
-            for (const changeLine of change.details.indexChanges) {
+            const indexChanges = (change.details.indexChanges || []) as string[];
+            for (const changeLine of indexChanges) {
               if (changeLine.includes('DEFINE INDEX')) {
                 // New index added - remove it
                 const indexMatch = changeLine.match(/DEFINE INDEX (\w+) ON TABLE/);
@@ -1322,9 +1329,7 @@ export class MigrationManager {
                 const indexMatch = changeLine.match(/REMOVE INDEX (\w+) ON TABLE/);
                 if (indexMatch) {
                   const indexName = indexMatch[1];
-                  const originalIndex = currentTable.indexes?.find(
-                    (i: Record<string, unknown>) => i.name === indexName,
-                  );
+                  const originalIndex = currentTable.indexes?.find((i) => i.name === indexName);
                   if (originalIndex) {
                     downChanges.push(`-- Restore removed index ${indexName}`);
                     downChanges.push(this.generateIndexDefinition(change.table, originalIndex));
@@ -1334,7 +1339,8 @@ export class MigrationManager {
             }
 
             // Rollback event changes
-            for (const changeLine of change.details.eventChanges) {
+            const eventChanges = (change.details.eventChanges || []) as string[];
+            for (const changeLine of eventChanges) {
               if (changeLine.includes('DEFINE EVENT')) {
                 // New event added - remove it
                 const eventMatch = changeLine.match(/DEFINE EVENT (\w+) ON TABLE/);
@@ -1348,9 +1354,7 @@ export class MigrationManager {
                 const eventMatch = changeLine.match(/REMOVE EVENT (\w+) ON TABLE/);
                 if (eventMatch) {
                   const eventName = eventMatch[1];
-                  const originalEvent = currentTable.events?.find(
-                    (e: Record<string, unknown>) => e.name === eventName,
-                  );
+                  const originalEvent = currentTable.events?.find((e) => e.name === eventName);
                   if (originalEvent) {
                     downChanges.push(`-- Restore removed event ${eventName}`);
                     downChanges.push(this.generateEventDefinition(change.table, originalEvent));
@@ -1361,7 +1365,9 @@ export class MigrationManager {
             downChanges.push('');
           } else if (change.type === 'function') {
             // Rollback function modification - restore original function
-            const currentFunction = change.details.currentFunction;
+            const currentFunction = change.details.currentFunction as
+              | IntrospectedFunction
+              | undefined;
             if (currentFunction) {
               downChanges.push(`-- Rollback: Restore function ${change.table} to original state`);
               downChanges.push(this.generateFunctionDefinition(currentFunction));
@@ -1369,7 +1375,7 @@ export class MigrationManager {
             }
           } else if (change.type === 'scope') {
             // Rollback scope modification - restore original scope
-            const currentScope = change.details.currentScope;
+            const currentScope = change.details.currentScope as IntrospectedScope | undefined;
             if (currentScope) {
               downChanges.push(`-- Rollback: Restore scope ${change.table} to original state`);
               downChanges.push(this.generateScopeDefinition(currentScope));
@@ -1377,7 +1383,9 @@ export class MigrationManager {
             }
           } else if (change.type === 'analyzer') {
             // Rollback analyzer modification - restore original analyzer
-            const currentAnalyzer = change.details.currentAnalyzer;
+            const currentAnalyzer = change.details.currentAnalyzer as
+              | IntrospectedAnalyzer
+              | undefined;
             if (currentAnalyzer) {
               downChanges.push(`-- Rollback: Restore analyzer ${change.table} to original state`);
               downChanges.push(this.generateAnalyzerDefinition(currentAnalyzer));
@@ -1385,7 +1393,7 @@ export class MigrationManager {
             }
           } else if (change.type === 'param') {
             // Rollback param modification - restore original value
-            const oldValue = change.details.oldValue;
+            const oldValue = change.details.oldValue as string | undefined;
             if (oldValue) {
               downChanges.push(`-- Rollback: Restore param ${change.table} to original value`);
               downChanges.push(`ALTER PARAM $${change.table} VALUE ${oldValue};`);
@@ -1397,24 +1405,30 @@ export class MigrationManager {
         case 'recreate':
           // Rollback recreation - restore the original relation
           if (change.type === 'relation') {
-            const oldRelation = change.details.oldRelation;
+            const oldRelation = change.details.oldRelation as IntrospectedRelation | undefined;
+            if (!oldRelation) {
+              debugLog(
+                `Warning: Cannot rollback recreate for ${change.table} - original relation not found`,
+              );
+              break;
+            }
             downChanges.push(`-- Rollback: Restore original ${change.type} ${change.table}`);
             downChanges.push(`REMOVE TABLE ${change.table};`);
             const schemaMode = oldRelation.schemafull === false ? 'SCHEMALESS' : 'SCHEMAFULL';
             downChanges.push(`DEFINE TABLE ${change.table} ${schemaMode};`);
 
             // Restore original fields
-            for (const field of oldRelation.fields) {
+            for (const field of oldRelation.fields || []) {
               downChanges.push(this.generateFieldDefinition(change.table, field));
             }
 
             // Restore original indexes
-            for (const index of oldRelation.indexes) {
+            for (const index of oldRelation.indexes || []) {
               downChanges.push(this.generateIndexDefinition(change.table, index));
             }
 
             // Restore original events
-            for (const event of oldRelation.events) {
+            for (const event of oldRelation.events || []) {
               downChanges.push(this.generateEventDefinition(change.table, event));
             }
             downChanges.push('');
@@ -1595,11 +1609,11 @@ export class MigrationManager {
 
     debugLog(
       'Virtualized tables:',
-      virtualizedTables.map((t) => (t as Record<string, unknown>).name),
+      virtualizedTables.map((t) => t.name),
     );
     debugLog(
       'Virtualized relations:',
-      virtualizedRelations.map((r) => (r as Record<string, unknown>).name),
+      virtualizedRelations.map((r) => r.name),
     );
 
     // Parse functions from database info
@@ -1726,43 +1740,34 @@ export class MigrationManager {
    * @param infoResult - The raw result object from INFO FOR TABLE command
    * @returns Structured table schema object ready for comparison
    */
-  private parseInfoResult(tableName: string, infoResultRaw: unknown): Record<string, unknown> {
+  private parseInfoResult(tableName: string, infoResultRaw: unknown): IntrospectedTable {
     // Type assertion for database introspection results
     const infoResult = infoResultRaw as Record<string, unknown>;
     // Parse the INFO FOR TABLE result to extract schema information
     debugLog(`Parsing info result for ${tableName}:`, infoResult);
 
     // Use the modular introspection parser
-    const tableInfo = parseTableInfo(tableName, infoResult) as {
-      name: string;
-      schemafull: boolean;
-      drop: boolean;
-      type: string;
-      changefeedDuration: string | null;
-      changefeedIncludeOriginal: boolean;
-      fields: Array<Record<string, unknown>>;
-      indexes: Array<Record<string, unknown>>;
-      events: Array<Record<string, unknown>>;
-      isRelation: boolean;
-      relationInfo: { from: string | null; to: string | null } | null;
-    };
+    const rawTableInfo = parseTableInfo(tableName, infoResult);
+
+    // Cast to typed structure
+    const fields = (rawTableInfo.fields as IntrospectedField[]) || [];
+    const indexes = (rawTableInfo.indexes as IntrospectedIndex[]) || [];
+    const events = (rawTableInfo.events as IntrospectedEvent[]) || [];
 
     debugLog(`Parsed table ${tableName}:`, {
-      fields: tableInfo.fields.length,
-      indexes: tableInfo.indexes.length,
-      events: tableInfo.events.length,
-      isRelation: tableInfo.isRelation,
+      fields: fields.length,
+      indexes: indexes.length,
+      events: events.length,
+      isRelation: rawTableInfo.isRelation,
     });
 
     return {
       name: tableName,
       schemafull: true,
       comments: [],
-      fields: tableInfo.fields,
-      indexes: tableInfo.indexes,
-      events: tableInfo.events,
-      isRelation: tableInfo.isRelation,
-      relationInfo: tableInfo.relationInfo,
+      fields,
+      indexes,
+      events,
     };
   }
 
@@ -2054,14 +2059,10 @@ export class MigrationManager {
    * @param tableInfo - The parsed table information
    * @returns True if the table is identified as a relation table
    */
-  private isRelationTable(
-    tableName: string,
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection requires flexible types
-    tableInfo: any,
-  ): boolean {
+  private isRelationTable(tableName: string, tableInfo: IntrospectedTable): boolean {
     // First check if the table has the standard relation fields
-    const hasInField = tableInfo.fields?.some((f: Record<string, unknown>) => f.name === 'in');
-    const hasOutField = tableInfo.fields?.some((f: Record<string, unknown>) => f.name === 'out');
+    const hasInField = tableInfo.fields?.some((f) => f.name === 'in');
+    const hasOutField = tableInfo.fields?.some((f) => f.name === 'out');
 
     // If it has both 'in' and 'out' fields, it's a relation
     // This is the only reliable way to detect relations - the 'in' and 'out' fields
@@ -2082,13 +2083,12 @@ export class MigrationManager {
    * @param tableInfo - The table info object containing field definitions
    * @returns Object with from and to table names
    */
-  // biome-ignore lint/suspicious/noExplicitAny: Dynamic schema introspection requires flexible types
-  private extractRelationInfo(tableInfo: any): {
+  private extractRelationInfo(tableInfo: IntrospectedTable): {
     from: string;
     to: string;
   } {
-    const inField = tableInfo.fields?.find((f: Record<string, unknown>) => f.name === 'in');
-    const outField = tableInfo.fields?.find((f: Record<string, unknown>) => f.name === 'out');
+    const inField = tableInfo.fields?.find((f) => f.name === 'in');
+    const outField = tableInfo.fields?.find((f) => f.name === 'out');
 
     // Extract table names from record types (e.g., "record<user>" -> "user")
     const extractTableFromRecordType = (fieldType: string): string | null => {
@@ -2096,8 +2096,8 @@ export class MigrationManager {
       return match ? match[1] : null;
     };
 
-    const fromTable = inField ? extractTableFromRecordType(inField.type) : null;
-    const toTable = outField ? extractTableFromRecordType(outField.type) : null;
+    const fromTable = inField?.type ? extractTableFromRecordType(inField.type) : null;
+    const toTable = outField?.type ? extractTableFromRecordType(outField.type) : null;
 
     debugLog(`Extracted relation info:`, {
       tableName: tableInfo.name,
@@ -2157,11 +2157,7 @@ export class MigrationManager {
     });
   }
 
-  private generateFieldDefinition(
-    tableName: string,
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic field definitions from schema introspection
-    field: any,
-  ): string {
+  private generateFieldDefinition(tableName: string, field: IntrospectedField): string {
     let definition = `DEFINE FIELD ${field.name} ON TABLE ${tableName} TYPE ${field.type}`;
 
     if (field.value) {
@@ -2200,18 +2196,26 @@ export class MigrationManager {
    * @param index - The index definition object
    * @returns Complete DEFINE INDEX statement
    */
-  private generateIndexDefinition(
-    tableName: string,
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic index definitions from schema introspection
-    index: any,
-  ): string {
-    const indexName = index.name || `${tableName}_${index.columns.join('_')}`;
+  private generateIndexDefinition(tableName: string, index: IntrospectedIndex): string {
+    const columns = index.columns || [];
+    const indexName = index.name || `${tableName}_${columns.join('_')}`;
+
+    // Cast type and dist to the expected types for the generator
+    type IndexTypeVal = 'BTREE' | 'HASH' | 'SEARCH' | 'MTREE' | 'HNSW';
+    type DistVal =
+      | 'COSINE'
+      | 'EUCLIDEAN'
+      | 'MANHATTAN'
+      | 'MINKOWSKI'
+      | 'CHEBYSHEV'
+      | 'HAMMING'
+      | null;
 
     // Use the proper generator which supports all index types
     return generateIndexSQL(tableName, indexName, {
-      columns: index.columns || [],
+      columns,
       unique: index.unique || false,
-      type: index.type || 'BTREE',
+      type: (index.type || 'BTREE') as IndexTypeVal,
       // Search options
       analyzer: index.analyzer || null,
       highlights: index.highlights || false,
@@ -2222,7 +2226,7 @@ export class MigrationManager {
       termsCache: index.termsCache || null,
       // Vector options (MTREE/HNSW)
       dimension: index.dimension || null,
-      dist: index.dist || null,
+      dist: (index.dist || null) as DistVal,
       // MTREE-specific
       capacity: index.capacity || null,
       // HNSW-specific
@@ -2250,11 +2254,7 @@ export class MigrationManager {
    * @param event - The event definition object
    * @returns Complete DEFINE EVENT statement
    */
-  private generateEventDefinition(
-    tableName: string,
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic event definitions from schema introspection
-    event: any,
-  ): string {
+  private generateEventDefinition(tableName: string, event: IntrospectedEvent): string {
     const thenValue = event.thenStatement ?? '';
     const trimmedStatement = String(thenValue).trim();
 
@@ -2289,11 +2289,7 @@ export class MigrationManager {
    * @param func - The function definition object
    * @returns Complete DEFINE FUNCTION statement
    */
-  private generateFunctionDefinition(
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic function definitions from schema
-    func: any,
-    overwrite = false,
-  ): string {
+  private generateFunctionDefinition(func: IntrospectedFunction, overwrite = false): string {
     let definition = `DEFINE FUNCTION ${overwrite ? 'OVERWRITE ' : ''}${func.name}`;
 
     // Add parameters
@@ -2328,11 +2324,7 @@ export class MigrationManager {
    * @param overwrite - Whether to include OVERWRITE keyword for modifications
    * @returns Complete DEFINE ACCESS statement
    */
-  private generateScopeDefinition(
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic scope definitions from schema
-    scope: any,
-    overwrite = false,
-  ): string {
+  private generateScopeDefinition(scope: IntrospectedScope, overwrite = false): string {
     let definition = `DEFINE ACCESS ${overwrite ? 'OVERWRITE ' : ''}${scope.name} ON DATABASE TYPE RECORD`;
 
     // Add SIGNUP logic
@@ -2362,11 +2354,7 @@ export class MigrationManager {
    * @param analyzer - The analyzer definition object
    * @returns Complete DEFINE ANALYZER statement
    */
-  private generateAnalyzerDefinition(
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic analyzer definitions from schema
-    analyzer: any,
-    overwrite = false,
-  ): string {
+  private generateAnalyzerDefinition(analyzer: IntrospectedAnalyzer, overwrite = false): string {
     let definition = `DEFINE ANALYZER ${overwrite ? 'OVERWRITE ' : ''}${analyzer.name}`;
 
     // Add tokenizers
@@ -2398,10 +2386,8 @@ export class MigrationManager {
    * @returns Array of SurrealQL statements needed to synchronize fields
    */
   private async compareTableFields(
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic table schema comparison requires flexible types
-    newTable: { name: string; fields: any[]; [key: string]: any },
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic table schema comparison requires flexible types
-    currentTable: { name: string; fields: any[]; [key: string]: any },
+    newTable: IntrospectedTable,
+    currentTable: IntrospectedTable,
   ): Promise<string[]> {
     const changes: string[] = [];
 
@@ -2411,24 +2397,18 @@ export class MigrationManager {
 
     // Filter out auto-generated relation fields for relation tables
     const filteredNewFields = this.isRelationTable(newTable.name, newTable)
-      ? newFields.filter(
-          (f: Record<string, unknown>) => f?.name && f.name !== 'in' && f.name !== 'out',
-        )
+      ? newFields.filter((f) => f?.name && f.name !== 'in' && f.name !== 'out')
       : newFields;
 
     const filteredCurrentFields =
       currentTable && this.isRelationTable(currentTable.name, currentTable)
-        ? currentFields.filter(
-            (f: Record<string, unknown>) => f?.name && f.name !== 'in' && f.name !== 'out',
-          )
+        ? currentFields.filter((f) => f?.name && f.name !== 'in' && f.name !== 'out')
         : currentFields;
 
     // Check for new fields and field modifications
     for (const newField of filteredNewFields) {
       if (!newField || !newField.name) continue;
-      const currentField = filteredCurrentFields.find(
-        (f: Record<string, unknown>) => f && f.name === newField.name,
-      );
+      const currentField = filteredCurrentFields.find((f) => f && f.name === newField.name);
 
       // Debug: Log TypeScript schema field definition
       debugLog(`TypeScript schema field ${newField.name} in table ${newTable.name}:`, {
@@ -2467,18 +2447,14 @@ export class MigrationManager {
       if (fieldName.endsWith('.*')) {
         // Check if the parent field (e.g., "tags") exists in the schema as an array
         const parentFieldName = fieldName.slice(0, -2); // Remove ".*"
-        const parentField = filteredNewFields.find(
-          (f: Record<string, unknown>) => f && f.name === parentFieldName,
-        );
+        const parentField = filteredNewFields.find((f) => f && f.name === parentFieldName);
         if (parentField && String(parentField.type || '').startsWith('array')) {
           // This is an auto-generated array element field, skip it
           continue;
         }
       }
 
-      const stillExists = filteredNewFields.find(
-        (f: Record<string, unknown>) => f && f.name === currentField.name,
-      );
+      const stillExists = filteredNewFields.find((f) => f && f.name === currentField.name);
       if (!stillExists) {
         changes.push(`-- Removed field: ${currentField.name} from table ${newTable.name}`);
         changes.push(`REMOVE FIELD ${currentField.name} ON TABLE ${newTable.name};`);
@@ -2509,10 +2485,8 @@ export class MigrationManager {
    */
   private compareFieldProperties(
     tableName: string,
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic field comparison requires flexible types
-    newField: any,
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic field comparison requires flexible types
-    currentField: any,
+    newField: IntrospectedField,
+    currentField: IntrospectedField,
   ): string[] {
     const changes: string[] = [];
 
@@ -2818,10 +2792,8 @@ export class MigrationManager {
    * @returns Array of SurrealQL statements for index changes
    */
   private compareTableIndexes(
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic table schema comparison requires flexible types
-    newTable: { name: string; indexes: any[]; [key: string]: any },
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic table schema comparison requires flexible types
-    currentTable: { indexes: any[]; [key: string]: any },
+    newTable: IntrospectedTable,
+    currentTable: IntrospectedTable,
   ): string[] {
     const changes: string[] = [];
 
@@ -2832,9 +2804,7 @@ export class MigrationManager {
     // Check for new indexes
     for (const newIndex of newIndexes) {
       if (!newIndex || !newIndex.columns) continue;
-      const currentIndex = currentIndexes.find(
-        (i: Record<string, unknown>) => i && i.name === newIndex.name,
-      );
+      const currentIndex = currentIndexes.find((i) => i && i.name === newIndex.name);
       if (!currentIndex) {
         changes.push(
           `-- New index: ${newIndex.name || newIndex.columns.join('_')} on table ${newTable.name}`,
@@ -2846,9 +2816,7 @@ export class MigrationManager {
     // Check for removed indexes
     for (const currentIndex of currentIndexes) {
       if (!currentIndex || !currentIndex.name) continue;
-      const stillExists = newIndexes.find(
-        (i: Record<string, unknown>) => i && i.name === currentIndex.name,
-      );
+      const stillExists = newIndexes.find((i) => i && i.name === currentIndex.name);
       if (!stillExists) {
         changes.push(`-- Removed index: ${currentIndex.name} from table ${newTable.name}`);
         changes.push(`REMOVE INDEX ${currentIndex.name} ON TABLE ${newTable.name};`);
@@ -2873,10 +2841,8 @@ export class MigrationManager {
    * @returns Array of SurrealQL statements for event changes
    */
   private compareTableEvents(
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic table schema comparison requires flexible types
-    newTable: { name: string; events: any[]; [key: string]: any },
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic table schema comparison requires flexible types
-    currentTable: { events: any[]; [key: string]: any },
+    newTable: IntrospectedTable,
+    currentTable: IntrospectedTable,
   ): string[] {
     const changes: string[] = [];
 
@@ -2887,9 +2853,7 @@ export class MigrationManager {
     // Check for new events
     for (const newEvent of newEvents) {
       if (!newEvent || !newEvent.name) continue;
-      const currentEvent = currentEvents.find(
-        (e: Record<string, unknown>) => e && e.name === newEvent.name,
-      );
+      const currentEvent = currentEvents.find((e) => e && e.name === newEvent.name);
       if (!currentEvent) {
         changes.push(`-- New event: ${newEvent.name} on table ${newTable.name}`);
         changes.push(this.generateEventDefinition(newTable.name, newEvent));
@@ -2899,9 +2863,7 @@ export class MigrationManager {
     // Check for removed events
     for (const currentEvent of currentEvents) {
       if (!currentEvent || !currentEvent.name) continue;
-      const stillExists = newEvents.find(
-        (e: Record<string, unknown>) => e && e.name === currentEvent.name,
-      );
+      const stillExists = newEvents.find((e) => e && e.name === currentEvent.name);
       if (!stillExists) {
         changes.push(`-- Removed event: ${currentEvent.name} from table ${newTable.name}`);
         changes.push(`REMOVE EVENT ${currentEvent.name} ON TABLE ${newTable.name};`);
@@ -2919,10 +2881,8 @@ export class MigrationManager {
    * @returns True if the relation properties have changed, false otherwise
    */
   private hasRelationPropertiesChanged(
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic relation comparison requires flexible types
-    newRelation: { from: string; to: string; [key: string]: any },
-    // biome-ignore lint/suspicious/noExplicitAny: Dynamic relation comparison requires flexible types
-    currentRelation: { from: string; to: string; [key: string]: any },
+    newRelation: IntrospectedRelation,
+    currentRelation: IntrospectedRelation,
   ): boolean {
     // Check if from or to properties have changed
     return newRelation.from !== currentRelation.from || newRelation.to !== currentRelation.to;
