@@ -17,7 +17,6 @@ import {
   SurrealQLSequence,
   SurrealQLTable,
   SurrealQLUser,
-  type UserRole,
 } from './entities';
 // Field factories
 import {

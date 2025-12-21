@@ -70,7 +70,7 @@ export default {
     // === STEP 1: Initial schema ===
     console.log('\n=== Step 1: Create initial schema ===');
     const v1 = createSchema('lifecycle-v1', `
-import { defineSchema, composeSchema, string, int, datetime, index } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string, int, datetime, index } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -125,7 +125,7 @@ export default composeSchema({
     // === STEP 2: Modify schema ===
     console.log('\n=== Step 2: Modify schema ===');
     const v2 = createSchema('lifecycle-v2', `
-import { defineSchema, composeSchema, string, int, bool, datetime, index, record } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string, int, bool, datetime, index, record } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -198,7 +198,7 @@ export default composeSchema({
     // === STEP 3: Another modification ===
     console.log('\n=== Step 3: Field type and index changes ===');
     const v3 = createSchema('lifecycle-v3', `
-import { defineSchema, composeSchema, string, int, bool, datetime, index, record, float } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string, int, bool, datetime, index, record, float } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -280,7 +280,7 @@ export default composeSchema({
 
     // Create initial schema
     const schema = createSchema('rollback', `
-import { defineSchema, composeSchema, string, int } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string, int } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -327,7 +327,7 @@ export default composeSchema({
 
     // Initial schema with more fields
     const v1 = createSchema('removal-v1', `
-import { defineSchema, composeSchema, string, int, bool, index } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string, int, bool, index } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -354,7 +354,7 @@ export default composeSchema({
 
     // Remove fields and indexes
     const v2 = createSchema('removal-v2', `
-import { defineSchema, composeSchema, string, index } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string, index } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -392,7 +392,7 @@ export default composeSchema({
 
     // Initial schema
     const v1 = createSchema('empty-v1', `
-import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -412,7 +412,7 @@ export default composeSchema({
 
     // Empty schema
     const v2 = createSchema('empty-v2', `
-import { composeSchema } from '../../../dist/schema/concise-schema.ts';
+import { composeSchema } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {},

@@ -15,7 +15,7 @@ describe('Configuration Integration Tests', () => {
     // Create a minimal schema file for validation tests
     fs.writeFileSync(
       TEST_SCHEMA_PATH,
-      `import { composeSchema } from './dist/schema/concise-schema.ts';
+      `import { composeSchema } from './dist/schema/concise-schema.js';
 export default composeSchema({ models: {}, relations: {} });`,
     );
   });

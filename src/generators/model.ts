@@ -54,7 +54,7 @@ export function generateModelDefinition(
     parts.push(`COMMENT "${model.comments[0].replace(/"/g, '\\"')}"`);
   }
 
-  return parts.join(' ') + ';';
+  return `${parts.join(' ')};`;
 }
 
 /**

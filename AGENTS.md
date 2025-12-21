@@ -156,14 +156,14 @@ DEFINE INDEX name ON TABLE t FIELDS f MTREE DIMENSION 3 DIST EUCLIDEAN CAPACITY 
 
 ### Unit tests
 
-```bash
+```zsh
 bun run test              # Run all unit tests
 bun run test:watch        # Watch mode
 ```
 
 ### Integration tests
 
-```bash
+```zsh
 bun run test:integration  # Requires running SurrealDB
 ```
 
@@ -244,7 +244,7 @@ Integration tests start SurrealDB instances per-test. They're in `tests/integrat
 
 ## Build commands
 
-```bash
+```zsh
 bun run build        # Build dist/
 bun run dev          # Watch mode
 bun run lint         # Biome check
@@ -263,6 +263,10 @@ bun run docs:build   # Build documentation
 | `src/index.ts` | Public API exports |
 | `docs/.vitepress/config.ts` | Documentation config |
 | `docs/.vitepress/languages/surql.tmLanguage.json` | SurrealQL syntax highlighting |
+
+## Additional Resources
+
+- **[SurrealDB Normalization Guide](docs/SURREALDB_NORMALIZATION.md)** — Critical reference for understanding how SurrealDB normalizes field definitions during introspection
 
 ## Links
 

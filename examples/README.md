@@ -19,7 +19,7 @@ The simplest possible **smig** schema - perfect for understanding the basics.
 - `task` - Simple todo items with validation
 
 **Run it:**
-```bash
+```zsh
 smig generate --schema examples/minimal-example.js
 smig migrate --schema examples/minimal-example.js
 ```
@@ -46,7 +46,7 @@ A realistic blogging platform schema with relationships.
 - `like` - Users liking posts (graph edge)
 
 **Run it:**
-```bash
+```zsh
 smig generate --schema examples/simple-blog-schema.js
 smig migrate --schema examples/simple-blog-schema.js
 ```
@@ -78,7 +78,7 @@ A comprehensive social media platform with advanced features.
 - `block` - User blocking
 
 **Run it:**
-```bash
+```zsh
 smig generate --schema examples/social-network-schema.js
 smig migrate --schema examples/social-network-schema.js
 ```
@@ -126,7 +126,7 @@ A full-featured social platform demonstrating advanced **smig** capabilities.
 - `relevanceSearch` - Full-text search with camel case, class tokenizers, and snowball stemming
 
 **Run it:**
-```bash
+```zsh
 smig generate --schema examples/social-platform-schema.js
 smig migrate --schema examples/social-platform-schema.js
 ```
@@ -266,7 +266,7 @@ const followRelation = defineRelation({
 
 Each example can be run directly:
 
-```bash
+```zsh
 # Test the minimal example
 smig generate --schema examples/minimal-example.js
 smig migrate --schema examples/minimal-example.js
@@ -284,7 +284,7 @@ smig migrate --schema examples/social-network-schema.js
 
 Copy an example as your starting point:
 
-```bash
+```zsh
 # Start with the blog example
 cp examples/simple-blog-schema.js schema.js
 
@@ -294,7 +294,7 @@ smig migrate
 
 ### Test with different databases
 
-```bash
+```zsh
 # Test against different database instances
 smig generate --schema examples/simple-blog-schema.js --url ws://localhost:8001
 

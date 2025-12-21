@@ -58,7 +58,7 @@ export function generateEventDefinition(
     parts.push(`COMMENT "${event.comments[0].replace(/"/g, '\\"')}"`);
   }
 
-  return parts.join(' ') + ';';
+  return `${parts.join(' ')};`;
 }
 
 /**

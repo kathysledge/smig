@@ -37,7 +37,7 @@ export function parseEventDefinition(eventName: string, eventDef: string): Recor
   return {
     name: eventName,
     when: extractEventWhen(eventDef),
-    then: extractEventThen(eventDef),
+    thenStatement: extractEventThen(eventDef),
     type: extractEventType(eventDef),
   };
 }

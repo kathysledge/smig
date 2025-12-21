@@ -45,7 +45,7 @@ export function generateParamDefinition(
     parts.push(`COMMENT "${param.comments[0].replace(/"/g, '\\"')}"`);
   }
 
-  return parts.join(' ') + ';';
+  return `${parts.join(' ')};`;
 }
 
 /**

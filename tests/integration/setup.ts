@@ -42,7 +42,7 @@ async function startSurrealDB() {
   console.log('🧹 Cleaning up any leftover test processes...');
   try {
     await execAsync('pkill -f "surreal.*800[12]" 2>/dev/null || true');
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for cleanup
+    await new Promise((resolve) => setTimeout(resolve, 100)); // Wait for cleanup
   } catch (_error) {
     // pkill failures are expected if no processes are found
   }
@@ -62,7 +62,7 @@ async function startSurrealDB() {
   });
 
   // Small delay between starting processes
-  await new Promise((resolve) => setTimeout(resolve, 500));
+  await new Promise((resolve) => setTimeout(resolve, 50));
 
   // Start second test database (port 8002)
   console.log('Starting SurrealDB test instance 2 on port 8002...');
@@ -79,7 +79,7 @@ async function startSurrealDB() {
   });
 
   // Wait for databases to be ready
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 200));
 
   // Test connectivity
   try {
@@ -139,13 +139,13 @@ async function stopSurrealDB() {
                 // Give it a moment for SIGKILL to take effect
                 setTimeout(() => {
                   resolve();
-                }, 500);
+                }, 50);
               } catch (killError) {
                 console.warn('Error sending SIGKILL to process 1:', killError);
                 resolve();
               }
             }
-          }, 2000);
+          }, 200);
         } catch (error) {
           console.warn('Error killing db1 process:', error);
           resolve();
@@ -185,13 +185,13 @@ async function stopSurrealDB() {
                 // Give it a moment for SIGKILL to take effect
                 setTimeout(() => {
                   resolve();
-                }, 500);
+                }, 50);
               } catch (killError) {
                 console.warn('Error sending SIGKILL to process 2:', killError);
                 resolve();
               }
             }
-          }, 2000);
+          }, 200);
         } catch (error) {
           console.warn('Error killing db2 process:', error);
           resolve();
@@ -215,7 +215,7 @@ async function stopSurrealDB() {
   }
 
   // Wait a bit for cleanup
-  await new Promise((resolve) => setTimeout(resolve, 500));
+  await new Promise((resolve) => setTimeout(resolve, 50));
 
   // Clear process references
   db1ProcessGlobal = null;

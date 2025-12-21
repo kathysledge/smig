@@ -33,7 +33,7 @@ tests/
 ## Running Tests
 
 ### Unit Tests (Main Suite)
-```bash
+```zsh
 # Run all unit tests
 bun run test
 
@@ -42,7 +42,7 @@ bun run test --watch
 ```
 
 ### Integration Tests (Requires SurrealDB)
-```bash
+```zsh
 # Run integration tests
 bun run test:integration
 
@@ -311,7 +311,7 @@ export default composeSchema({
 ## Debugging Tests
 
 ### Debug Output
-```bash
+```zsh
 # Run specific test file
 bun run test tests/migration-manager.test.ts
 

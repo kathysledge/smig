@@ -68,7 +68,7 @@
  * ```
  *
  * @example
- * ```bash
+ * ```zsh
  * # Apply migrations using default config
  * bun smig migrate
  *
@@ -627,22 +627,22 @@ const userModel = defineSchema({
     // Basic fields
     name: string().required(),
     email: string().required(),
-    
+
     // Optional fields with defaults
     isActive: bool().default(true),
     role: string().default('user'),
-    
+
     // Timestamps (using common field patterns)
     createdAt: cf.timestamp(),
     updatedAt: cf.timestamp(),
-    
+
     // Vector embedding for AI search (384 dimensions)
     embedding: array('float').comment('User profile embedding'),
   },
   indexes: {
     // Unique email constraint
     emailIndex: index(['email']).unique(),
-    
+
     // Vector index for similarity search (HNSW algorithm)
     embeddingIndex: index(['embedding'])
       .hnsw()
@@ -664,14 +664,14 @@ const postModel = defineSchema({
     isPublished: bool().default(false),
     viewCount: int().default(0).readonly(),
     createdAt: cf.timestamp(),
-    
+
     // Content embedding for semantic search
     contentEmbedding: array('float'),
   },
   indexes: {
     authorIndex: index(['author']),
     publishedIndex: index(['isPublished', 'createdAt']),
-    
+
     // Full-text search with custom analyzer
     contentSearch: index(['content'])
       .search()

@@ -28,7 +28,7 @@ features:
     details: Zero-config TypeScript support. Just use .ts files — no build step required.
 ---
 
-<img src="/homepage-banner.jpg” alt="Cartoon of Asterix and Obelix using smig to control an AI machine” data-zoomable style="width: 100%; border-radius: 12px; margin: 2rem 0;” />
+<img src="/homepage-banner.jpg" alt="Cartoon of Asterix and Obelix using smig to control an AI machine" data-zoomable style="width: 100%; border-radius: 12px; margin: 2rem 0;" />
 
 <div class="two-column-layout">
 <div class="main-column">
@@ -144,7 +144,7 @@ flowchart LR
 
 Get up and running in seconds:
 
-```bash
+```zsh
 # Install
 bun add -D smig
 
@@ -152,7 +152,7 @@ bun add -D smig
 bun smig init
 
 # Start SurrealDB
-surreal start memory
+surreal start -u root -p root
 
 # Apply schema
 bun smig migrate

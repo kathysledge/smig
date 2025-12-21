@@ -39,7 +39,7 @@ export interface FieldComparisonResult {
  * @returns Comparison result with change details
  */
 export function compareFields(
-  tableName: string,
+  _tableName: string,
   newField: Record<string, unknown>,
   currentField: Record<string, unknown>,
 ): FieldComparisonResult {

@@ -481,7 +481,7 @@ describe('Migration Diff Generator', () => {
       const diff = generateMigrationDiff(current, desired);
 
       expect(diff.up).toContain('DEFINE INDEX idx_content');
-      expect(diff.up).toContain('SEARCH');
+      expect(diff.up).toContain('FULLTEXT');
       expect(diff.up).toContain('ANALYZER english');
       expect(diff.up).toContain('HIGHLIGHTS');
     });

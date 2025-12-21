@@ -13,7 +13,7 @@ Before installing **smig**, you need:
 
 If you don’t have SurrealDB:
 
-```bash
+```zsh
 # macOS
 brew install surrealdb/tap/surreal
 
@@ -32,19 +32,19 @@ Choose your package manager:
 
 ::: code-group
 
-```bash [bun]
+```zsh [bun]
 bun add -D smig
 ```
 
-```bash [npm]
+```zsh [npm]
 npm install --save-dev smig
 ```
 
-```bash [pnpm]
+```zsh [pnpm]
 pnpm add -D smig
 ```
 
-```bash [yarn]
+```zsh [yarn]
 yarn add -D smig
 ```
 
@@ -58,7 +58,7 @@ We recommend Bun — it’s faster and **smig** is tested primarily with Bun.
 
 Run the init command:
 
-```bash
+```zsh
 bun smig init
 ```
 
@@ -112,7 +112,7 @@ export default composeSchema({
 
 Verify the installation worked:
 
-```bash
+```zsh
 bun smig --version
 ```
 
@@ -120,13 +120,13 @@ bun smig --version
 
 Start SurrealDB:
 
-```bash
+```zsh
 surreal start --user root --pass root memory
 ```
 
 In another terminal:
 
-```bash
+```zsh
 bun smig test
 ```
 
@@ -188,7 +188,7 @@ export default {
 
 Use with `--env`:
 
-```bash
+```zsh
 bun smig migrate --env production
 ```
 
@@ -196,7 +196,7 @@ bun smig migrate --env production
 
 **smig** automatically reads `.env` files:
 
-```bash
+```zsh
 # .env
 SMIG_URL=ws://localhost:8000
 SMIG_NAMESPACE=test
@@ -294,7 +294,7 @@ myapp/
 
 SurrealDB isn’t running. Start it:
 
-```bash
+```zsh
 surreal start --user root --pass root memory
 ```
 
@@ -306,7 +306,7 @@ Check username/password in your config matches SurrealDB’s startup flags.
 
 Make sure **smig** is in `devDependencies`:
 
-```bash
+```zsh
 bun add -D smig
 ```
 

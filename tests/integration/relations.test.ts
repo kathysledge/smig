@@ -69,7 +69,7 @@ export default {
       const dbName = `test_relation_simple_${Date.now()}`;
 
       const schemaPath = createSchema('simple', `
-import { defineSchema, defineRelation, composeSchema, string, datetime } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, defineRelation, composeSchema, string, datetime } from '../../../dist/schema/concise-schema.js';
 
 const user = defineSchema({
   table: 'rel_user',
@@ -121,7 +121,7 @@ export default composeSchema({
       const dbName = `test_relation_self_${Date.now()}`;
 
       const schemaPath = createSchema('self-ref', `
-import { defineSchema, defineRelation, composeSchema, string, datetime, bool } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, defineRelation, composeSchema, string, datetime, bool } from '../../../dist/schema/concise-schema.js';
 
 const person = defineSchema({
   table: 'person',
@@ -164,7 +164,7 @@ export default composeSchema({
       const dbName = `test_relation_fields_${Date.now()}`;
 
       const schemaPath = createSchema('with-fields', `
-import { defineSchema, defineRelation, composeSchema, string, int, float, datetime, bool } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, defineRelation, composeSchema, string, int, float, datetime, bool } from '../../../dist/schema/concise-schema.js';
 
 const customer = defineSchema({
   table: 'customer',
@@ -230,7 +230,7 @@ export default composeSchema({
 
       // Initial relation
       const v1 = createSchema('add-field-v1', `
-import { defineSchema, defineRelation, composeSchema, string, datetime } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, defineRelation, composeSchema, string, datetime } from '../../../dist/schema/concise-schema.js';
 
 const user = defineSchema({
   table: 'rel_user2',
@@ -262,7 +262,7 @@ export default composeSchema({
 
       // Add field to relation
       const v2 = createSchema('add-field-v2', `
-import { defineSchema, defineRelation, composeSchema, string, datetime, int } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, defineRelation, composeSchema, string, datetime, int } from '../../../dist/schema/concise-schema.js';
 
 const user = defineSchema({
   table: 'rel_user2',

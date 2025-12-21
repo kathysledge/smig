@@ -78,7 +78,7 @@ export function generateSequenceDefinition(
     parts.push(`COMMENT "${sequence.comments[0].replace(/"/g, '\\"')}"`);
   }
 
-  return parts.join(' ') + ';';
+  return `${parts.join(' ')};`;
 }
 
 /**

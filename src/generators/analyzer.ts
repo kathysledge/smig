@@ -58,7 +58,7 @@ export function generateAnalyzerDefinition(
     parts.push(`COMMENT "${analyzer.comments[0].replace(/"/g, '\\"')}"`);
   }
 
-  return parts.join(' ') + ';';
+  return `${parts.join(' ')};`;
 }
 
 /**

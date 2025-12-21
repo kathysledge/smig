@@ -27,10 +27,7 @@ import {
   alterFieldValue,
   alterFunctionRename,
   alterIndexRename,
-  alterParamRename,
   alterParamValue,
-  alterSequenceRename,
-  alterTableComment,
   // ALTER statements
   alterTableRename,
   generateAccessDefinition,
@@ -38,7 +35,6 @@ import {
   generateAnalyzerDefinition,
   generateAnalyzerRemove,
   generateEventDefinition,
-  generateEventRemove,
   generateFieldDefinition,
   generateFieldRemove,
   generateFunctionDefinition,
@@ -55,7 +51,6 @@ import {
   generateUserRemove,
 } from '../generators';
 import type { SurrealDBSchema } from '../types/schema';
-import { debugLog } from '../utils/debug-logger';
 
 // Comparison utilities
 import {
@@ -366,8 +361,8 @@ function compareTableContents(
   const desiredFields = desiredTable.fields || [];
   const currentIndexes = currentTable.indexes || [];
   const desiredIndexes = desiredTable.indexes || [];
-  const currentEvents = currentTable.events || [];
-  const desiredEvents = desiredTable.events || [];
+  const _currentEvents = currentTable.events || [];
+  const _desiredEvents = desiredTable.events || [];
 
   // Compare fields
   for (const desiredField of desiredFields) {

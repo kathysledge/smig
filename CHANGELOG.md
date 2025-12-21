@@ -14,7 +14,7 @@ This release consolidates all alpha features into a production-ready beta. Major
 
 Define schemas in TypeScript with zero build configuration:
 
-```bash
+```zsh
 bun smig init          # Creates schema.ts
 bun smig migrate       # Just works™
 ```
@@ -123,7 +123,7 @@ defineSchema({ table: 'logs', schemaless: true, fields: { ... } })
 ### From v0.x to v1.x
 
 1. **Update dependencies**
-   ```bash
+   ```zsh
    bun install smig@latest
    ```
 
@@ -144,7 +144,7 @@ defineSchema({ table: 'logs', schemaless: true, fields: { ... } })
    ```
 
 6. **Test your migrations**
-   ```bash
+   ```zsh
    bun smig diff
    bun smig migrate
    ```
@@ -153,7 +153,7 @@ defineSchema({ table: 'logs', schemaless: true, fields: { ... } })
 
 No breaking changes! Just update and enjoy:
 
-```bash
+```zsh
 bun install smig@latest
 ```
 

@@ -3,7 +3,7 @@
  * @module generators/table
  */
 
-import type { TableSchema, TableType } from '../schema/entities/table';
+import type { TableSchema } from '../schema/entities/table';
 
 /**
  * Options for SQL generation.
@@ -103,7 +103,7 @@ export function generateTableDefinition(
     }
   }
 
-  return parts.join(' ') + ';';
+  return `${parts.join(' ')};`;
 }
 
 /**

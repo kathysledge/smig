@@ -70,7 +70,7 @@ export function generateFunctionDefinition(
     parts.push(`COMMENT "${func.comments[0].replace(/"/g, '\\"')}"`);
   }
 
-  return parts.join(' ') + ';';
+  return `${parts.join(' ')};`;
 }
 
 /**

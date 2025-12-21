@@ -112,7 +112,7 @@ export function parseTableInfo(tableName: string, infoResultRaw: unknown): Recor
  * @param tableInfo - The parsed table info
  * @returns True if the table is a relation
  */
-export function isRelationTable(tableName: string, tableInfo: Record<string, unknown>): boolean {
+export function isRelationTable(_tableName: string, tableInfo: Record<string, unknown>): boolean {
   // Check if explicitly marked as RELATION type
   if (tableInfo.type === 'RELATION') {
     return true;

@@ -20,7 +20,7 @@ These options work with any command:
 
 Example:
 
-```bash
+```zsh
 bun smig migrate --url ws://localhost:8000 --namespace test --database myapp
 ```
 
@@ -30,7 +30,7 @@ bun smig migrate --url ws://localhost:8000 --namespace test --database myapp
 
 Apply pending schema changes to the database.
 
-```bash
+```zsh
 bun smig migrate [options]
 ```
 
@@ -41,7 +41,7 @@ bun smig migrate [options]
 
 **Examples:**
 
-```bash
+```zsh
 # Apply changes with default config
 bun smig migrate
 
@@ -65,7 +65,7 @@ bun smig migrate --env production
 
 Preview what SQL would be generated, without applying it.
 
-```bash
+```zsh
 bun smig diff [options]
 ```
 
@@ -76,7 +76,7 @@ bun smig diff [options]
 
 **Examples:**
 
-```bash
+```zsh
 # Preview changes
 bun smig diff
 
@@ -103,13 +103,13 @@ REMOVE FIELD avatar ON TABLE user;
 
 Show the current migration status.
 
-```bash
+```zsh
 bun smig status [options]
 ```
 
 **Examples:**
 
-```bash
+```zsh
 bun smig status
 bun smig status --env production
 ```
@@ -132,7 +132,7 @@ Applied migrations:
 
 Undo applied migrations.
 
-```bash
+```zsh
 bun smig rollback [options]
 ```
 
@@ -144,7 +144,7 @@ bun smig rollback [options]
 
 **Examples:**
 
-```bash
+```zsh
 # Rollback the last migration
 bun smig rollback
 
@@ -165,13 +165,13 @@ bun smig rollback --to def456
 
 Check your schema file for errors without connecting to the database.
 
-```bash
+```zsh
 bun smig validate [options]
 ```
 
 **Examples:**
 
-```bash
+```zsh
 bun smig validate
 bun smig validate --schema ./schemas/main.ts
 ```
@@ -196,7 +196,7 @@ bun smig validate --schema ./schemas/main.ts
 
 Create starter files for a new project.
 
-```bash
+```zsh
 bun smig init [options]
 ```
 
@@ -206,7 +206,7 @@ bun smig init [options]
 
 **Examples:**
 
-```bash
+```zsh
 # Create default files
 bun smig init
 
@@ -223,13 +223,13 @@ bun smig init --output ./src/db/schema.ts
 
 Verify database connection.
 
-```bash
+```zsh
 bun smig test [options]
 ```
 
 **Examples:**
 
-```bash
+```zsh
 bun smig test
 bun smig test --env production
 ```
@@ -247,7 +247,7 @@ bun smig test --env production
 
 Show current configuration.
 
-```bash
+```zsh
 bun smig config [options]
 ```
 
@@ -257,7 +257,7 @@ bun smig config [options]
 
 **Examples:**
 
-```bash
+```zsh
 bun smig config
 bun smig config --show-secrets
 bun smig config --env production
@@ -286,7 +286,7 @@ Use --env <name> to select an environment
 
 Generate an ER diagram from your schema.
 
-```bash
+```zsh
 bun smig mermaid [options]
 ```
 
@@ -296,7 +296,7 @@ bun smig mermaid [options]
 
 **Examples:**
 
-```bash
+```zsh
 bun smig mermaid
 bun smig mermaid --output docs/schema.mmd
 ```
@@ -350,7 +350,7 @@ export default {
 
 Use with `--env`:
 
-```bash
+```zsh
 bun smig migrate --env production
 ```
 
@@ -358,7 +358,7 @@ bun smig migrate --env production
 
 **smig** reads from `.env` files:
 
-```bash
+```zsh
 # .env
 SMIG_URL=ws://localhost:8000
 SMIG_NAMESPACE=test

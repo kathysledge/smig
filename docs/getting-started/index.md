@@ -9,7 +9,7 @@ This section helps you go from zero to working migrations. By the end, you’ll 
 
 If you just want to see it work, here’s the shortest path:
 
-```bash
+```zsh
 # Install smig
 bun add -D smig
 
@@ -36,7 +36,7 @@ Done! You now have a `user` and `post` table in your database.
 
 Verify your environment is ready:
 
-```bash
+```zsh
 # Check Bun or Node.js
 bun --version    # Should be 1.0.0 or higher
 node --version   # Should be 18.0.0 or higher (if not using Bun)
@@ -93,7 +93,7 @@ export default {
 
 Apply your schema to the database:
 
-```bash
+```zsh
 bun smig migrate
 ```
 

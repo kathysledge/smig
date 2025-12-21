@@ -8,7 +8,7 @@ Production-ready patterns for using **smig** effectively.
 
 Your `schema.ts` is the source of truth. Always commit it:
 
-```bash
+```zsh
 git add schema.ts
 git commit -m "Add user authentication fields"
 ```
@@ -17,7 +17,7 @@ git commit -m "Add user authentication fields"
 
 Descriptive messages help you understand history:
 
-```bash
+```zsh
 # ✓ Good
 bun smig diff
 bun smig diff
@@ -31,7 +31,7 @@ bun smig diff
 
 Always review generated SurrealQL (SQL) before applying:
 
-```bash
+```zsh
 bun smig diff --dry-run
 # Review the output carefully
 bun smig migrate
@@ -181,7 +181,7 @@ const likesRelation = defineRelation({
 
 Don’t push directly to production:
 
-```bash
+```zsh
 # 1. Apply to dev
 bun smig migrate
 
@@ -200,7 +200,7 @@ bun smig migrate --config smig.production.config.ts
 
 Protect your data before significant schema updates:
 
-```bash
+```zsh
 # Before risky migrations
 surreal export --conn ws://localhost:8000 backup-$(date +%Y%m%d).surql
 
@@ -221,7 +221,7 @@ surreal import --conn ws://localhost:8000 backup-20240115.surql
 
 Coordinate schema changes in teams:
 
-```bash
+```zsh
 # Developer A
 git pull
 bun smig diff
@@ -311,4 +311,3 @@ indexes: {
 - [Schema design](schema-design.md)
 - [Multi-environment workflows](multi-environment.md)
 - [CLI commands](cli-commands.md)
-

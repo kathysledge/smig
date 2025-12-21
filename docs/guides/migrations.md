@@ -109,7 +109,7 @@ Each migration includes SHA-256 checksums of both the up and down scripts. This 
 
 Compare your schema definition with the database and preview the migration:
 
-```bash
+```zsh
 bun smig generate
 ```
 
@@ -122,7 +122,7 @@ bun smig generate
 
 Apply schema changes to your database:
 
-```bash
+```zsh
 # Preview changes without applying
 bun smig migrate --dry-run
 
@@ -142,7 +142,7 @@ What happens during `migrate`:
 
 Undo the most recent migration:
 
-```bash
+```zsh
 bun smig rollback
 ```
 
@@ -164,7 +164,7 @@ If a migration fails partway through:
 
 Commands to diagnose and recover from issues:
 
-```bash
+```zsh
 # Retry the failed migration
 bun smig migrate
 
@@ -182,7 +182,7 @@ bun smig generate  # See current differences
 
 Look at what will change before applying:
 
-```bash
+```zsh
 # Preview changes
 bun smig migrate --dry-run
 
@@ -198,7 +198,7 @@ bun smig migrate
 
 Protect your data before significant schema updates:
 
-```bash
+```zsh
 # Export current state
 surreal export --conn ws://localhost:8000 backup.surql
 
@@ -213,7 +213,7 @@ surreal import --conn ws://localhost:8000 backup.surql
 
 Verify migrations work before production:
 
-```bash
+```zsh
 # Apply to staging
 bun smig migrate --config ./staging.config.ts
 
@@ -226,4 +226,3 @@ bun smig migrate --config ./production.config.ts
 - [CLI commands](cli-commands.md)
 - [Multi-environment workflows](multi-environment.md)
 - [Best practices](best-practices.md)
-

@@ -24,12 +24,7 @@ import type {
 } from '../types/schema';
 import { debugLog, debugLogSchema } from '../utils/debug-logger';
 // Introspection parsers
-import {
-  parseEventDefinition,
-  parseFieldDefinition,
-  parseIndexDefinition,
-  parseTableInfo,
-} from './introspection';
+import { parseTableInfo } from './introspection';
 
 /**
  * Main class for managing SurrealDB database migrations.
@@ -1772,168 +1767,6 @@ export class MigrationManager {
   }
 
   /**
-   * Regular expression patterns for parsing SurrealDB field definitions.
-   *
-   * These patterns are designed to extract field properties from the INFO FOR TABLE
-   * results, which return field definitions in SurrealQL syntax. The patterns use
-   * lookahead to match properties without consuming the following keywords.
-   *
-   * Each pattern is carefully crafted to:
-   * - Match the property value (in capture group 1)
-   * - Stop at the next keyword or end of string
-   * - Handle optional spacing and multiple property combinations
-   */
-  private static readonly FIELD_PATTERNS = {
-    // Field modifiers
-    ifNotExists: /IF\s+NOT\s+EXISTS/,
-    overwrite: /OVERWRITE/,
-    flexible: /FLEX(?:IBLE)?/,
-    readonly: /READONLY/,
-    // Match optional types - both option<T> and none | T formats (SurrealDB v3)
-    optional: /TYPE\s+(?:option<|none\s*\|)/i,
-
-    // Field properties - capture type including union types like "none | string"
-    type: /(?:FLEXIBLE\s+)?TYPE\s+([^\s;]+(?:<[^>]+>)?(?:\s*\|\s*[^\s;]+(?:<[^>]+>)?)*)/,
-    value: /VALUE\s+([^;]+?)(?:\s+(?:ASSERT|DEFAULT|PERMISSIONS|COMMENT|FLEX(?:IBLE)?|$))/,
-    assert: /ASSERT\s+([^;]+?)(?:\s+(?:DEFAULT|PERMISSIONS|COMMENT|FLEX(?:IBLE)?|$))/,
-    default: /DEFAULT\s+([^;]+?)(?:\s+(?:ASSERT|PERMISSIONS|COMMENT|FLEX(?:IBLE)?|$))/,
-    permissions: /PERMISSIONS\s+([^;]+?)(?:\s+COMMENT|$)/,
-    comment: /COMMENT\s+([^;]+?)(?:\s+FLEX(?:IBLE)?|$)/,
-  } as const;
-
-  private extractFieldType(fieldDef: string): string {
-    const typeMatch = fieldDef.match(MigrationManager.FIELD_PATTERNS.type);
-    return typeMatch ? typeMatch[1].trim() : 'string';
-  }
-
-  private isFieldOptional(fieldDef: string): boolean {
-    return MigrationManager.FIELD_PATTERNS.optional.test(fieldDef);
-  }
-
-  private isFieldReadonly(fieldDef: string): boolean {
-    return MigrationManager.FIELD_PATTERNS.readonly.test(fieldDef);
-  }
-
-  private isFieldFlexible(fieldDef: string): boolean {
-    return MigrationManager.FIELD_PATTERNS.flexible.test(fieldDef);
-  }
-
-  private hasIfNotExists(fieldDef: string): boolean {
-    return MigrationManager.FIELD_PATTERNS.ifNotExists.test(fieldDef);
-  }
-
-  private hasOverwrite(fieldDef: string): boolean {
-    return MigrationManager.FIELD_PATTERNS.overwrite.test(fieldDef);
-  }
-
-  private extractFieldDefault(fieldDef: string): string | null {
-    const defaultMatch = fieldDef.match(MigrationManager.FIELD_PATTERNS.default);
-    return defaultMatch ? defaultMatch[1].trim() : null;
-  }
-
-  private extractFieldValue(fieldDef: string): string | null {
-    // Check if there's a VALUE clause
-    const valueIndex = fieldDef.indexOf('VALUE ');
-    if (valueIndex === -1) return null;
-
-    // Start after "VALUE "
-    const start = valueIndex + 6;
-    let value = '';
-    let braceDepth = 0;
-    let inFuture = false;
-
-    // Scan through the string character by character
-    for (let i = start; i < fieldDef.length; i++) {
-      const char = fieldDef[i];
-
-      // Check if we're starting a <future> block (SurrealDB v2 syntax)
-      if (!inFuture && fieldDef.substring(i, i + 8) === '<future>') {
-        inFuture = true;
-      }
-
-      // Track brace depth - also handle SurrealDB v3 computed fields { }
-      if (char === '{') {
-        braceDepth++;
-        // If this is the first brace at the start of value, it's a computed expression
-        if (braceDepth === 1 && value.trim() === '') {
-          inFuture = true; // Treat { } blocks like <future> blocks for parsing
-        }
-      } else if (char === '}') {
-        braceDepth--;
-        // If we close all braces in a future/computed block, we're done with the value
-        if (inFuture && braceDepth === 0) {
-          value += char;
-          break;
-        }
-      }
-
-      // If not in a future/computed block and we hit a keyword, stop
-      if (braceDepth === 0 && !inFuture) {
-        const remaining = fieldDef.substring(i);
-        if (/^\s+(ASSERT|DEFAULT|PERMISSIONS|COMMENT|FLEX(?:IBLE)?)\s/.test(remaining)) {
-          break;
-        }
-      }
-
-      value += char;
-    }
-
-    return value.trim() || null;
-  }
-
-  private extractFieldAssert(fieldDef: string): string | null {
-    const assertMatch = fieldDef.match(MigrationManager.FIELD_PATTERNS.assert);
-    return assertMatch ? assertMatch[1].trim() : null;
-  }
-
-  private extractFieldPermissions(fieldDef: string): string | null {
-    const permissionsMatch = fieldDef.match(MigrationManager.FIELD_PATTERNS.permissions);
-    return permissionsMatch ? permissionsMatch[1].trim() : null;
-  }
-
-  private extractFieldComment(fieldDef: string): string | null {
-    const commentMatch = fieldDef.match(MigrationManager.FIELD_PATTERNS.comment);
-    return commentMatch ? commentMatch[1].trim() : null;
-  }
-
-  private extractIndexColumns(indexDef: string): string[] {
-    // SurrealDB uses FIELDS instead of COLUMNS in index definitions
-    // Match FIELDS followed by column names, stopping before UNIQUE or other keywords
-    const fieldsMatch = indexDef.match(/FIELDS\s+([^;]+?)(?:\s+(?:UNIQUE|$))/);
-    if (!fieldsMatch) {
-      // Fallback: try to match everything after FIELDS until semicolon
-      const fallbackMatch = indexDef.match(/FIELDS\s+([^;]+)/);
-      if (!fallbackMatch) {
-        return [];
-      }
-      // Remove UNIQUE and other keywords that might be at the end
-      const columnsStr = fallbackMatch[1].replace(/\s+UNIQUE\s*$/, '').trim();
-      return columnsStr
-        .split(',')
-        .map((col) => col.trim())
-        .filter((col) => col.length > 0);
-    }
-    return fieldsMatch[1]
-      .split(',')
-      .map((col) => col.trim())
-      .filter((col) => col.length > 0);
-  }
-
-  private isIndexUnique(indexDef: string): boolean {
-    return indexDef.includes('UNIQUE');
-  }
-
-  private extractEventWhen(eventDef: string): string {
-    const whenMatch = eventDef.match(/WHEN\s+([^;]+)/);
-    return whenMatch ? whenMatch[1].trim() : '';
-  }
-
-  private extractEventThen(eventDef: string): string {
-    const thenMatch = eventDef.match(/THEN\s+([^;]+)/);
-    return thenMatch ? thenMatch[1].trim() : '';
-  }
-
-  /**
    * Parses a function definition from INFO FOR DB result.
    *
    * Extracts function parameters, return type, and body from the definition string.
@@ -2422,8 +2255,7 @@ export class MigrationManager {
     // biome-ignore lint/suspicious/noExplicitAny: Dynamic event definitions from schema introspection
     event: any,
   ): string {
-    // Handle both schema events (thenStatement) and introspected events (then)
-    const thenValue = event.thenStatement ?? event.then ?? '';
+    const thenValue = event.thenStatement ?? '';
     const trimmedStatement = String(thenValue).trim();
 
     // If the statement is already wrapped in braces, don't wrap again

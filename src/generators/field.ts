@@ -127,7 +127,7 @@ export function generateFieldDefinition(
     parts.push(`COMMENT "${field.comment.replace(/"/g, '\\"')}"`);
   }
 
-  return parts.join(' ') + ';';
+  return `${parts.join(' ')};`;
 }
 
 /**
@@ -166,7 +166,7 @@ export function generateFieldAlter(
     parts.push(`COMMENT "${changes.comment.replace(/"/g, '\\"')}"`);
   }
 
-  return parts.join(' ') + ';';
+  return `${parts.join(' ')};`;
 }
 
 /**

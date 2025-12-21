@@ -113,7 +113,7 @@ export default {
     it('should generate migration for new table', async () => {
       // Create test schema
       const schemaContent = `
-import { defineSchema, composeSchema, string, int, datetime } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string, int, datetime } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -156,7 +156,7 @@ export default {
     it('should detect no changes when schema matches database', async () => {
       // Create minimal schema
       const schemaContent = `
-import { composeSchema } from '../../../dist/schema/concise-schema.ts';
+import { composeSchema } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {},
@@ -187,7 +187,7 @@ export default {
     it('should apply migration and track it in _migrations table', async () => {
       // Create test schema
       const schemaContent = `
-import { defineSchema, composeSchema, string, datetime } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string, datetime } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -268,7 +268,7 @@ export default {
       // Create empty schema
       createTestSchema(
         `
-import { composeSchema } from '../../../dist/schema/concise-schema.ts';
+import { composeSchema } from '../../../dist/schema/concise-schema.js';
 export default composeSchema({ models: {}, relations: {} });
       `,
         'empty-schema.ts',
@@ -298,7 +298,7 @@ export default {
       fs.writeFileSync(TEST_CONFIG_PATH, configContent);
       createTestSchema(
         `
-import { composeSchema } from '../../../dist/schema/concise-schema.ts';
+import { composeSchema } from '../../../dist/schema/concise-schema.js';
 export default composeSchema({ models: {}, relations: {} });
       `,
         'empty-schema.ts',
@@ -331,7 +331,7 @@ export default composeSchema({ models: {}, relations: {} });
       // Create schema file
       createTestSchema(
         `
-import { composeSchema } from '../../../dist/schema/concise-schema.ts';
+import { composeSchema } from '../../../dist/schema/concise-schema.js';
 export default composeSchema({ models: {}, relations: {} });
       `,
         'env-schema.ts',
@@ -361,7 +361,7 @@ export default {
 
       createTestSchema(
         `
-import { composeSchema } from '../../../dist/schema/concise-schema.ts';
+import { composeSchema } from '../../../dist/schema/concise-schema.js';
 export default composeSchema({ models: {}, relations: {} });
       `,
         'debug-schema.ts',

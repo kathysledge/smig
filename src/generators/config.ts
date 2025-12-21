@@ -88,7 +88,7 @@ export function generateConfigDefinition(
     parts.push(`COMMENT "${config.comments[0].replace(/"/g, '\\"')}"`);
   }
 
-  return parts.join(' ') + ';';
+  return `${parts.join(' ')};`;
 }
 
 /**

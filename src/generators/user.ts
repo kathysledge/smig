@@ -69,7 +69,7 @@ export function generateUserDefinition(
     parts.push(`COMMENT "${user.comments[0].replace(/"/g, '\\"')}"`);
   }
 
-  return parts.join(' ') + ';';
+  return `${parts.join(' ')};`;
 }
 
 /**

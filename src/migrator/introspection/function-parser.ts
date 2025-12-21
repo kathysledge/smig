@@ -29,7 +29,7 @@ export function parseFunctionDefinition(
   const paramsMatch = funcDef.match(/\(([^)]*)\)/);
   const parameters: Array<{ name: string; type: string }> = [];
 
-  if (paramsMatch && paramsMatch[1].trim()) {
+  if (paramsMatch?.[1].trim()) {
     const paramStrs = paramsMatch[1].split(',');
     for (const paramStr of paramStrs) {
       // Parse $name: type format

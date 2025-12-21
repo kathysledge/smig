@@ -69,7 +69,7 @@ export default {
       const dbName = `test_params_${Date.now()}`;
 
       const schemaPath = createSchema('params', `
-import { composeSchema, param } from '../../../dist/schema/concise-schema.ts';
+import { composeSchema, param } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {},
@@ -94,7 +94,7 @@ export default composeSchema({
       const dbName = `test_sequences_${Date.now()}`;
 
       const schemaPath = createSchema('sequences', `
-import { composeSchema, sequence } from '../../../dist/schema/concise-schema.ts';
+import { composeSchema, sequence } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {},
@@ -119,7 +119,7 @@ export default composeSchema({
       const dbName = `test_functions_${Date.now()}`;
 
       const schemaPath = createSchema('functions', `
-import { composeSchema, fn } from '../../../dist/schema/concise-schema.ts';
+import { composeSchema, fn } from '../../../dist/schema/concise-schema.js';
 
 const add = fn('fn::add')
   .param('a', 'int')
@@ -153,7 +153,7 @@ export default composeSchema({
       const dbName = `test_analyzers_${Date.now()}`;
 
       const schemaPath = createSchema('analyzers', `
-import { composeSchema, analyzer } from '../../../dist/schema/concise-schema.ts';
+import { composeSchema, analyzer } from '../../../dist/schema/concise-schema.js';
 
 const simple = analyzer('simple_text')
   .tokenizers(['blank'])
@@ -185,7 +185,7 @@ export default composeSchema({
       const dbName = `test_events_${Date.now()}`;
 
       const schemaPath = createSchema('events', `
-import { defineSchema, composeSchema, string, datetime, event } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string, datetime, event } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {

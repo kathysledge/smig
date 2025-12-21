@@ -71,7 +71,7 @@ export default {
 
       // Initial schema
       const v1 = createSchema('default-v1', `
-import { defineSchema, composeSchema, int } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, int } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -93,7 +93,7 @@ export default composeSchema({
 
       // Modified schema - change default
       const v2 = createSchema('default-v2', `
-import { defineSchema, composeSchema, int } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, int } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -120,7 +120,7 @@ export default composeSchema({
       const dbName = `test_alter_assert_${Date.now()}`;
 
       const v1 = createSchema('assert-v1', `
-import { defineSchema, composeSchema, int } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, int } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -140,7 +140,7 @@ export default composeSchema({
 
       // Change assert
       const v2 = createSchema('assert-v2', `
-import { defineSchema, composeSchema, int } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, int } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -165,7 +165,7 @@ export default composeSchema({
       const dbName = `test_alter_readonly_${Date.now()}`;
 
       const v1 = createSchema('readonly-v1', `
-import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -185,7 +185,7 @@ export default composeSchema({
 
       // Make field readonly
       const v2 = createSchema('readonly-v2', `
-import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -210,7 +210,7 @@ export default composeSchema({
       const dbName = `test_alter_multiple_${Date.now()}`;
 
       const v1 = createSchema('multiple-v1', `
-import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -230,7 +230,7 @@ export default composeSchema({
 
       // Change multiple properties - should fall back to DEFINE OVERWRITE
       const v2 = createSchema('multiple-v2', `
-import { defineSchema, composeSchema, int } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, int } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -257,7 +257,7 @@ export default composeSchema({
       const dbName = `test_alter_param_${Date.now()}`;
 
       const v1 = createSchema('param-v1', `
-import { composeSchema, param } from '../../../dist/schema/concise-schema.ts';
+import { composeSchema, param } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {},
@@ -273,7 +273,7 @@ export default composeSchema({
 
       // Change param value
       const v2 = createSchema('param-v2', `
-import { composeSchema, param } from '../../../dist/schema/concise-schema.ts';
+import { composeSchema, param } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {},

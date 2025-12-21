@@ -73,7 +73,7 @@ export default {
     const dbName = `test_ts_schema_${Date.now()}`;
 
     const schemaPath = createTsSchema('basic', `
-import { defineSchema, composeSchema, string, int, datetime } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string, int, datetime } from '../../../dist/schema/concise-schema.js';
 
 // TypeScript interfaces for type safety
 interface UserFields {
@@ -111,7 +111,7 @@ export default composeSchema({
     const dbName = `test_mts_schema_${Date.now()}`;
 
     const schemaPath = createTsSchema('module', `
-import { defineSchema, composeSchema, string, bool } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string, bool } from '../../../dist/schema/concise-schema.js';
 
 const settings = defineSchema({
   table: 'mts_settings',
@@ -140,7 +140,7 @@ export default composeSchema({
     const dbName = `test_ts_migrate_${Date.now()}`;
 
     const schemaPath = createTsSchema('migrate', `
-import { defineSchema, composeSchema, string, float } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string, float } from '../../../dist/schema/concise-schema.js';
 
 const product = defineSchema({
   table: 'ts_product',
@@ -179,7 +179,7 @@ import {
   int,
   index,
   type SurrealDBSchema 
-} from '../../../dist/schema/concise-schema.ts';
+} from '../../../dist/schema/concise-schema.js';
 
 // Use TypeScript enums
 enum Status {

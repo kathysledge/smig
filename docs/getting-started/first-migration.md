@@ -52,7 +52,7 @@ Let’s break this down:
 
 Before applying changes, let’s see what SurrealQL (SQL) will be generated:
 
-```bash
+```zsh
 bun smig diff
 ```
 
@@ -81,7 +81,7 @@ This shows:
 
 Happy with the preview? Apply it:
 
-```bash
+```zsh
 bun smig migrate
 ```
 
@@ -100,7 +100,7 @@ Your database now has the `user` table.
 
 Check the migration status:
 
-```bash
+```zsh
 bun smig status
 ```
 
@@ -115,7 +115,7 @@ Applied migrations: 1
 
 You can also query SurrealDB directly:
 
-```bash
+```zsh
 surreal sql --endpoint ws://localhost:8000 --namespace test --database test
 ```
 
@@ -148,7 +148,7 @@ const users = defineSchema({
 
 Preview the change:
 
-```bash
+```zsh
 bun smig diff
 ```
 
@@ -169,7 +169,7 @@ REMOVE FIELD avatar ON TABLE user;
 
 Apply it:
 
-```bash
+```zsh
 bun smig migrate
 ```
 
@@ -177,7 +177,7 @@ bun smig migrate
 
 Changed your mind? Roll back the last migration:
 
-```bash
+```zsh
 bun smig rollback
 ```
 

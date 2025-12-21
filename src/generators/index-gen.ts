@@ -165,7 +165,7 @@ export function generateIndexDefinition(
     parts.push(`COMMENT "${index.comments[0].replace(/"/g, '\\"')}"`);
   }
 
-  return parts.join(' ') + ';';
+  return `${parts.join(' ')};`;
 }
 
 /**

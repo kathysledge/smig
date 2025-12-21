@@ -89,7 +89,7 @@ import {
   scope,
   string,
   uuid,
-} from '../../../dist/schema/concise-schema.ts';
+} from '../../../dist/schema/concise-schema.js';
 
 // ============================================================================
 // COMPREHENSIVE TEST SCHEMA - ${suffix}
@@ -427,7 +427,7 @@ import {
   scope,
   string,
   uuid,
-} from '../../../dist/schema/concise-schema.ts';
+} from '../../../dist/schema/concise-schema.js';
 
 // ============================================================================
 // MODIFIED COMPREHENSIVE TEST SCHEMA - v2

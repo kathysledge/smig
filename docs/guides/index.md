@@ -34,7 +34,7 @@ Lessons learned from real projects. Performance tips, security considerations, t
 
 Run `diff` with dry-run to see what would change:
 
-```bash
+```zsh
 bun smig diff
 ```
 
@@ -44,7 +44,7 @@ This shows the SurrealQL (SQL) that would run, without running it.
 
 Use the rollback command:
 
-```bash
+```zsh
 bun smig rollback
 ```
 
@@ -54,7 +54,7 @@ This undoes the last applied migration.
 
 Check the migration status:
 
-```bash
+```zsh
 bun smig status
 ```
 
@@ -91,6 +91,6 @@ export default {
 
 Or use command-line flags:
 
-```bash
+```zsh
 bun smig migrate --url wss://server.com --namespace prod --database myapp
 ```

@@ -69,7 +69,7 @@ export default {
       const dbName = `test_hnsw_default_${Date.now()}`;
 
       const schemaPath = createSchema('hnsw-default', `
-import { defineSchema, composeSchema, string, array, index } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string, array, index } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -100,7 +100,7 @@ export default composeSchema({
       const dbName = `test_hnsw_cosine_${Date.now()}`;
 
       const schemaPath = createSchema('hnsw-cosine', `
-import { defineSchema, composeSchema, string, array, index } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string, array, index } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -132,7 +132,7 @@ export default composeSchema({
       const dbName = `test_hnsw_migrate_${Date.now()}`;
 
       const schemaPath = createSchema('hnsw-migrate', `
-import { defineSchema, composeSchema, string, array, index } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string, array, index } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -167,7 +167,7 @@ export default composeSchema({
       const dbName = `test_mtree_default_${Date.now()}`;
 
       const schemaPath = createSchema('mtree-default', `
-import { defineSchema, composeSchema, string, array, index } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string, array, index } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -198,7 +198,7 @@ export default composeSchema({
       const dbName = `test_mtree_capacity_${Date.now()}`;
 
       const schemaPath = createSchema('mtree-capacity', `
-import { defineSchema, composeSchema, string, array, index } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string, array, index } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {
@@ -231,7 +231,7 @@ export default composeSchema({
       const dbName = `test_search_${Date.now()}`;
 
       const schemaPath = createSchema('search', `
-import { defineSchema, composeSchema, string, index, analyzer } from '../../../dist/schema/concise-schema.ts';
+import { defineSchema, composeSchema, string, index, analyzer } from '../../../dist/schema/concise-schema.js';
 
 const textAnalyzer = analyzer('text_analyzer')
   .tokenizers(['blank', 'class'])
@@ -261,7 +261,7 @@ export default composeSchema({
       const { stdout } = await execAsync(`node ${CLI_PATH} generate --debug`);
       
       expect(stdout).toContain('DEFINE INDEX contentSearch');
-      expect(stdout).toContain('SEARCH');
+      expect(stdout).toContain('FULLTEXT');
       expect(stdout).toContain('ANALYZER text_analyzer');
       expect(stdout).toContain('BM25');
     }, 60000);

@@ -94,7 +94,11 @@ export class SurrealClient {
       const connectWithTimeout = async () => {
         const timeoutPromise = new Promise<never>((_, reject) => {
           setTimeout(() => {
-            reject(new Error(`Connection timeout after ${CONNECTION_TIMEOUT / 1000}s - is SurrealDB running at ${this.config.url}?`));
+            reject(
+              new Error(
+                `Connection timeout after ${CONNECTION_TIMEOUT / 1000}s - is SurrealDB running at ${this.config.url}?`,
+              ),
+            );
           }, CONNECTION_TIMEOUT);
         });
 

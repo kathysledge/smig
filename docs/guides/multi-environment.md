@@ -66,7 +66,7 @@ export default {
 
 Specify the config file when running commands:
 
-```bash
+```zsh
 # Development (default)
 bun smig diff
 bun smig migrate
@@ -82,7 +82,7 @@ bun smig migrate --config smig.production.config.ts
 
 For CI/CD pipelines, use environment variables:
 
-```bash
+```zsh
 # Set via environment
 export SMIG_URL="wss://prod.surrealdb.example.com"
 export SMIG_NAMESPACE="production"
@@ -198,7 +198,7 @@ flowchart LR
 
 Isolate schema changes per feature:
 
-```bash
+```zsh
 # On feature branch
 bun smig diff
 bun smig migrate  # To dev database
@@ -212,4 +212,3 @@ bun smig migrate --config smig.production.config.ts
 
 - [CLI commands](cli-commands.md)
 - [Best practices](best-practices.md)
-

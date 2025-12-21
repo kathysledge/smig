@@ -21,7 +21,7 @@
 
 ## Installation
 
-```bash
+```zsh
 # Bun (recommended)
 bun add -D smig
 
@@ -34,7 +34,7 @@ pnpm add -D smig
 
 ## Quick start
 
-```bash
+```zsh
 # Initialize project (creates schema.ts)
 bun smig init
 
@@ -140,7 +140,7 @@ export default composeSchema({
 
 Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-```bash
+```zsh
 git clone git@github.com:kathysledge/smig.git
 cd smig
 bun install

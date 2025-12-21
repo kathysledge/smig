@@ -207,7 +207,7 @@ describe('SQL Generators', () => {
         analyzer: 'english',
         highlights: true,
       });
-      expect(sql).toContain('SEARCH');
+      expect(sql).toContain('FULLTEXT');
       expect(sql).toContain('ANALYZER english');
       expect(sql).toContain('HIGHLIGHTS');
     });

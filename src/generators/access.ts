@@ -105,7 +105,7 @@ export function generateAccessDefinition(
     parts.push(`COMMENT "${access.comments[0].replace(/"/g, '\\"')}"`);
   }
 
-  return parts.join(' ') + ';';
+  return `${parts.join(' ')};`;
 }
 
 /**
@@ -184,7 +184,7 @@ export function generateScopeDefinition(
     parts.push(`COMMENT "${scope.comments[0].replace(/"/g, '\\"')}"`);
   }
 
-  return parts.join(' ') + ';';
+  return `${parts.join(' ')};`;
 }
 
 /**
