@@ -4,18 +4,18 @@
 
 import { describe, expect, it } from 'vitest';
 import {
-  bytes,
-  number,
-  nullType,
-  literal,
-  range,
-  set,
-  string,
-  int,
-  record,
   array,
+  bytes,
   datetime,
   defineSchema,
+  int,
+  literal,
+  nullType,
+  number,
+  range,
+  record,
+  set,
+  string,
 } from '../src/schema';
 
 describe('New Field Types (SurrealDB 3.x)', () => {
@@ -262,4 +262,3 @@ describe('Integration: Complete Schema with New Features', () => {
     expect(versionField?.previousNames).toEqual(['doc_version']);
   });
 });
-

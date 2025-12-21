@@ -244,7 +244,7 @@ Explicitly mark a field as optional (can be null):
 ```typescript
 bio: option('string')
 avatar: option('string')
-manager: option(record('user'))
+manager: option('record<user>')
 ```
 
 ## Arrays and sets

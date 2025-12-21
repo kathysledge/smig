@@ -46,7 +46,7 @@ describe('Comprehensive Schema Integration Tests', () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
       'smig.config.js',
-      'tests/integration/fixtures/comprehensive-schema-*.js',
+      'tests/integration/fixtures/comprehensive-schema-*.ts',
     ]);
   });
 
@@ -54,7 +54,7 @@ describe('Comprehensive Schema Integration Tests', () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
       'smig.config.js',
-      'tests/integration/fixtures/comprehensive-schema-*.js',
+      'tests/integration/fixtures/comprehensive-schema-*.ts',
     ]);
   });
 
@@ -750,9 +750,7 @@ export default {
       fs.writeFileSync(TEST_CONFIG_PATH, configContent);
 
       console.log('\nStep 1: Applying v1 schema...');
-      const { stderr: v1Stderr } = await execAsync(
-        `node ${CLI_PATH} migrate`,
-      );
+      const { stderr: v1Stderr } = await execAsync(`node ${CLI_PATH} migrate`);
       expect(v1Stderr).toContain('Migration applied successfully');
 
       // Now switch to v2 and check for changes
@@ -809,9 +807,7 @@ export default {
 
       // Apply migration (ora outputs to stderr)
       console.log('\nStep 1: Applying migration...');
-      const { stderr: migrateStderr } = await execAsync(
-        `node ${CLI_PATH} migrate`,
-      );
+      const { stderr: migrateStderr } = await execAsync(`node ${CLI_PATH} migrate`);
       expect(migrateStderr).toContain('Migration applied successfully');
 
       // Verify it's applied (ora outputs to stderr)

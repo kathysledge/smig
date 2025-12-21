@@ -251,6 +251,10 @@ If **smig** saves you time, consider [supporting development](https://ko-fi.com/
   font-size: 0.9rem;
 }
 
+.sidebar-card p:last-child {
+  margin-bottom: 0;
+}
+
 .sidebar-card pre {
   font-size: 0.8rem;
 }

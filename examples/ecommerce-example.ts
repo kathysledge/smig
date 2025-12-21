@@ -1,12 +1,9 @@
-# E-commerce
-
-An online store with products, orders, and inventory management.
-
-## Schema
-
-A full e-commerce schema with categories, products, customers, and orders with inventory management:
-
-```typescript
+/**
+ * E-commerce Example
+ *
+ * An online store with products, orders, and inventory management.
+ * Demonstrates sequences, events for inventory, and permissions.
+ */
 import {
   defineSchema,
   composeSchema,
@@ -22,7 +19,7 @@ import {
   index,
   event,
   sequence,
-} from 'smig';
+} from '../dist/schema/concise-schema.js';
 
 // Categories
 const categorySchema = defineSchema({
@@ -182,98 +179,4 @@ export default composeSchema({
   },
   relations: {},
 });
-```
 
-## Example queries
-
-### Create a product
-
-Add a new product with pricing and stock:
-
-```surql
-CREATE product SET
-  sku = "WIDGET-001",
-  name = "Super Widget",
-  slug = "super-widget",
-  description = "The best widget money can buy",
-  price = 29.99d,
-  comparePrice = 39.99d,
-  category = category:electronics,
-  images = ["/images/widget-1.jpg", "/images/widget-2.jpg"],
-  stock = 100;
-```
-
-### Place an order
-
-Create an order (triggers inventory reduction automatically):
-
-```surql
-CREATE order SET
-  customer = customer:cust123,
-  items = [
-    { product: product:widget1, quantity: 2, price: 29.99d },
-    { product: product:gadget1, quantity: 1, price: 49.99d }
-  ],
-  subtotal = 109.97d,
-  tax = 9.90d,
-  shipping = 5.99d,
-  total = 125.86d,
-  shippingAddress = {
-    street: "123 Main St",
-    city: "Springfield",
-    state: "IL",
-    zip: "62701",
-    country: "US"
-  };
-```
-
-### Get order with product details
-
-Fetch an order with its product information:
-
-```surql
-SELECT
-  *,
-  items.*.product.* AS productDetails
-FROM order
-WHERE orderNumber = 10001;
-```
-
-### Low stock products
-
-Find products that need restocking:
-
-```surql
-SELECT * FROM product
-WHERE stock <= lowStockThreshold AND isActive = true
-ORDER BY stock ASC;
-```
-
-### Top customers
-
-Find your biggest spenders:
-
-```surql
-SELECT * FROM customer
-ORDER BY totalSpent DESC
-LIMIT 10;
-```
-
-### Sales by category
-
-Aggregate revenue by product category:
-
-```surql
-SELECT
-  category,
-  count() AS orderCount,
-  math::sum(total) AS revenue
-FROM order
-WHERE status = "completed"
-GROUP BY category;
-```
-
-## See also
-
-- [Sequences reference](../schema-reference/sequences.md) - Order numbers
-- [Events reference](../schema-reference/events.md) - Inventory triggers

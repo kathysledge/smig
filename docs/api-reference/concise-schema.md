@@ -298,8 +298,11 @@ function sequence(name: string): SequenceBuilder;
 | Method | Description |
 |--------|-------------|
 | `.start(n)` | Starting value |
-| `.batch(n)` | Batch size |
-| `.timeout(duration)` | Batch timeout |
+| `.comments(arr)` | Documentation comments |
+
+::: info SurrealDB 3.x limitation
+SurrealDB 3.x only supports the `START` option for sequences. Other options like step, min/max values, cycle, and cache are not yet supported.
+:::
 
 ## Common patterns
 

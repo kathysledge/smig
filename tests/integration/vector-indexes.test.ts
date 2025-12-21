@@ -1,6 +1,6 @@
 /**
  * Integration tests for vector indexes (HNSW and MTREE)
- * 
+ *
  * Tests AI/ML embedding vector indexes for semantic search.
  */
 
@@ -31,7 +31,7 @@ describe('Vector Index Integration Tests', () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
       'smig.config.js',
-      'tests/integration/fixtures/vector-*.js',
+      'tests/integration/fixtures/vector-*.ts',
     ]);
   });
 
@@ -39,12 +39,12 @@ describe('Vector Index Integration Tests', () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
       'smig.config.js',
-      'tests/integration/fixtures/vector-*.js',
+      'tests/integration/fixtures/vector-*.ts',
     ]);
   });
 
   function createSchema(name: string, content: string): string {
-    const filename = `vector-${name}.js`;
+    const filename = `vector-${name}.ts`;
     const schemaPath = path.join(FIXTURES_DIR, filename);
     fs.writeFileSync(schemaPath, content);
     return `./tests/integration/fixtures/${filename}`;
@@ -68,7 +68,9 @@ export default {
     it('should create HNSW index with default options', async () => {
       const dbName = `test_hnsw_default_${Date.now()}`;
 
-      const schemaPath = createSchema('hnsw-default', `
+      const schemaPath = createSchema(
+        'hnsw-default',
+        `
 import { defineSchema, composeSchema, string, array, index } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -85,12 +87,13 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(schemaPath, dbName);
 
       const { stdout } = await execAsync(`node ${CLI_PATH} generate --debug`);
-      
+
       expect(stdout).toContain('DEFINE INDEX embeddingIdx');
       expect(stdout).toContain('HNSW');
       expect(stdout).toContain('DIMENSION 1536');
@@ -99,7 +102,9 @@ export default composeSchema({
     it('should create HNSW index with custom distance metric', async () => {
       const dbName = `test_hnsw_cosine_${Date.now()}`;
 
-      const schemaPath = createSchema('hnsw-cosine', `
+      const schemaPath = createSchema(
+        'hnsw-cosine',
+        `
 import { defineSchema, composeSchema, string, array, index } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -116,12 +121,13 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(schemaPath, dbName);
 
       const { stdout } = await execAsync(`node ${CLI_PATH} generate --debug`);
-      
+
       expect(stdout).toContain('DEFINE INDEX vectorIdx');
       expect(stdout).toContain('HNSW');
       expect(stdout).toContain('DIMENSION 768');
@@ -131,7 +137,9 @@ export default composeSchema({
     it('should migrate and verify HNSW index', async () => {
       const dbName = `test_hnsw_migrate_${Date.now()}`;
 
-      const schemaPath = createSchema('hnsw-migrate', `
+      const schemaPath = createSchema(
+        'hnsw-migrate',
+        `
 import { defineSchema, composeSchema, string, array, index } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -148,7 +156,8 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(schemaPath, dbName);
 
@@ -166,7 +175,9 @@ export default composeSchema({
     it('should create MTREE index with default options', async () => {
       const dbName = `test_mtree_default_${Date.now()}`;
 
-      const schemaPath = createSchema('mtree-default', `
+      const schemaPath = createSchema(
+        'mtree-default',
+        `
 import { defineSchema, composeSchema, string, array, index } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -183,12 +194,13 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(schemaPath, dbName);
 
       const { stdout } = await execAsync(`node ${CLI_PATH} generate --debug`);
-      
+
       expect(stdout).toContain('DEFINE INDEX featuresIdx');
       expect(stdout).toContain('MTREE');
       expect(stdout).toContain('DIMENSION 256');
@@ -197,7 +209,9 @@ export default composeSchema({
     it('should create MTREE index with custom capacity', async () => {
       const dbName = `test_mtree_capacity_${Date.now()}`;
 
-      const schemaPath = createSchema('mtree-capacity', `
+      const schemaPath = createSchema(
+        'mtree-capacity',
+        `
 import { defineSchema, composeSchema, string, array, index } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -214,12 +228,13 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(schemaPath, dbName);
 
       const { stdout } = await execAsync(`node ${CLI_PATH} generate --debug`);
-      
+
       expect(stdout).toContain('MTREE');
       expect(stdout).toContain('DIMENSION 128');
       expect(stdout).toContain('CAPACITY 50');
@@ -230,7 +245,9 @@ export default composeSchema({
     it('should create full-text SEARCH index', async () => {
       const dbName = `test_search_${Date.now()}`;
 
-      const schemaPath = createSchema('search', `
+      const schemaPath = createSchema(
+        'search',
+        `
 import { defineSchema, composeSchema, string, index, analyzer } from '../../../dist/schema/concise-schema.js';
 
 const textAnalyzer = analyzer('text_analyzer')
@@ -254,12 +271,13 @@ export default composeSchema({
   analyzers: {
     text_analyzer: textAnalyzer,
   }
-});`);
+});`,
+      );
 
       createConfig(schemaPath, dbName);
 
       const { stdout } = await execAsync(`node ${CLI_PATH} generate --debug`);
-      
+
       expect(stdout).toContain('DEFINE INDEX contentSearch');
       expect(stdout).toContain('FULLTEXT');
       expect(stdout).toContain('ANALYZER text_analyzer');

@@ -337,10 +337,8 @@ export interface SurrealSequence {
   name: string;
   /** Starting value */
   start?: number;
-  /** Step increment */
-  step?: number;
-  /** Optional comment */
-  comment?: string;
+  /** Documentation comments */
+  comments?: string[];
   /** Previous names for rename detection */
   previousNames?: string[];
 }

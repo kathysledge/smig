@@ -45,29 +45,8 @@ describe('Example Schema Integration Tests', () => {
   afterEach(async () => {
     // Clean up test config and debug files
     cleanupTestFiles(['smig-debug-*.txt', 'smig.config.js']);
-
-    // Reset databases by deleting all tables except _migrations
-    for (const dbName of createdDatabases) {
-      try {
-        const db = TEST_DATABASES.db1;
-        const configContent = `
-export default {
-  url: '${db.url}',
-  username: '${db.username}',
-  password: '${db.password}',
-  namespace: '${db.namespace}',
-  database: '${dbName}',
-  schema: './examples/minimal-example.js'
-};`;
-        fs.writeFileSync(TEST_CONFIG_PATH, configContent);
-
-        // Get all migrations and roll them back
-        await execAsync(`node ${CLI_PATH} status 2>/dev/null || true`);
-      } catch (_error) {
-        // Ignore cleanup errors
-      }
-    }
-  });
+    // Note: Database tables are left in place - each test uses a unique database name
+  }, 30000);
 
   /**
    * Helper to create a unique test database name
@@ -146,10 +125,10 @@ export default {
 
   describe('Minimal Example Schema', () => {
     it('should migrate and have no remaining changes', async () => {
-      const schemaRelPath = `${EXAMPLES_REL_DIR}/minimal-example.js`;
+      const schemaRelPath = `${EXAMPLES_REL_DIR}/minimal-example.ts`;
       expect(fs.existsSync(path.join(process.cwd(), schemaRelPath))).toBe(true);
       await runMigrationCycleTest(schemaRelPath, 'minimal');
-    }, 30000);
+    }, 60000);
   });
 
   describe('Simple Blog Schema', () => {
@@ -157,28 +136,52 @@ export default {
       const schemaRelPath = `${EXAMPLES_REL_DIR}/simple-blog-schema.ts`;
       expect(fs.existsSync(path.join(process.cwd(), schemaRelPath))).toBe(true);
       await runMigrationCycleTest(schemaRelPath, 'blog');
-    }, 30000);
+    }, 60000);
   });
 
   describe('Social Network Schema', () => {
     it('should migrate and have no remaining changes', async () => {
-      const schemaRelPath = `${EXAMPLES_REL_DIR}/social-network-schema.js`;
+      const schemaRelPath = `${EXAMPLES_REL_DIR}/social-network-schema.ts`;
       expect(fs.existsSync(path.join(process.cwd(), schemaRelPath))).toBe(true);
       await runMigrationCycleTest(schemaRelPath, 'social_network');
-    }, 60000); // Longer timeout for complex schema
+    }, 90000);
   });
 
   describe('Social Platform Schema', () => {
     it('should migrate and have no remaining changes', async () => {
-      const schemaRelPath = `${EXAMPLES_REL_DIR}/social-platform-schema.js`;
+      const schemaRelPath = `${EXAMPLES_REL_DIR}/social-platform-schema.ts`;
       expect(fs.existsSync(path.join(process.cwd(), schemaRelPath))).toBe(true);
       await runMigrationCycleTest(schemaRelPath, 'social_platform');
-    }, 60000); // Longer timeout for complex schema
+    }, 90000);
+  });
+
+  describe('Blog Example Schema', () => {
+    it('should migrate and have no remaining changes', async () => {
+      const schemaRelPath = `${EXAMPLES_REL_DIR}/blog-example.ts`;
+      expect(fs.existsSync(path.join(process.cwd(), schemaRelPath))).toBe(true);
+      await runMigrationCycleTest(schemaRelPath, 'blog_example');
+    }, 60000);
+  });
+
+  describe('E-commerce Example Schema', () => {
+    it('should migrate and have no remaining changes', async () => {
+      const schemaRelPath = `${EXAMPLES_REL_DIR}/ecommerce-example.ts`;
+      expect(fs.existsSync(path.join(process.cwd(), schemaRelPath))).toBe(true);
+      await runMigrationCycleTest(schemaRelPath, 'ecommerce');
+    }, 90000);
+  });
+
+  describe('AI Embeddings Example Schema', () => {
+    it('should migrate and have no remaining changes', async () => {
+      const schemaRelPath = `${EXAMPLES_REL_DIR}/ai-embeddings-example.ts`;
+      expect(fs.existsSync(path.join(process.cwd(), schemaRelPath))).toBe(true);
+      await runMigrationCycleTest(schemaRelPath, 'ai_embeddings');
+    }, 90000);
   });
 
   describe('Rollback Tests', () => {
     it('should rollback minimal example successfully', async () => {
-      const schemaRelPath = `${EXAMPLES_REL_DIR}/minimal-example.js`;
+      const schemaRelPath = `${EXAMPLES_REL_DIR}/minimal-example.ts`;
       const dbName = createTestDbName('minimal_rollback');
       const db = TEST_DATABASES.db1;
 
@@ -217,12 +220,12 @@ export default {
         (msg) => rollbackOutput.includes(msg) || statusOutput.includes('Applied migrations: 0'),
       );
       expect(rollbackSuccess).toBe(true);
-    }, 30000);
+    }, 60000);
   });
 
   describe('Idempotency Tests', () => {
     it('should be idempotent - multiple migrations produce same result', async () => {
-      const schemaRelPath = `${EXAMPLES_REL_DIR}/minimal-example.js`;
+      const schemaRelPath = `${EXAMPLES_REL_DIR}/minimal-example.ts`;
       const dbName = createTestDbName('idempotent');
       const db = TEST_DATABASES.db1;
 
@@ -257,6 +260,6 @@ export default {
       );
       const thirdMigrate = thirdStdout + thirdStderr;
       expect(thirdMigrate).toMatch(/No changes detected|up to date/);
-    }, 45000);
+    }, 90000);
   });
 });

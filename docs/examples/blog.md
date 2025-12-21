@@ -26,7 +26,10 @@ const userSchema = defineSchema({
   table: 'user',
   fields: {
     email: string().required().assert('string::is_email($value)'),
-    name: string().required().length(2, 100),
+    name: string()
+      .required()
+      .assert('string::len($value) >= 2')
+      .assert('string::len($value) <= 100'),
     bio: option('string'),
     isActive: bool().default(true),
     createdAt: datetime().default('time::now()'),
@@ -42,7 +45,10 @@ const postSchema = defineSchema({
   table: 'post',
   fields: {
     author: record('user').required(),
-    title: string().required().length(1, 200),
+    title: string()
+      .required()
+      .assert('string::len($value) >= 1')
+      .assert('string::len($value) <= 200'),
     slug: string().required(),
     content: string().required(),
     excerpt: option('string'),
@@ -58,7 +64,8 @@ const postSchema = defineSchema({
     author: index(['author', 'createdAt']),
     published: index(['published', 'publishedAt']),
     tags: index(['tags']),
-    search: index(['title', 'content']).fulltext().analyzer('english'),
+    // Full-text search (single column)
+    contentSearch: index(['content']).search().analyzer('english'),
   },
   events: {
     setPublishedAt: event('set_published_at')
@@ -74,8 +81,11 @@ const commentSchema = defineSchema({
   fields: {
     post: record('post').required(),
     author: record('user').required(),
-    parent: option(record('comment')),  // For nested comments
-    content: string().required().length(1, 5000),
+    parent: option('record<comment>'), // For nested comments
+    content: string()
+      .required()
+      .assert('string::len($value) >= 1')
+      .assert('string::len($value) <= 5000'),
     createdAt: datetime().default('time::now()'),
     updatedAt: datetime().value('time::now()'),
   },
@@ -92,6 +102,7 @@ export default composeSchema({
     post: postSchema,
     comment: commentSchema,
   },
+  relations: {},
 });
 ```
 
@@ -102,9 +113,9 @@ Running `bun smig migrate` generates this SurrealQL (SQL):
 ```surql
 -- Users
 DEFINE TABLE user TYPE NORMAL SCHEMAFULL;
-DEFINE FIELD email ON TABLE user TYPE string 
+DEFINE FIELD email ON TABLE user TYPE string
   ASSERT ($value != NONE) AND (string::is_email($value));
-DEFINE FIELD name ON TABLE user TYPE string 
+DEFINE FIELD name ON TABLE user TYPE string
   ASSERT ($value != NONE) AND (string::len($value) >= 2) AND (string::len($value) <= 100);
 DEFINE FIELD bio ON TABLE user TYPE option<string>;
 DEFINE FIELD isActive ON TABLE user TYPE bool DEFAULT true;
@@ -115,7 +126,7 @@ DEFINE INDEX active ON TABLE user FIELDS isActive;
 -- Posts
 DEFINE TABLE post TYPE NORMAL SCHEMAFULL;
 DEFINE FIELD author ON TABLE post TYPE record<user> ASSERT $value != NONE;
-DEFINE FIELD title ON TABLE post TYPE string 
+DEFINE FIELD title ON TABLE post TYPE string
   ASSERT ($value != NONE) AND (string::len($value) >= 1) AND (string::len($value) <= 200);
 DEFINE FIELD slug ON TABLE post TYPE string ASSERT $value != NONE;
 DEFINE FIELD content ON TABLE post TYPE string ASSERT $value != NONE;
@@ -130,9 +141,9 @@ DEFINE INDEX slug ON TABLE post FIELDS slug UNIQUE;
 DEFINE INDEX author ON TABLE post FIELDS author, createdAt;
 DEFINE INDEX published ON TABLE post FIELDS published, publishedAt;
 DEFINE INDEX tags ON TABLE post FIELDS tags;
-DEFINE INDEX search ON TABLE post FIELDS title, content FULLTEXT ANALYZER english;
-DEFINE EVENT set_published_at ON TABLE post 
-  WHEN $before.published = false AND $after.published = true 
+DEFINE INDEX contentSearch ON TABLE post FIELDS content FULLTEXT ANALYZER english;
+DEFINE EVENT set_published_at ON TABLE post
+  WHEN $before.published = false AND $after.published = true
   THEN UPDATE $after.id SET publishedAt = time::now();
 
 -- Comments
@@ -140,7 +151,7 @@ DEFINE TABLE comment TYPE NORMAL SCHEMAFULL;
 DEFINE FIELD post ON TABLE comment TYPE record<post> ASSERT $value != NONE;
 DEFINE FIELD author ON TABLE comment TYPE record<user> ASSERT $value != NONE;
 DEFINE FIELD parent ON TABLE comment TYPE option<record<comment>>;
-DEFINE FIELD content ON TABLE comment TYPE string 
+DEFINE FIELD content ON TABLE comment TYPE string
   ASSERT ($value != NONE) AND (string::len($value) >= 1) AND (string::len($value) <= 5000);
 DEFINE FIELD createdAt ON TABLE comment TYPE datetime DEFAULT time::now();
 DEFINE FIELD updatedAt ON TABLE comment TYPE datetime VALUE time::now();
@@ -180,7 +191,7 @@ UPDATE post:abc123 SET published = true;
 
 ### Search posts
 
-Use full-text search on title and content:
+Use full-text search on content:
 
 ```surql
 SELECT * FROM post
@@ -194,7 +205,7 @@ LIMIT 10;
 Fetch a post with all its comments in one query:
 
 ```surql
-SELECT 
+SELECT
   *,
   (SELECT * FROM comment WHERE post = $parent.id ORDER BY createdAt) AS comments
 FROM post
@@ -207,7 +218,7 @@ Get top-level comments with their nested replies:
 
 ```surql
 -- Get top-level comments with replies
-SELECT 
+SELECT
   *,
   (SELECT * FROM comment WHERE parent = $parent.id ORDER BY createdAt) AS replies
 FROM comment
@@ -219,4 +230,3 @@ ORDER BY createdAt;
 
 - [Social network](social-network.md) - Graph relationships
 - [Schema design](../guides/schema-design.md) - Best practices
-

@@ -4,23 +4,23 @@
 
 import { describe, expect, it } from 'vitest';
 import {
-  generateTableDefinition,
-  generateTableRename,
-  generateTableRemove,
-  generateFieldDefinition,
-  generateFieldRename,
-  generateFieldRemove,
-  generateIndexDefinition,
-  generateIndexRename,
-  generateIndexRemove,
-  generateEventDefinition,
-  generateFunctionDefinition,
-  generateAnalyzerDefinition,
   generateAccessDefinition,
-  generateParamDefinition,
-  generateUserDefinition,
-  generateSequenceDefinition,
+  generateAnalyzerDefinition,
   generateConfigDefinition,
+  generateEventDefinition,
+  generateFieldDefinition,
+  generateFieldRemove,
+  generateFieldRename,
+  generateFunctionDefinition,
+  generateIndexDefinition,
+  generateIndexRemove,
+  generateIndexRename,
+  generateParamDefinition,
+  generateSequenceDefinition,
+  generateTableDefinition,
+  generateTableRemove,
+  generateTableRename,
+  generateUserDefinition,
 } from '../src/generators';
 
 describe('SQL Generators', () => {
@@ -459,4 +459,3 @@ describe('SQL Generators', () => {
     });
   });
 });
-

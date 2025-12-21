@@ -15,16 +15,17 @@ A document search system that:
 Here’s the complete schema for a semantic search system with documents, embeddings, and search functions:
 
 ```typescript
-import { 
-  defineSchema, 
+import {
+  defineSchema,
   composeSchema,
-  string, 
-  datetime, 
+  string,
+  float,
+  datetime,
   array,
   record,
   index,
   fn,
-  analyzer
+  analyzer,
 } from 'smig';
 
 // Custom analyzer for technical content
@@ -36,22 +37,21 @@ const techAnalyzer = analyzer('tech')
 // Documents with embeddings
 const documents = defineSchema({
   table: 'document',
-  comment: 'Documents with semantic embeddings',
+  comments: ['Documents with semantic embeddings'],
   fields: {
     // Content
     title: string().required(),
     content: string().required(),
     summary: string(),
-    
+
     // Metadata
     category: string(),
     tags: array('string').default([]),
     author: record('user'),
-    
+
     // Embedding vector (OpenAI ada-002 = 1536 dimensions)
-    embedding: array('float')
-      .comment('1536-dimensional OpenAI embedding vector'),
-    
+    embedding: array('float').comment('1536-dimensional OpenAI embedding vector'),
+
     // Timestamps
     createdAt: datetime().default('time::now()'),
     updatedAt: datetime(),
@@ -59,19 +59,21 @@ const documents = defineSchema({
   indexes: {
     // Vector similarity search (HNSW)
     semantic: index(['embedding'])
-      .hnsw(1536)
+      .hnsw()
+      .dimension(1536)
       .dist('COSINE')
       .efc(200)
       .m(16)
       .comment('Semantic search via cosine similarity'),
-    
-    // Full-text search
-    fulltext: index(['title', 'content'])
-      .search('tech')
+
+    // Full-text search (single column only)
+    contentSearch: index(['content'])
+      .search()
+      .analyzer('tech')
       .highlights()
       .bm25(1.2, 0.75)
       .comment('Keyword-based full-text search'),
-    
+
     // Metadata indexes
     category: index(['category']),
     tags: index(['tags']),
@@ -92,7 +94,7 @@ const searchHistory = defineSchema({
 // Document similarity cache
 const similarity = defineSchema({
   table: 'document_similarity',
-  comment: 'Pre-computed similar document pairs',
+  comments: ['Pre-computed similar document pairs'],
   fields: {
     source: record('document').required(),
     target: record('document').required(),
@@ -107,17 +109,15 @@ const similarity = defineSchema({
 
 // Semantic search function
 const semanticSearch = fn('fn::semantic_search')
-  .params({
-    query_embedding: 'array<float>',
-    limit: 'option<int>',
-    min_score: 'option<float>'
-  })
+  .param('query_embedding', 'array<float>')
+  .param('limit', 'option<int>')
+  .param('min_score', 'option<float>')
   .returns('array')
   .body(`{
     LET $max = $limit ?? 10;
     LET $threshold = $min_score ?? 0.7;
-    
-    RETURN SELECT 
+
+    RETURN SELECT
       *,
       vector::similarity::cosine(embedding, $query_embedding) AS score
     FROM document
@@ -130,48 +130,43 @@ const semanticSearch = fn('fn::semantic_search')
 
 // Hybrid search (vector + keyword)
 const hybridSearch = fn('fn::hybrid_search')
-  .params({
-    query: 'string',
-    query_embedding: 'array<float>',
-    limit: 'option<int>',
-    vector_weight: 'option<float>'
-  })
+  .param('query', 'string')
+  .param('query_embedding', 'array<float>')
+  .param('limit', 'option<int>')
+  .param('vector_weight', 'option<float>')
   .returns('array')
   .body(`{
     LET $max = $limit ?? 10;
     LET $vw = $vector_weight ?? 0.5;
     LET $kw = 1.0 - $vw;
-    
-    -- Get vector results
-    LET $vector_results = SELECT 
+
+    LET $vector_results = SELECT
       id,
       vector::similarity::cosine(embedding, $query_embedding) AS vector_score
     FROM document
     WHERE embedding != NONE
     ORDER BY vector_score DESC
     LIMIT $max * 2;
-    
-    -- Get keyword results
-    LET $keyword_results = SELECT 
+
+    LET $keyword_results = SELECT
       id,
       search::score(0) AS keyword_score
     FROM document
-    WHERE title @0@ $query OR content @0@ $query
+    WHERE content @0@ $query
     ORDER BY keyword_score DESC
     LIMIT $max * 2;
-    
-    -- Combine and rank
-    RETURN SELECT 
+
+    RETURN SELECT
       document.*,
       ($vw * vector_score + $kw * keyword_score) AS combined_score
     FROM (
-      SELECT 
+      SELECT
         id,
         vector_score ?? 0 AS vector_score,
         keyword_score ?? 0 AS keyword_score
       FROM array::union($vector_results, $keyword_results)
       GROUP BY id
-    ) 
+    )
     JOIN document ON document.id = id
     ORDER BY combined_score DESC
     LIMIT $max;
@@ -180,19 +175,17 @@ const hybridSearch = fn('fn::hybrid_search')
 
 // Find similar documents
 const findSimilar = fn('fn::find_similar')
-  .params({
-    doc_id: 'record<document>',
-    limit: 'option<int>'
-  })
+  .param('doc_id', 'record<document>')
+  .param('limit', 'option<int>')
   .returns('array')
   .body(`{
     LET $max = $limit ?? 5;
     LET $doc = SELECT embedding FROM $doc_id;
-    
+
     IF $doc.embedding = NONE {
       RETURN [];
     };
-    
+
     RETURN SELECT *
     FROM document
     WHERE id != $doc_id
@@ -208,8 +201,14 @@ export default composeSchema({
     searchHistory: searchHistory,
     documentSimilarity: similarity,
   },
-  functions: [semanticSearch, hybridSearch, findSimilar],
-  analyzers: [techAnalyzer],
+  functions: {
+    semanticSearch,
+    hybridSearch,
+    findSimilar,
+  },
+  analyzers: {
+    tech: techAnalyzer,
+  },
 });
 ```
 
@@ -235,10 +234,11 @@ The `hnsw()` index enables fast approximate nearest neighbor search:
 
 ```typescript
 semantic: index(['embedding'])
-  .hnsw(1536)          // Dimensions must match embedding size
-  .dist('COSINE')      // Cosine similarity (good for text)
-  .efc(200)            // Higher = better quality, slower build
-  .m(16)               // Connections per node
+  .hnsw()
+  .dimension(1536)      // Dimensions must match embedding size
+  .dist('COSINE')       // Cosine similarity (good for text)
+  .efc(200)             // Higher = better quality, slower build
+  .m(16)                // Connections per node
 ```
 
 **EFC (efConstruction)**: Quality during index building. Higher values (100-500) give better recall but slower indexing.
@@ -283,7 +283,7 @@ Save documents along with their computed embeddings:
 ```typescript
 async function storeDocument(title, content) {
   const embedding = await getEmbedding(`${title}\n\n${content}`);
-  
+
   await db.create('document', {
     title,
     content,
@@ -299,7 +299,7 @@ Find documents by meaning rather than keywords:
 ```typescript
 async function searchDocuments(query) {
   const queryEmbedding = await getEmbedding(query);
-  
+
   const results = await db.query(
     'RETURN fn::semantic_search($embedding, $limit, $threshold)',
     {
@@ -308,7 +308,7 @@ async function searchDocuments(query) {
       threshold: 0.75,
     }
   );
-  
+
   return results;
 }
 ```
@@ -320,7 +320,7 @@ Combine meaning and keywords:
 ```typescript
 async function hybridSearch(query) {
   const queryEmbedding = await getEmbedding(query);
-  
+
   const results = await db.query(
     'RETURN fn::hybrid_search($query, $embedding, $limit, $weight)',
     {
@@ -330,7 +330,7 @@ async function hybridSearch(query) {
       weight: 0.6,  // 60% vector, 40% keyword
     }
   );
-  
+
   return results;
 }
 ```
@@ -339,7 +339,7 @@ async function hybridSearch(query) {
 
 ### Chunking long documents
 
-For documents longer than the embedding model’s context window:
+For documents longer than the embedding model's context window:
 
 ```typescript
 const chunks = defineSchema({
@@ -352,7 +352,8 @@ const chunks = defineSchema({
   },
   indexes: {
     chunkEmbedding: index(['embedding'])
-      .hnsw(1536)
+      .hnsw()
+      .dimension(1536)
       .dist('COSINE'),
     document: index(['document', 'chunkIndex']),
   },
@@ -370,7 +371,7 @@ async function computeSimilarities(docId) {
     'RETURN fn::find_similar($id, 20)',
     { id: docId }
   );
-  
+
   for (const doc of similar) {
     await db.create('document_similarity', {
       source: docId,

@@ -1,7 +1,6 @@
-import type { SurrealDBSchema } from '../src/types/schema';
 import {
-  cf, // Common field patterns
-  ci, // Common index patterns
+  cf,
+  ci,
   composeSchema,
   defineRelation,
   defineSchema,
@@ -9,7 +8,7 @@ import {
   index,
   option,
   string,
-} from '../src';
+} from '../dist/schema/concise-schema.js';
 
 /**
  * Simple Blog Schema Example (TypeScript)
@@ -79,7 +78,7 @@ const likeRelation = defineRelation({
 });
 
 // Compose the complete schema
-const blogSchema: SurrealDBSchema = composeSchema({
+const blogSchema = composeSchema({
   models: {
     user: userSchema,
     post: postSchema,
@@ -90,4 +89,3 @@ const blogSchema: SurrealDBSchema = composeSchema({
 });
 
 export default blogSchema;
-

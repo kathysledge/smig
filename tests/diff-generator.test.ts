@@ -3,10 +3,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import {
-  generateMigrationDiff,
-  hasSchemaChanges,
-} from '../src/migrator/diff-generator';
+import { generateMigrationDiff, hasSchemaChanges } from '../src/migrator/diff-generator';
 import type { SurrealDBSchema } from '../src/types/schema';
 
 // Helper to create minimal schema
@@ -285,7 +282,12 @@ describe('Migration Diff Generator', () => {
             schemafull: true,
             fields: [],
             indexes: [
-              { name: 'idx_user_email', columns: ['email'], unique: false, previousName: 'idx_email' } as any,
+              {
+                name: 'idx_user_email',
+                columns: ['email'],
+                unique: false,
+                previousName: 'idx_email',
+              } as any,
             ],
             events: [],
           },
@@ -492,9 +494,7 @@ describe('Migration Diff Generator', () => {
       const current = createSchema();
       const desired = {
         ...createSchema(),
-        params: [
-          { name: 'app_version', value: "'2.0.0'" },
-        ],
+        params: [{ name: 'app_version', value: "'2.0.0'" }],
       } as any;
 
       const diff = generateMigrationDiff(current, desired);
@@ -545,9 +545,7 @@ describe('Migration Diff Generator', () => {
       const current = createSchema();
       const desired = {
         ...createSchema(),
-        sequences: [
-          { name: 'order_number', start: 10000, step: 1 },
-        ],
+        sequences: [{ name: 'order_number', start: 10000, step: 1 }],
       } as any;
 
       const diff = generateMigrationDiff(current, desired);
@@ -575,9 +573,7 @@ describe('Migration Diff Generator', () => {
       const current = createSchema();
       const desired = {
         ...createSchema(),
-        users: [
-          { name: 'admin', level: 'DATABASE', roles: ['OWNER'] },
-        ],
+        users: [{ name: 'admin', level: 'DATABASE', roles: ['OWNER'] }],
       } as any;
 
       const diff = generateMigrationDiff(current, desired);
@@ -756,14 +752,16 @@ describe('Migration Diff Generator', () => {
           {
             name: 'user',
             schemafull: true,
-            fields: [{ 
-              name: 'data', 
-              type: 'object',
-              default: '{}',
-              assert: '$value != NONE',
-              readonly: true,
-              flexible: true,
-            }],
+            fields: [
+              {
+                name: 'data',
+                type: 'object',
+                default: '{}',
+                assert: '$value != NONE',
+                readonly: true,
+                flexible: true,
+              },
+            ],
             indexes: [],
             events: [],
           },
@@ -777,4 +775,3 @@ describe('Migration Diff Generator', () => {
     });
   });
 });
-

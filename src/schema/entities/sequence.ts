@@ -10,35 +10,21 @@ import { validateIdentifier } from '../common/utils';
  *
  * Sequences provide auto-incrementing numeric values that can be used
  * for generating unique identifiers, order numbers, and other sequential data.
- * SurrealDB 3.x feature.
  *
  * @example
  * ```typescript
  * // Simple sequence starting at 1
  * const orderNumber = sequence('order_number');
  *
- * // Sequence with custom start and increment
+ * // Sequence with custom start value
  * const invoiceNumber = sequence('invoice_number')
- *   .start(1000)
- *   .step(1);
- *
- * // Sequence with min/max bounds
- * const limitedSeq = sequence('limited_seq')
- *   .start(1)
- *   .min(1)
- *   .max(9999)
- *   .cycle(); // Restart when max is reached
+ *   .start(1000);
  * ```
  */
 export class SurrealQLSequence {
   private sequence: Record<string, unknown> = {
     name: '',
     start: null,
-    step: null,
-    min: null,
-    max: null,
-    cycle: false,
-    cache: null,
     comments: [],
     previousNames: [],
     ifNotExists: false,
@@ -73,77 +59,18 @@ export class SurrealQLSequence {
     return this;
   }
 
-  /**
-   * Sets the increment step for the sequence.
-   *
-   * @param value - The increment value (can be negative)
-   * @returns The sequence instance for method chaining
-   */
-  step(value: number) {
-    this.sequence.step = value;
-    return this;
-  }
-
-  /**
-   * Sets the minimum value for the sequence.
-   *
-   * @param value - The minimum value
-   * @returns The sequence instance for method chaining
-   */
-  min(value: number) {
-    this.sequence.min = value;
-    return this;
-  }
-
-  /**
-   * Sets the maximum value for the sequence.
-   *
-   * @param value - The maximum value
-   * @returns The sequence instance for method chaining
-   */
-  max(value: number) {
-    this.sequence.max = value;
-    return this;
-  }
-
-  /**
-   * Enables cycling when min/max is reached.
-   * When the sequence reaches the limit, it restarts from the opposite bound.
-   *
-   * @returns The sequence instance for method chaining
-   */
-  cycle() {
-    this.sequence.cycle = true;
-    return this;
-  }
-
-  /**
-   * Disables cycling (sequence will error when limit is reached).
-   *
-   * @returns The sequence instance for method chaining
-   */
-  noCycle() {
-    this.sequence.cycle = false;
-    return this;
-  }
-
-  /**
-   * Sets how many values to cache for performance.
-   *
-   * @param size - Number of values to cache
-   * @returns The sequence instance for method chaining
-   */
-  cache(size: number) {
-    this.sequence.cache = size;
-    return this;
-  }
-
   /** Adds a documentation comment */
   comment(text: string) {
     if (text && text.trim() !== '') {
       // biome-ignore lint/suspicious/noExplicitAny: Dynamic comment array
       (this.sequence.comments as any[]).push(text.trim());
     }
+    return this;
+  }
+
+  /** Sets documentation comments (replaces any existing) */
+  comments(texts: string[]) {
+    this.sequence.comments = texts.filter((t) => t && t.trim() !== '').map((t) => t.trim());
     return this;
   }
 
@@ -164,11 +91,6 @@ export class SurrealQLSequence {
     return {
       name: this.sequence.name,
       start: this.sequence.start,
-      step: this.sequence.step,
-      min: this.sequence.min,
-      max: this.sequence.max,
-      cycle: this.sequence.cycle,
-      cache: this.sequence.cache,
       comments: [...(this.sequence.comments as string[])],
       previousNames: [...(this.sequence.previousNames as string[])],
       ifNotExists: this.sequence.ifNotExists,

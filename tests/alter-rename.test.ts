@@ -4,65 +4,63 @@
 
 import { describe, expect, it } from 'vitest';
 import {
-  alterTableRename,
-  alterTableType,
+  alterAccessAuthenticate,
+  alterAccessComment,
+  alterAccessDuration,
+  alterAccessRename,
+  alterAnalyzerComment,
+  alterAnalyzerRename,
+  alterEventComment,
+  alterEventRename,
+  alterEventThen,
+  alterEventWhen,
+  alterFieldAssert,
+  alterFieldComment,
+  alterFieldDefault,
+  alterFieldFlexible,
+  alterFieldPermissions,
+  alterFieldReadonly,
+  alterFieldReference,
+  alterFieldRename,
+  alterFieldType,
+  alterFieldValue,
+  alterFunctionComment,
+  alterFunctionPermissions,
+  alterFunctionRename,
+  alterIndexComment,
+  alterIndexRename,
+  alterParamComment,
+  alterParamPermissions,
+  alterParamRename,
+  alterParamValue,
+  alterSequenceCache,
+  alterSequenceComment,
+  alterSequenceRename,
+  alterSequenceRestart,
   alterTableChangefeed,
   alterTableComment,
   alterTablePermissions,
-  alterFieldRename,
-  alterFieldType,
-  alterFieldDefault,
-  alterFieldValue,
-  alterFieldAssert,
-  alterFieldReadonly,
-  alterFieldFlexible,
-  alterFieldPermissions,
-  alterFieldComment,
-  alterFieldReference,
-  alterIndexRename,
-  alterIndexComment,
-  alterEventRename,
-  alterEventWhen,
-  alterEventThen,
-  alterEventComment,
-  alterFunctionRename,
-  alterFunctionPermissions,
-  alterFunctionComment,
-  alterAnalyzerRename,
-  alterAnalyzerComment,
-  alterAccessRename,
-  alterAccessAuthenticate,
-  alterAccessDuration,
-  alterAccessComment,
-  alterParamRename,
-  alterParamValue,
-  alterParamPermissions,
-  alterParamComment,
-  alterSequenceRename,
-  alterSequenceRestart,
-  alterSequenceCache,
-  alterSequenceComment,
-  alterUserRename,
-  alterUserPassword,
-  alterUserRoles,
+  alterTableRename,
+  alterTableType,
   alterUserComment,
+  alterUserPassword,
+  alterUserRename,
+  alterUserRoles,
 } from '../src/generators';
 import {
-  detectTableRename,
-  detectFieldRenameByWas,
-  detectIndexRenameByWas,
-  detectFunctionRename,
-  detectAnalyzerRename,
   detectAccessRename,
+  detectAnalyzerRename,
+  detectFieldRenameByWas,
+  detectFunctionRename,
   detectGenericRename,
+  detectIndexRenameByWas,
+  detectTableRename,
 } from '../src/migrator/comparison';
 
 describe('ALTER Statement Generators', () => {
   describe('ALTER TABLE', () => {
     it('should generate table rename', () => {
-      expect(alterTableRename('users', 'customers')).toBe(
-        'ALTER TABLE users RENAME TO customers;',
-      );
+      expect(alterTableRename('users', 'customers')).toBe('ALTER TABLE users RENAME TO customers;');
     });
 
     it('should generate table type change', () => {
@@ -390,7 +388,9 @@ describe('ALTER Statement Generators', () => {
     });
 
     it('should generate sequence RESTART change', () => {
-      expect(alterSequenceRestart('order_seq', 1000)).toBe('ALTER SEQUENCE order_seq RESTART 1000;');
+      expect(alterSequenceRestart('order_seq', 1000)).toBe(
+        'ALTER SEQUENCE order_seq RESTART 1000;',
+      );
     });
 
     it('should generate sequence CACHE change', () => {
@@ -538,4 +538,3 @@ describe('Rename Detection', () => {
     });
   });
 });
-

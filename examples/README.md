@@ -1,337 +1,303 @@
-# **smig** schema examples
+# **smig** Schema Examples
 
-This directory contains example schemas demonstrating various features and best practices of **smig**. These examples progress from simple to complex, showcasing real-world patterns you can use in your own projects.
+This directory contains example schemas demonstrating various features and best practices of **smig**. Each example is tested and ready to use as a starting point for your own projects.
 
-## Examples overview
+## Examples Overview
 
-### ⚡ Minimal example (`minimal-example.js`)
+| Example | Description | Features |
+|---------|-------------|----------|
+| [Minimal](#minimal-example) | Simplest possible schema | Basic fields, validation |
+| [Blog](#blog-example) | Users, posts, comments | Full-text search, events |
+| [Social Network](#social-network-example) | Follows, posts, likes | Graph relations, counters |
+| [E-commerce](#e-commerce-example) | Products, orders, inventory | Sequences, permissions, events |
+| [AI Embeddings](#ai-embeddings-example) | Semantic search system | HNSW vectors, functions |
+| [Social Platform](#social-platform-example) | Full-featured platform | Scopes, analyzers, computed fields |
 
-The simplest possible **smig** schema - perfect for understanding the basics.
+---
 
-**What it demonstrates:**
+## Minimal Example
+
+**File:** `minimal-example.ts`
+
+The simplest possible **smig** schema—perfect for understanding the basics.
+
+**Features:**
 - Single table definition
 - Basic field types (`string`, `bool`)
 - Field validation with assertions
 - Common field patterns (`cf.timestamp()`)
-- Required schema composition
-
-**Tables:**
-- `task` - Simple todo items with validation
 
 **Run it:**
 ```zsh
-smig generate --schema examples/minimal-example.js
-smig migrate --schema examples/minimal-example.js
+bun smig generate --schema examples/minimal-example.ts
+bun smig migrate --schema examples/minimal-example.ts
 ```
 
-### 📝 Simple blog schema (`simple-blog-schema.js`)
+---
 
-A realistic blogging platform schema with relationships.
+## Blog Example
 
-**What it demonstrates:**
+**File:** `blog-example.ts`
+
+A realistic blogging platform with users, posts, and nested comments.
+
+**Features:**
 - Multiple table definitions
-- Field validation (email, length)
+- Email and length validation
 - Optional fields with `option()`
-- Relations between tables
-- Indexes for performance
-- Basic events for automation
-- Common field patterns (`cf.owner()`, `cf.timestamp()`)
-- Common index patterns (`ci.createdAt()`)
+- Full-text search on content
+- Events for automation (`publishedAt` timestamp)
 
-**Tables:**
-- `user` - Blog authors with email validation
-- `post` - Blog posts with author references and timestamps
-
-**Relations:**
-- `like` - Users liking posts (graph edge)
+**Tables:** `user`, `post`, `comment`
 
 **Run it:**
 ```zsh
-smig generate --schema examples/simple-blog-schema.js
-smig migrate --schema examples/simple-blog-schema.js
+bun smig generate --schema examples/blog-example.ts
+bun smig migrate --schema examples/blog-example.ts
 ```
 
-### 🌐 Social network schema (`social-network-schema.js`)
+---
 
-A comprehensive social media platform with advanced features.
+## Social Network Example
 
-**What it demonstrates:**
-- Advanced field types (`uuid`, `array`, `int`)
-- Complex validation (username patterns, enums, length limits)
-- Composite indexes for query optimization
-- Multiple event definitions
-- Audit trail patterns
-- Nested data structures (threaded comments)
-- Self-referencing relations (user follows user)
+**File:** `social-network-schema.ts`
+
+A social media platform with user follows, posts, and likes.
+
+**Features:**
+- Graph relations (`follows`, `likes`)
 - Counter automation with events
-- Real-world social media patterns
+- User profiles with follower/following counts
+- Reply and repost tracking
 
-**Tables:**
-- `user` - Complete user profiles with counters
-- `post` - Social posts with hashtags, mentions, media
-- `comment` - Threaded comment system
-- `notification` - Type-safe notification system
-
-**Relations:**
-- `follow` - User following with self-reference
-- `like` - Post likes
-- `block` - User blocking
+**Tables:** `user`, `post`
+**Relations:** `follows`, `likes`
 
 **Run it:**
 ```zsh
-smig generate --schema examples/social-network-schema.js
-smig migrate --schema examples/social-network-schema.js
+bun smig generate --schema examples/social-network-schema.ts
+bun smig migrate --schema examples/social-network-schema.ts
 ```
 
-### 🎯 Social platform schema (`social-platform-schema.js`)
+---
 
-A full-featured social platform demonstrating advanced **smig** capabilities.
+## E-commerce Example
 
-**What it demonstrates:**
-- Custom authentication scopes with `scope()` builder
-- Full-text search analyzers with `analyzer()` builder
-- Custom database functions with `fn()` builder
-- Union type records for polymorphic references
-- Computed fields with `.computed()` method
-- Complex voting systems with nested fields
+**File:** `ecommerce-example.ts`
+
+An online store with products, orders, and inventory management.
+
+**Features:**
+- Sequences for order numbers
+- Inventory events (stock reduction, low stock alerts)
+- Order completion events
+- Row-level permissions
+- Category hierarchies
+
+**Tables:** `category`, `product`, `customer`, `order`
+**Sequences:** `order_number`
+
+**Run it:**
+```zsh
+bun smig generate --schema examples/ecommerce-example.ts
+bun smig migrate --schema examples/ecommerce-example.ts
+```
+
+---
+
+## AI Embeddings Example
+
+**File:** `ai-embeddings-example.ts`
+
+A semantic search system with vector embeddings for AI applications.
+
+**Features:**
+- HNSW vector indexes (1536 dimensions for OpenAI)
+- Custom database functions for search
+- Hybrid search (vector + keyword)
+- Custom analyzers for technical content
+- Document similarity caching
+
+**Tables:** `document`, `search_history`, `document_similarity`
+**Functions:** `fn::semantic_search`, `fn::hybrid_search`, `fn::find_similar`
+**Analyzers:** `tech`
+
+**Run it:**
+```zsh
+bun smig generate --schema examples/ai-embeddings-example.ts
+bun smig migrate --schema examples/ai-embeddings-example.ts
+```
+
+---
+
+## Social Platform Example
+
+**File:** `social-platform-schema.ts`
+
+A comprehensive social platform demonstrating advanced **smig** capabilities.
+
+**Features:**
+- Schemaless tables for flexibility
+- Computed fields with expressions
+- Union type records (polymorphic references)
 - Topic-based content organization
-- Thread and comment hierarchies
-- Comprehensive permission systems
+- User roles and permissions
 
-**Tables:**
-- `user` - Users with voting, roles, and computed follower counts
-- `topic` - Content topics with posts and threads
-- `post` - Posts with images, comments, and voting
-- `draft` - Draft posts before publication
-- `thread` - Discussion threads with replies
-- `comment` - Comments on posts with voting
-- `image` - Image attachments
-- `notification` - Polymorphic notifications (union types)
-- `feedback` - User feedback system
-- `report` - Content reporting
-- `error` - Error logging
-- `confirmation` - Email confirmations
-- `passwordReset` - Password reset tokens
-
-**Relations:**
-- `pin` - Users pinning posts
-
-**Functions:**
-- `fn::days_since` - Calculate days elapsed since a datetime
-
-**Scopes:**
-- `account` - Authentication with email/username and Argon2 password hashing
-
-**Analyzers:**
-- `relevanceSearch` - Full-text search with camel case, class tokenizers, and snowball stemming
+**Tables:** `user`, `topic`, `post`, `thread`, `comment`, `notification`
 
 **Run it:**
 ```zsh
-smig generate --schema examples/social-platform-schema.js
-smig migrate --schema examples/social-platform-schema.js
+bun smig generate --schema examples/social-platform-schema.ts
+bun smig migrate --schema examples/social-platform-schema.ts
 ```
 
-## Key features demonstrated
+---
 
-> **SurrealDB 3 compatibility**: These examples use SurrealDB 3 syntax. Key differences from v2:
-> - Regex validation: `string::matches($value, /regex/)` instead of `$value ~ /regex/`
-> - Function names: `string::is_email()` instead of `string::is::email()`
-> - Computed fields: `{ expression }` instead of `<future> { expression }`
+## Additional Examples
 
-### Field types & validation
-```javascript
+### Simple Blog (Original)
+
+**File:** `simple-blog-schema.ts`
+
+The original blog example with full-text search and like relations.
+
+**Features:**
+- Full-text search with `ci.createdAt()` pattern
+- Like relations between users and posts
+- Events for publish timestamp automation
+
+---
+
+## Key Features Demonstrated
+
+### Field Types & Validation
+
+```typescript
 // Basic types
-name: string()
-  .assert('$value != NONE'),
+name: string().required(),
 age: int().default(0),
 isActive: bool().default(true),
-createdAt: cf.timestamp(), // Common pattern for timestamps
+createdAt: datetime().default('time::now()'),
 
-// Advanced types
-id_uuid: uuid().default('rand::uuid::v7()'),
-tags: array('string').default([]),
-bio: option('string'), // Optional field (can be NONE)
-settings: option('object'), // Optional JSON data
-
-// Validation with stacked assertions (combined with AND)
+// Validation with stacked assertions
 email: string()
-  .assert('$value != NONE')
+  .required()
   .assert('string::is_email($value)'),
 
 username: string()
-  .assert('string::matches($value, /^[a-zA-Z0-9_]{3,20}$/)'),
-
-content: string()
-  .assert('$value != NONE')
-  .assert('string::len($value) >= 1 AND string::len($value) <= 5000'),
-
-// Foreign key references
-author: cf.owner('user'), // Common pattern for ownership
+  .assert('string::len($value) >= 3')
+  .assert('string::len($value) <= 30'),
 ```
 
 ### Indexes
-```javascript
+
+```typescript
 indexes: {
-  // Simple unique index
-  emailIndex: index(['email']).unique(),
+  // Unique index
+  email: index(['email']).unique(),
 
-  // Common index patterns
-  recentPosts: ci.createdAt('post'),
+  // Composite index
+  authorDate: index(['author', 'createdAt']),
 
-  // Composite index for complex queries
-  verifiedUsersIndex: index(['isVerified', 'followerCount']),
+  // Full-text search (single column)
+  contentSearch: index(['content']).search().analyzer('english'),
 
-  // Multi-value index for arrays
-  hashtagIndex: index(['hashtags']),
+  // Vector index for AI
+  semantic: index(['embedding']).hnsw().dimension(1536).dist('COSINE'),
 }
 ```
 
-### Events & business logic
-```javascript
+### Events
+
+```typescript
 events: {
-  // Automatic timestamp updates
-  updateTimestamp: event('post_updated_at')
+  // Automatic timestamp
+  updateTimestamp: event('post_updated')
     .onUpdate()
     .thenDo('UPDATE $after.id SET updatedAt = time::now()'),
 
-  // Automatic counter updates
-  incrementPostCount: event('post_count_increment')
-    .onCreate()
-    .thenDo('UPDATE $after.author SET postCount += 1'),
-
-  // Audit trails
-  auditProfileUpdate: event('user_profile_audit')
+  // Conditional trigger
+  setPublishedAt: event('set_published')
     .onUpdate()
-    .when('$before.bio != $after.bio')
-    .thenDo(`
-      CREATE audit_log SET
-        table = "user",
-        recordId = $after.id,
-        action = "profile_update",
-        timestamp = time::now()
-    `),
-
-  // Complex business logic (single statement, multiple lines OK)
-  extractHashtags: event('post_hashtag_extraction')
-    .onCreate()
-    .thenDo(`
-      UPDATE $after.id SET
-        hashtags = string::matches($after.content, /#\\w+/g)
-      WHERE array::len(string::matches($after.content, /#\\w+/g)) > 0
-    `),
-}
-```
-
-**Multiple statements**: Events can contain multiple SurrealQL statements when wrapped in curly braces `{ ... }`. The statements should be separated by semicolons. **smig** automatically detects multi-statement events and generates the correct block syntax:
-
-```javascript
-events: {
-  // Multiple statements in a block
-  multiAction: event('multi_action')
-    .onCreate()
-    .thenDo(`{
-      UPDATE $after.author SET postCount += 1;
-      CREATE notification SET recipient = $after.author, message = "Post created";
-    }`),
+    .when('$before.published = false AND $after.published = true')
+    .thenDo('UPDATE $after.id SET publishedAt = time::now()'),
 }
 ```
 
 ### Relations
-```javascript
-// Simple relation
-const likeRelation = defineRelation({
-  name: 'like',
-  from: 'user',
-  to: 'post',
-  fields: {
-    createdAt: cf.timestamp(), // Common pattern
-  },
-});
 
-// Self-referencing relation
-const followRelation = defineRelation({
-  name: 'follow',
+```typescript
+// User-to-user relation
+const follows = defineRelation({
+  name: 'follows',
   from: 'user',
   to: 'user',
   fields: {
-    createdAt: cf.timestamp(),
-    notificationsEnabled: bool().default(true),
+    followedAt: datetime().default('time::now()'),
+  },
+});
+
+// User-to-post relation
+const likes = defineRelation({
+  name: 'likes',
+  from: 'user',
+  to: 'post',
+  fields: {
+    likedAt: datetime().default('time::now()'),
   },
 });
 ```
 
-## Running the examples
+### Functions
 
-### Quick start
-
-Each example can be run directly:
-
-```zsh
-# Test the minimal example
-smig generate --schema examples/minimal-example.js
-smig migrate --schema examples/minimal-example.js
-
-# Test the blog example
-smig generate --schema examples/simple-blog-schema.js
-smig migrate --schema examples/simple-blog-schema.js
-
-# Test the social network example
-smig generate --schema examples/social-network-schema.js
-smig migrate --schema examples/social-network-schema.js
+```typescript
+const searchFn = fn('fn::search')
+  .param('query', 'string')
+  .param('limit', 'option<int>')
+  .returns('array')
+  .body(`{
+    LET $max = $limit ?? 10;
+    RETURN SELECT * FROM document
+    WHERE content @@ $query
+    LIMIT $max;
+  }`);
 ```
 
-### Use as a template
+---
 
-Copy an example as your starting point:
+## Quick Start
 
+1. Copy an example as your starting point:
 ```zsh
-# Start with the blog example
-cp examples/simple-blog-schema.js schema.js
-
-# Then customize and run
-smig migrate
+cp examples/blog-example.ts schema.ts
 ```
 
-### Test with different databases
-
+2. Run migrations:
 ```zsh
-# Test against different database instances
-smig generate --schema examples/simple-blog-schema.js --url ws://localhost:8001
-
-# Use different environment configurations
-smig migrate --schema examples/social-network-schema.js --env staging
+bun smig migrate
 ```
 
-### Customize for your needs
+3. Customize for your needs!
 
-These examples are starting points - modify them to match your requirements:
+---
 
-- ✅ Add your own field types and validations
-- ✅ Create custom events for your business logic
-- ✅ Add indexes based on your query patterns
-- ✅ Extend relations with additional fields
-- ✅ Mix and match patterns from different examples
+## Best Practices
 
-## Best practices demonstrated
+These examples showcase **smig** best practices:
 
-These examples showcase **smig** best practices in action:
+1. **Singular table names** — `user`, `post`, not `users`, `posts`
+2. **Always timestamp** — Include `createdAt` and optionally `updatedAt`
+3. **Validate critical fields** — Emails, usernames, content length
+4. **Index for performance** — Based on your actual query patterns
+5. **Automate with events** — Counters, timestamps, audit trails
+6. **Use common patterns** — Leverage `cf` and `ci` helpers
 
-1. **Meaningful table names** - Singular form (`user`, `post`, not `users`, `posts`)
-2. **Use common patterns** - Leverage `cf`, `ci` helpers for consistency
-3. **Always timestamp** - Include `createdAt` and optionally `updatedAt`
-4. **Validate critical fields** - Emails, usernames, content length
-5. **Index for performance** - Based on your actual query patterns
-6. **Automate with events** - Counters, timestamps, audit trails
-7. **Explicit optionality** - Use `option()` type for nullable fields
-8. **Stack assertions** - Multiple `.assert()` calls get combined with AND
-9. **Clear validation** - Separate concerns: type, format, length, range
-10. **Relations are simple** - Clear `from`/`to` semantics
+---
 
-## Need help?
+## Need Help?
 
-- 📖 [Main README](https://github.com/kathysledge/smig) - Complete documentation
-- 🎯 [API reference](https://github.com/kathysledge/smig#api-reference) - All field types, methods, and patterns
-- ❓ [FAQ](https://github.com/kathysledge/smig#faq) - Common questions and answers
-- 💬 [Issue tracker](https://github.com/kathysledge/smig/issues) - Report bugs or ask questions
+- 📖 [Documentation](https://smig.build/)
+- 💬 [GitHub Issues](https://github.com/kathysledge/smig/issues)
+- 📦 [npm Package](https://www.npmjs.com/package/smig)
 
 Happy schema building with **smig**! 🚀

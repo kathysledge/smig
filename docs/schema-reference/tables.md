@@ -152,7 +152,7 @@ Document your table:
 ```typescript
 defineSchema({
   table: 'user',
-  comment: 'Registered user accounts',
+  comments: ['Registered user accounts'],
   fields: { ... },
 });
 ```
@@ -218,7 +218,7 @@ import { defineSchema, string, int, datetime, bool, uuid, record, index, event }
 
 const posts = defineSchema({
   table: 'post',
-  comment: 'Blog posts',
+  comments: ['Blog posts'],
   
   // Access control
   permissions: `

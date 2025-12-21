@@ -1,6 +1,6 @@
 /**
  * Integration tests for relations and graph edges
- * 
+ *
  * Tests SurrealDB graph relations with custom fields.
  */
 
@@ -31,7 +31,7 @@ describe('Relations Integration Tests', () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
       'smig.config.js',
-      'tests/integration/fixtures/relation-*.js',
+      'tests/integration/fixtures/relation-*.ts',
     ]);
   });
 
@@ -39,12 +39,12 @@ describe('Relations Integration Tests', () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
       'smig.config.js',
-      'tests/integration/fixtures/relation-*.js',
+      'tests/integration/fixtures/relation-*.ts',
     ]);
   });
 
   function createSchema(name: string, content: string): string {
-    const filename = `relation-${name}.js`;
+    const filename = `relation-${name}.ts`;
     const schemaPath = path.join(FIXTURES_DIR, filename);
     fs.writeFileSync(schemaPath, content);
     return `./tests/integration/fixtures/${filename}`;
@@ -68,7 +68,9 @@ export default {
     it('should create simple relation between two tables', async () => {
       const dbName = `test_relation_simple_${Date.now()}`;
 
-      const schemaPath = createSchema('simple', `
+      const schemaPath = createSchema(
+        'simple',
+        `
 import { defineSchema, defineRelation, composeSchema, string, datetime } from '../../../dist/schema/concise-schema.js';
 
 const user = defineSchema({
@@ -97,12 +99,13 @@ const authored = defineRelation({
 export default composeSchema({
   models: { rel_user: user, rel_post: post },
   relations: { authored }
-});`);
+});`,
+      );
 
       createConfig(schemaPath, dbName);
 
       const { stdout } = await execAsync(`node ${CLI_PATH} generate --debug`);
-      
+
       // Relations are defined as tables with in/out record fields
       expect(stdout).toContain('DEFINE TABLE authored');
       expect(stdout).toContain('DEFINE FIELD in ON TABLE authored');
@@ -120,7 +123,9 @@ export default composeSchema({
     it('should create self-referencing relation', async () => {
       const dbName = `test_relation_self_${Date.now()}`;
 
-      const schemaPath = createSchema('self-ref', `
+      const schemaPath = createSchema(
+        'self-ref',
+        `
 import { defineSchema, defineRelation, composeSchema, string, datetime, bool } from '../../../dist/schema/concise-schema.js';
 
 const person = defineSchema({
@@ -143,12 +148,13 @@ const follows = defineRelation({
 export default composeSchema({
   models: { person },
   relations: { follows }
-});`);
+});`,
+      );
 
       createConfig(schemaPath, dbName);
 
       const { stdout } = await execAsync(`node ${CLI_PATH} generate --debug`);
-      
+
       // Self-referencing relations have in/out fields pointing to same table
       expect(stdout).toContain('DEFINE TABLE follows');
       expect(stdout).toContain('DEFINE FIELD in ON TABLE follows');
@@ -163,7 +169,9 @@ export default composeSchema({
     it('should create relation with multiple custom fields', async () => {
       const dbName = `test_relation_fields_${Date.now()}`;
 
-      const schemaPath = createSchema('with-fields', `
+      const schemaPath = createSchema(
+        'with-fields',
+        `
 import { defineSchema, defineRelation, composeSchema, string, int, float, datetime, bool } from '../../../dist/schema/concise-schema.js';
 
 const customer = defineSchema({
@@ -199,12 +207,13 @@ const purchased = defineRelation({
 export default composeSchema({
   models: { customer, product },
   relations: { purchased }
-});`);
+});`,
+      );
 
       createConfig(schemaPath, dbName);
 
       const { stdout } = await execAsync(`node ${CLI_PATH} generate --debug`);
-      
+
       // Relations with custom fields show the fields in the definition
       expect(stdout).toContain('DEFINE TABLE purchased');
       expect(stdout).toContain('DEFINE FIELD in ON TABLE purchased');
@@ -229,7 +238,9 @@ export default composeSchema({
       const dbName = `test_relation_add_field_${Date.now()}`;
 
       // Initial relation
-      const v1 = createSchema('add-field-v1', `
+      const v1 = createSchema(
+        'add-field-v1',
+        `
 import { defineSchema, defineRelation, composeSchema, string, datetime } from '../../../dist/schema/concise-schema.js';
 
 const user = defineSchema({
@@ -254,14 +265,17 @@ const owns = defineRelation({
 export default composeSchema({
   models: { rel_user2: user, rel_item: item },
   relations: { owns }
-});`);
+});`,
+      );
 
       createConfig(v1, dbName);
       const { stderr: v1Stderr } = await execAsync(`node ${CLI_PATH} migrate`);
       expect(v1Stderr).toContain('Migration applied successfully');
 
       // Add field to relation
-      const v2 = createSchema('add-field-v2', `
+      const v2 = createSchema(
+        'add-field-v2',
+        `
 import { defineSchema, defineRelation, composeSchema, string, datetime, int } from '../../../dist/schema/concise-schema.js';
 
 const user = defineSchema({
@@ -287,7 +301,8 @@ const owns = defineRelation({
 export default composeSchema({
   models: { rel_user2: user, rel_item: item },
   relations: { owns }
-});`);
+});`,
+      );
 
       createConfig(v2, dbName);
 
@@ -304,4 +319,3 @@ export default composeSchema({
     }, 90000);
   });
 });
-

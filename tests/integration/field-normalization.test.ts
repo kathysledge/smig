@@ -37,7 +37,7 @@ describe('Field Normalization Integration Tests', () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
       'smig.config.js',
-      'tests/integration/fixtures/field-norm-*.js',
+      'tests/integration/fixtures/field-norm-*.ts',
     ]);
   });
 
@@ -45,12 +45,12 @@ describe('Field Normalization Integration Tests', () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
       'smig.config.js',
-      'tests/integration/fixtures/field-norm-*.js',
+      'tests/integration/fixtures/field-norm-*.ts',
     ]);
   });
 
   function createSchema(name: string, content: string): string {
-    const filename = `field-norm-${name}.js`;
+    const filename = `field-norm-${name}.ts`;
     const schemaPath = path.join(FIXTURES_DIR, filename);
     fs.writeFileSync(schemaPath, content);
     return `./tests/integration/fixtures/${filename}`;
@@ -74,7 +74,9 @@ export default {
     it('should correctly migrate all primitive field types', async () => {
       const dbName = `test_primitives_${Date.now()}`;
 
-      const schema = createSchema('primitives', `
+      const schema = createSchema(
+        'primitives',
+        `
 import { defineSchema, composeSchema, string, int, float, bool, datetime, decimal, uuid, duration, object, geometry, bytes, number, literal } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -140,7 +142,8 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(schema, dbName);
 
@@ -156,7 +159,9 @@ export default composeSchema({
     it('should correctly migrate option, array, set, and record types', async () => {
       const dbName = `test_complex_${Date.now()}`;
 
-      const schema = createSchema('complex', `
+      const schema = createSchema(
+        'complex',
+        `
 import { defineSchema, composeSchema, string, int, option, array, set, record } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -192,7 +197,8 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(schema, dbName);
 
@@ -205,7 +211,9 @@ export default composeSchema({
     it('should correctly apply readonly, flexible, default, value, and assert modifiers', async () => {
       const dbName = `test_modifiers_${Date.now()}`;
 
-      const schema = createSchema('modifiers', `
+      const schema = createSchema(
+        'modifiers',
+        `
 import { defineSchema, composeSchema, string, int, datetime } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -257,7 +265,8 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(schema, dbName);
 
@@ -270,7 +279,9 @@ export default composeSchema({
     it('should correctly migrate BTREE, HNSW, and MTREE indexes', async () => {
       const dbName = `test_indexes_${Date.now()}`;
 
-      const schema = createSchema('indexes', `
+      const schema = createSchema(
+        'indexes',
+        `
 import { defineSchema, composeSchema, string, int, array, index } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -308,7 +319,8 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(schema, dbName);
 
@@ -321,7 +333,9 @@ export default composeSchema({
     it('should correctly migrate analyzers and params', async () => {
       const dbName = `test_entities_${Date.now()}`;
 
-      const schema = createSchema('entities', `
+      const schema = createSchema(
+        'entities',
+        `
 import { defineSchema, composeSchema, string, int, analyzer, param } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -344,7 +358,8 @@ export default composeSchema({
   params: {
     app_version: param('app_version').value('"1.0.0"'),
   },
-});`);
+});`,
+      );
 
       createConfig(schema, dbName);
 
@@ -357,7 +372,9 @@ export default composeSchema({
     it('should detect no changes when schema matches database', async () => {
       const dbName = `test_no_changes_${Date.now()}`;
 
-      const schema = createSchema('no-changes', `
+      const schema = createSchema(
+        'no-changes',
+        `
 import { defineSchema, composeSchema, string, int } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -372,7 +389,8 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(schema, dbName);
 
@@ -389,7 +407,9 @@ export default composeSchema({
       const dbName = `test_additions_${Date.now()}`;
 
       // Initial schema
-      const v1 = createSchema('additions-v1', `
+      const v1 = createSchema(
+        'additions-v1',
+        `
 import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -403,13 +423,16 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(v1, dbName);
       await execAsync(`node ${CLI_PATH} migrate`);
 
       // Add a field
-      const v2 = createSchema('additions-v2', `
+      const v2 = createSchema(
+        'additions-v2',
+        `
 import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -424,7 +447,8 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(v2, dbName);
       const { stdout: diff } = await execAsync(`node ${CLI_PATH} generate --debug`);
@@ -435,7 +459,9 @@ export default composeSchema({
       const dbName = `test_modifications_${Date.now()}`;
 
       // Initial schema
-      const v1 = createSchema('modifications-v1', `
+      const v1 = createSchema(
+        'modifications-v1',
+        `
 import { defineSchema, composeSchema, int } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -449,13 +475,16 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(v1, dbName);
       await execAsync(`node ${CLI_PATH} migrate`);
 
       // Modify field to have a default
-      const v2 = createSchema('modifications-v2', `
+      const v2 = createSchema(
+        'modifications-v2',
+        `
 import { defineSchema, composeSchema, int } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -469,7 +498,8 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(v2, dbName);
       const { stdout: diff } = await execAsync(`node ${CLI_PATH} generate --debug`);
@@ -480,7 +510,9 @@ export default composeSchema({
       const dbName = `test_renames_${Date.now()}`;
 
       // Initial schema
-      const v1 = createSchema('renames-v1', `
+      const v1 = createSchema(
+        'renames-v1',
+        `
 import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -494,13 +526,16 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(v1, dbName);
       await execAsync(`node ${CLI_PATH} migrate`);
 
       // Rename field
-      const v2 = createSchema('renames-v2', `
+      const v2 = createSchema(
+        'renames-v2',
+        `
 import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -514,7 +549,8 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(v2, dbName);
       const { stdout: diff } = await execAsync(`node ${CLI_PATH} generate --debug`);
@@ -526,7 +562,9 @@ export default composeSchema({
     it('should handle special characters in string defaults', async () => {
       const dbName = `test_special_chars_${Date.now()}`;
 
-      const schema = createSchema('special-chars', `
+      const schema = createSchema(
+        'special-chars',
+        `
 import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -542,7 +580,8 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(schema, dbName);
       const { stderr } = await execAsync(`node ${CLI_PATH} migrate`);
@@ -552,7 +591,9 @@ export default composeSchema({
     it('should handle zero and negative numeric defaults', async () => {
       const dbName = `test_numeric_defaults_${Date.now()}`;
 
-      const schema = createSchema('numeric-defaults', `
+      const schema = createSchema(
+        'numeric-defaults',
+        `
 import { defineSchema, composeSchema, int, float, decimal } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -571,7 +612,8 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(schema, dbName);
       const { stderr } = await execAsync(`node ${CLI_PATH} migrate`);
@@ -581,7 +623,9 @@ export default composeSchema({
     it('should handle boolean defaults correctly', async () => {
       const dbName = `test_bool_defaults_${Date.now()}`;
 
-      const schema = createSchema('bool-defaults', `
+      const schema = createSchema(
+        'bool-defaults',
+        `
 import { defineSchema, composeSchema, bool } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -597,7 +641,8 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(schema, dbName);
       const { stderr } = await execAsync(`node ${CLI_PATH} migrate`);
@@ -607,7 +652,9 @@ export default composeSchema({
     it('should handle complex assertion combinations', async () => {
       const dbName = `test_complex_asserts_${Date.now()}`;
 
-      const schema = createSchema('complex-asserts', `
+      const schema = createSchema(
+        'complex-asserts',
+        `
 import { defineSchema, composeSchema, string, float } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -635,7 +682,8 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(schema, dbName);
       const { stderr } = await execAsync(`node ${CLI_PATH} migrate`);

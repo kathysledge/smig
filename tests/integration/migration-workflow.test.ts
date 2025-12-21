@@ -1,6 +1,6 @@
 /**
  * Integration tests for the full migration workflow
- * 
+ *
  * Tests the complete lifecycle: create → migrate → modify → migrate → rollback
  */
 
@@ -31,7 +31,7 @@ describe('Migration Workflow Integration Tests', () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
       'smig.config.js',
-      'tests/integration/fixtures/workflow-*.js',
+      'tests/integration/fixtures/workflow-*.ts',
     ]);
   });
 
@@ -39,12 +39,12 @@ describe('Migration Workflow Integration Tests', () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
       'smig.config.js',
-      'tests/integration/fixtures/workflow-*.js',
+      'tests/integration/fixtures/workflow-*.ts',
     ]);
   });
 
   function createSchema(name: string, content: string): string {
-    const filename = `workflow-${name}.js`;
+    const filename = `workflow-${name}.ts`;
     const schemaPath = path.join(FIXTURES_DIR, filename);
     fs.writeFileSync(schemaPath, content);
     return `./tests/integration/fixtures/${filename}`;
@@ -69,7 +69,9 @@ export default {
 
     // === STEP 1: Initial schema ===
     console.log('\n=== Step 1: Create initial schema ===');
-    const v1 = createSchema('lifecycle-v1', `
+    const v1 = createSchema(
+      'lifecycle-v1',
+      `
 import { defineSchema, composeSchema, string, int, datetime, index } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -96,7 +98,8 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+    );
 
     createConfig(v1, dbName);
 
@@ -124,7 +127,9 @@ export default composeSchema({
 
     // === STEP 2: Modify schema ===
     console.log('\n=== Step 2: Modify schema ===');
-    const v2 = createSchema('lifecycle-v2', `
+    const v2 = createSchema(
+      'lifecycle-v2',
+      `
 import { defineSchema, composeSchema, string, int, bool, datetime, index, record } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -168,7 +173,8 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+    );
 
     createConfig(v2, dbName);
 
@@ -197,7 +203,9 @@ export default composeSchema({
 
     // === STEP 3: Another modification ===
     console.log('\n=== Step 3: Field type and index changes ===');
-    const v3 = createSchema('lifecycle-v3', `
+    const v3 = createSchema(
+      'lifecycle-v3',
+      `
 import { defineSchema, composeSchema, string, int, bool, datetime, index, record, float } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -249,7 +257,8 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+    );
 
     createConfig(v3, dbName);
 
@@ -269,7 +278,9 @@ export default composeSchema({
     expect(verifyV3).toContain('No changes detected');
     console.log('✅ v3 verified - no remaining changes');
 
-    const { stdout: finalStatus, stderr: finalStatusStderr } = await execAsync(`node ${CLI_PATH} status`);
+    const { stdout: finalStatus, stderr: finalStatusStderr } = await execAsync(
+      `node ${CLI_PATH} status`,
+    );
     const finalStatusOutput = finalStatus + finalStatusStderr;
     expect(finalStatusOutput).toContain('Applied migrations: 3');
     console.log('✅ Final status shows 3 migrations applied');
@@ -279,7 +290,9 @@ export default composeSchema({
     const dbName = `test_rollback_${Date.now()}`;
 
     // Create initial schema
-    const schema = createSchema('rollback', `
+    const schema = createSchema(
+      'rollback',
+      `
 import { defineSchema, composeSchema, string, int } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -293,7 +306,8 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+    );
 
     createConfig(schema, dbName);
 
@@ -302,21 +316,25 @@ export default composeSchema({
     expect(migrateStderr).toContain('Migration applied successfully');
 
     // Check status before rollback
-    const { stdout: statusBefore, stderr: statusBeforeStderr } = await execAsync(`node ${CLI_PATH} status`);
+    const { stdout: statusBefore, stderr: statusBeforeStderr } = await execAsync(
+      `node ${CLI_PATH} status`,
+    );
     const statusBeforeOutput = statusBefore + statusBeforeStderr;
     expect(statusBeforeOutput).toContain('Applied migrations: 1');
 
     // Attempt rollback (with yes confirmation piped in)
     const { stdout: rollbackOutput, stderr: rollbackStderr } = await execAsync(
-      `echo "y" | node ${CLI_PATH} rollback`
+      `echo "y" | node ${CLI_PATH} rollback`,
     );
     const rollbackResult = rollbackOutput + rollbackStderr;
-    
+
     // Should indicate rollback happened or was cancelled
     expect(rollbackResult).toMatch(/rolled back|cancelled|Rollback/i);
 
     // Check status after rollback
-    const { stdout: statusAfter, stderr: statusAfterStderr } = await execAsync(`node ${CLI_PATH} status`);
+    const { stdout: statusAfter, stderr: statusAfterStderr } = await execAsync(
+      `node ${CLI_PATH} status`,
+    );
     const statusAfterOutput = statusAfter + statusAfterStderr;
     // Should show 0 migrations after successful rollback
     expect(statusAfterOutput).toMatch(/Applied migrations: [01]/);
@@ -326,7 +344,9 @@ export default composeSchema({
     const dbName = `test_removals_${Date.now()}`;
 
     // Initial schema with more fields
-    const v1 = createSchema('removal-v1', `
+    const v1 = createSchema(
+      'removal-v1',
+      `
 import { defineSchema, composeSchema, string, int, bool, index } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -346,14 +366,17 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+    );
 
     createConfig(v1, dbName);
     const { stderr: v1Stderr } = await execAsync(`node ${CLI_PATH} migrate`);
     expect(v1Stderr).toContain('Migration applied successfully');
 
     // Remove fields and indexes
-    const v2 = createSchema('removal-v2', `
+    const v2 = createSchema(
+      'removal-v2',
+      `
 import { defineSchema, composeSchema, string, index } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -369,16 +392,17 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+    );
 
     createConfig(v2, dbName);
 
     // Should detect removals
     const { stdout: diffOutput } = await execAsync(`node ${CLI_PATH} generate --debug`);
-    
+
     expect(diffOutput).toContain('REMOVE FIELD');
     expect(diffOutput).toContain('REMOVE INDEX');
-    
+
     // Apply and verify
     const { stderr: v2Stderr } = await execAsync(`node ${CLI_PATH} migrate`);
     expect(v2Stderr).toContain('Migration applied successfully');
@@ -391,7 +415,9 @@ export default composeSchema({
     const dbName = `test_empty_${Date.now()}`;
 
     // Initial schema
-    const v1 = createSchema('empty-v1', `
+    const v1 = createSchema(
+      'empty-v1',
+      `
 import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -404,20 +430,24 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+    );
 
     createConfig(v1, dbName);
     const { stderr: v1Stderr } = await execAsync(`node ${CLI_PATH} migrate`);
     expect(v1Stderr).toContain('Migration applied successfully');
 
     // Empty schema
-    const v2 = createSchema('empty-v2', `
+    const v2 = createSchema(
+      'empty-v2',
+      `
 import { composeSchema } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
   models: {},
   relations: {}
-});`);
+});`,
+    );
 
     createConfig(v2, dbName);
 
@@ -434,4 +464,3 @@ export default composeSchema({
     expect(verifyOutput).toContain('No changes detected');
   }, 90000);
 });
-

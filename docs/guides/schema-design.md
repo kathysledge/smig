@@ -158,7 +158,7 @@ fields: {
   author: record('user').required(),
   
   // Optional reference
-  parentComment: option(record('comment')),
+  parentComment: option('record<comment>'),
   
   // Union type (multiple possible tables)
   target: record(['post', 'comment', 'user']),

@@ -1,6 +1,6 @@
 /**
  * Integration tests for new entity types
- * 
+ *
  * Tests params, sequences, access definitions, and other SurrealDB 3.x entities.
  */
 
@@ -31,7 +31,7 @@ describe('New Entity Types Integration Tests', () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
       'smig.config.js',
-      'tests/integration/fixtures/entity-*.js',
+      'tests/integration/fixtures/entity-*.ts',
     ]);
   });
 
@@ -39,12 +39,12 @@ describe('New Entity Types Integration Tests', () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
       'smig.config.js',
-      'tests/integration/fixtures/entity-*.js',
+      'tests/integration/fixtures/entity-*.ts',
     ]);
   });
 
   function createSchema(name: string, content: string): string {
-    const filename = `entity-${name}.js`;
+    const filename = `entity-${name}.ts`;
     const schemaPath = path.join(FIXTURES_DIR, filename);
     fs.writeFileSync(schemaPath, content);
     return `./tests/integration/fixtures/${filename}`;
@@ -68,7 +68,9 @@ export default {
     it('should create and migrate params', async () => {
       const dbName = `test_params_${Date.now()}`;
 
-      const schemaPath = createSchema('params', `
+      const schemaPath = createSchema(
+        'params',
+        `
 import { composeSchema, param } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -78,7 +80,8 @@ export default composeSchema({
     max_results: param('max_results').value('100'),
     app_name: param('app_name').value('"My App"'),
   }
-});`);
+});`,
+      );
 
       createConfig(schemaPath, dbName);
 
@@ -93,7 +96,9 @@ export default composeSchema({
     it('should create sequences', async () => {
       const dbName = `test_sequences_${Date.now()}`;
 
-      const schemaPath = createSchema('sequences', `
+      const schemaPath = createSchema(
+        'sequences',
+        `
 import { composeSchema, sequence } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -102,12 +107,13 @@ export default composeSchema({
   sequences: {
     order_number: sequence('order_number').start(1000).step(1),
   }
-});`);
+});`,
+      );
 
       createConfig(schemaPath, dbName);
 
       const { stdout } = await execAsync(`node ${CLI_PATH} generate --debug`);
-      
+
       expect(stdout).toContain('DEFINE SEQUENCE');
       expect(stdout).toContain('order_number');
       expect(stdout).toContain('START 1000');
@@ -118,7 +124,9 @@ export default composeSchema({
     it('should create custom functions', async () => {
       const dbName = `test_functions_${Date.now()}`;
 
-      const schemaPath = createSchema('functions', `
+      const schemaPath = createSchema(
+        'functions',
+        `
 import { composeSchema, fn } from '../../../dist/schema/concise-schema.js';
 
 const add = fn('fn::add')
@@ -133,12 +141,13 @@ export default composeSchema({
   functions: {
     add,
   }
-});`);
+});`,
+      );
 
       createConfig(schemaPath, dbName);
 
       const { stdout } = await execAsync(`node ${CLI_PATH} generate --debug`);
-      
+
       expect(stdout).toContain('DEFINE FUNCTION');
       expect(stdout).toContain('fn::add');
 
@@ -152,7 +161,9 @@ export default composeSchema({
     it('should create custom analyzers', async () => {
       const dbName = `test_analyzers_${Date.now()}`;
 
-      const schemaPath = createSchema('analyzers', `
+      const schemaPath = createSchema(
+        'analyzers',
+        `
 import { composeSchema, analyzer } from '../../../dist/schema/concise-schema.js';
 
 const simple = analyzer('simple_text')
@@ -165,12 +176,13 @@ export default composeSchema({
   analyzers: {
     simple_text: simple,
   }
-});`);
+});`,
+      );
 
       createConfig(schemaPath, dbName);
 
       const { stdout } = await execAsync(`node ${CLI_PATH} generate --debug`);
-      
+
       expect(stdout).toContain('DEFINE ANALYZER');
       expect(stdout).toContain('simple_text');
 
@@ -184,7 +196,9 @@ export default composeSchema({
     it('should create table events', async () => {
       const dbName = `test_events_${Date.now()}`;
 
-      const schemaPath = createSchema('events', `
+      const schemaPath = createSchema(
+        'events',
+        `
 import { defineSchema, composeSchema, string, datetime, event } from '../../../dist/schema/concise-schema.js';
 
 export default composeSchema({
@@ -216,12 +230,13 @@ export default composeSchema({
     })
   },
   relations: {}
-});`);
+});`,
+      );
 
       createConfig(schemaPath, dbName);
 
       const { stdout } = await execAsync(`node ${CLI_PATH} generate --debug`);
-      
+
       expect(stdout).toContain('DEFINE EVENT');
       expect(stdout).toContain('status_change');
       expect(stdout).toContain('order_created');

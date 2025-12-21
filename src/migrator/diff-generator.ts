@@ -1153,10 +1153,7 @@ function compareSequenceEntities(
         generateSequenceDefinition({
           name,
           start: desiredSeq.start as number | undefined,
-          step: desiredSeq.step as number | undefined,
-          cache: desiredSeq.cache as number | undefined,
-          cycle: desiredSeq.cycle as boolean | undefined,
-          comments: desiredSeq.comment ? [desiredSeq.comment as string] : undefined,
+          comments: desiredSeq.comments as string[] | undefined,
         }),
       );
       downChanges.push(generateSequenceRemove(name));

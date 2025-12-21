@@ -14,7 +14,7 @@ describe('TypeScript Schema Loading', () => {
     expect(schema).toBeDefined();
     expect(schema.tables).toBeDefined();
     expect(schema.tables.length).toBeGreaterThan(0);
-    
+
     // Check that user table exists
     const userTable = schema.tables.find((t) => t.name === 'user');
     expect(userTable).toBeDefined();
@@ -34,7 +34,7 @@ describe('TypeScript Schema Loading', () => {
     const fs = await import('fs-extra');
     const schemaPath = path.resolve(__dirname, '../examples/temp-schema.tson');
     await fs.writeFile(schemaPath, '{}');
-    
+
     try {
       await expect(loadSchemaFromFile(schemaPath)).rejects.toThrow('Unsupported file type');
     } finally {
@@ -45,7 +45,7 @@ describe('TypeScript Schema Loading', () => {
 
   it('should reject non-existent files', async () => {
     const schemaPath = path.resolve(__dirname, '../examples/does-not-exist.ts');
-    
+
     await expect(loadSchemaFromFile(schemaPath)).rejects.toThrow();
   });
 
@@ -62,4 +62,3 @@ describe('TypeScript Schema Loading', () => {
     expect(supportedExtensions.includes(ext)).toBe(true);
   });
 });
-

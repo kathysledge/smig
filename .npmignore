@@ -3,7 +3,7 @@ examples
 media
 scripts
 src
-.cursor
+docs
 schema.js
 vitest.*
 vite.config.ts
@@ -11,3 +11,6 @@ tsconfig.json
 biome.json
 bun.lock
 .github
+AGENTS.md
+CHANGELOG.md
+.cursorrules

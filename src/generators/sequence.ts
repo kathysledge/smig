@@ -11,11 +11,6 @@ import type { GeneratorOptions } from './table';
 export interface SequenceDefinition {
   name: string;
   start?: number | null;
-  step?: number | null;
-  min?: number | null;
-  max?: number | null;
-  cycle?: boolean;
-  cache?: number | null;
   comments?: string[];
   previousNames?: string[];
   ifNotExists?: boolean;
@@ -41,36 +36,9 @@ export function generateSequenceDefinition(
   // Sequence name
   parts.push(sequence.name);
 
-  // Start
+  // Start - SurrealDB 3.x only supports START, not INCREMENT/STEP/MIN/MAX/CYCLE/CACHE
   if (sequence.start !== null && sequence.start !== undefined) {
     parts.push(`START ${sequence.start}`);
-  }
-
-  // Step/Increment
-  if (sequence.step !== null && sequence.step !== undefined) {
-    parts.push(`INCREMENT ${sequence.step}`);
-  }
-
-  // Min
-  if (sequence.min !== null && sequence.min !== undefined) {
-    parts.push(`MINVALUE ${sequence.min}`);
-  }
-
-  // Max
-  if (sequence.max !== null && sequence.max !== undefined) {
-    parts.push(`MAXVALUE ${sequence.max}`);
-  }
-
-  // Cycle
-  if (sequence.cycle) {
-    parts.push('CYCLE');
-  } else if (sequence.cycle === false && (sequence.min !== null || sequence.max !== null)) {
-    parts.push('NO CYCLE');
-  }
-
-  // Cache
-  if (sequence.cache !== null && sequence.cache !== undefined) {
-    parts.push(`CACHE ${sequence.cache}`);
   }
 
   // Comment

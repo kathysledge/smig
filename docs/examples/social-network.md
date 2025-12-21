@@ -4,7 +4,7 @@ A social platform with follows, posts, and likes using graph relations.
 
 ## Schema
 
-A social platform with users, posts, follows, and likes using SurrealDB’s graph relations:
+A social platform with users, posts, follows, and likes using SurrealDB's graph relations:
 
 ```typescript
 import {
@@ -26,7 +26,10 @@ import {
 const userSchema = defineSchema({
   table: 'user',
   fields: {
-    username: string().required().length(3, 30),
+    username: string()
+      .required()
+      .assert('string::len($value) >= 3')
+      .assert('string::len($value) <= 30'),
     email: string().required().assert('string::is_email($value)'),
     displayName: string().required(),
     bio: option('string'),
@@ -49,10 +52,13 @@ const postSchema = defineSchema({
   table: 'post',
   fields: {
     author: record('user').required(),
-    content: string().required().length(1, 280),
+    content: string()
+      .required()
+      .assert('string::len($value) >= 1')
+      .assert('string::len($value) <= 280'),
     media: array('string').default([]),
-    replyTo: option(record('post')),
-    repostOf: option(record('post')),
+    replyTo: option('record<post>'),
+    repostOf: option('record<post>'),
     likeCount: int().default(0),
     repostCount: int().default(0),
     replyCount: int().default(0),
@@ -63,6 +69,22 @@ const postSchema = defineSchema({
     replyTo: index(['replyTo']),
     timeline: index(['createdAt']),
   },
+  events: {
+    incrementPostCount: event('increment_post_count')
+      .onCreate()
+      .when('$event = "CREATE" AND $after.replyTo = NONE AND $after.repostOf = NONE')
+      .thenDo('UPDATE $after.author SET postCount += 1'),
+
+    incrementReplyCount: event('increment_reply_count')
+      .onCreate()
+      .when('$event = "CREATE" AND $after.replyTo != NONE')
+      .thenDo('UPDATE $after.replyTo SET replyCount += 1'),
+
+    incrementRepostCount: event('increment_repost_count')
+      .onCreate()
+      .when('$event = "CREATE" AND $after.repostOf != NONE')
+      .thenDo('UPDATE $after.repostOf SET repostCount += 1'),
+  },
 });
 
 // Follow relation
@@ -70,31 +92,9 @@ const followsRelation = defineRelation({
   name: 'follows',
   from: 'user',
   to: 'user',
-  enforced: true,
   fields: {
     followedAt: datetime().default('time::now()'),
     notifications: bool().default(true),
-  },
-  indexes: {
-    unique: index(['in', 'out']).unique(),
-    byFollower: index(['in', 'followedAt']),
-    byFollowed: index(['out', 'followedAt']),
-  },
-  events: {
-    updateCounts: event('update_counts')
-      .onCreate()
-      .when('$event = "CREATE"')
-      .thenDo(`{
-        UPDATE $after.in SET followingCount += 1;
-        UPDATE $after.out SET followerCount += 1;
-      }`),
-    decrementCounts: event('decrement_counts')
-      .onDelete()
-      .when('$event = "DELETE"')
-      .thenDo(`{
-        UPDATE $before.in SET followingCount -= 1;
-        UPDATE $before.out SET followerCount -= 1;
-      }`),
   },
 });
 
@@ -103,47 +103,10 @@ const likesRelation = defineRelation({
   name: 'likes',
   from: 'user',
   to: 'post',
-  enforced: true,
   fields: {
     likedAt: datetime().default('time::now()'),
   },
-  indexes: {
-    unique: index(['in', 'out']).unique(),
-    byUser: index(['in', 'likedAt']),
-    byPost: index(['out', 'likedAt']),
-  },
-  events: {
-    incrementLikes: event('increment_likes')
-      .onCreate()
-      .when('$event = "CREATE"')
-      .thenDo('UPDATE $after.out SET likeCount += 1'),
-    decrementLikes: event('decrement_likes')
-      .onDelete()
-      .when('$event = "DELETE"')
-      .thenDo('UPDATE $before.out SET likeCount -= 1'),
-  },
 });
-
-// Post events
-const postEvents = {
-  incrementPostCount: event('increment_post_count')
-    .onCreate()
-    .when('$event = "CREATE" AND $after.replyTo = NONE AND $after.repostOf = NONE')
-    .thenDo('UPDATE $after.author SET postCount += 1'),
-  
-  incrementReplyCount: event('increment_reply_count')
-    .onCreate()
-    .when('$event = "CREATE" AND $after.replyTo != NONE')
-    .thenDo('UPDATE $after.replyTo SET replyCount += 1'),
-    
-  incrementRepostCount: event('increment_repost_count')
-    .onCreate()
-    .when('$event = "CREATE" AND $after.repostOf != NONE')
-    .thenDo('UPDATE $after.repostOf SET repostCount += 1'),
-};
-
-// Add events to post
-postSchema.events = postEvents;
 
 export default composeSchema({
   models: {
@@ -196,7 +159,7 @@ SELECT * FROM user:alice -> follows -> user;
 Check if one user follows another:
 
 ```surql
-SELECT * FROM follows 
+SELECT * FROM follows
 WHERE in = user:alice AND out = user:bob;
 ```
 
@@ -216,7 +179,7 @@ Remove a like:
 DELETE likes WHERE in = user:alice AND out = post:123;
 ```
 
-### Get user’s liked posts
+### Get user's liked posts
 
 Get all posts a user has liked:
 
@@ -231,7 +194,7 @@ LIMIT 20;
 Build a chronological feed of posts from people a user follows:
 
 ```surql
-SELECT * FROM post 
+SELECT * FROM post
 WHERE author IN (SELECT VALUE out FROM follows WHERE in = user:alice)
 ORDER BY createdAt DESC
 LIMIT 50;
@@ -253,7 +216,7 @@ Discover new people through your network:
 
 ```surql
 SELECT DISTINCT out FROM user:alice -> follows -> user -> follows -> user
-WHERE out != user:alice 
+WHERE out != user:alice
 AND out NOT IN (SELECT VALUE out FROM follows WHERE in = user:alice);
 ```
 
@@ -262,4 +225,3 @@ AND out NOT IN (SELECT VALUE out FROM follows WHERE in = user:alice);
 - [Relations reference](../schema-reference/relations.md) - Relation options
 - [Events reference](../schema-reference/events.md) - Event triggers
 - [AI embeddings](ai-embeddings.md) - Recommendation feeds
-

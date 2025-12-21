@@ -1100,8 +1100,8 @@ export class MigrationManager {
         // New sequence
         upChanges.push(`-- New sequence: ${newSequence.name}`);
         let seqDef = `DEFINE SEQUENCE ${newSequence.name}`;
+        // SurrealDB 3.x only supports START for sequences
         if (newSequence.start !== undefined) seqDef += ` START ${newSequence.start}`;
-        if (newSequence.step !== undefined) seqDef += ` STEP ${newSequence.step}`;
         upChanges.push(`${seqDef};`);
         upChanges.push('');
 
@@ -1240,8 +1240,8 @@ export class MigrationManager {
             if (seq) {
               downChanges.push(`-- Rollback: Recreate sequence ${change.table}`);
               let seqDef = `DEFINE SEQUENCE ${seq.name}`;
+              // SurrealDB 3.x only supports START for sequences
               if (seq.start !== undefined) seqDef += ` START ${seq.start}`;
-              if (seq.step !== undefined) seqDef += ` STEP ${seq.step}`;
               downChanges.push(`${seqDef};`);
               downChanges.push('');
             }
@@ -2547,6 +2547,7 @@ export class MigrationManager {
     // Normalize default values for comparison
     // The database returns defaults as strings, but our schema may have arrays, objects, etc.
     // Also handles cases where SurrealDB adds extra quotes around literal values
+    // and normalizes quote styles (SurrealDB uses single quotes internally)
     const normalizeDefault = (value: unknown): string => {
       if (value === null || value === undefined) return '';
       if (typeof value === 'string') {
@@ -2559,6 +2560,9 @@ export class MigrationManager {
         ) {
           normalized = normalized.slice(1, -1);
         }
+        // Normalize internal quotes to single quotes for comparison
+        // e.g., sequence::nextval("order_number") -> sequence::nextval('order_number')
+        normalized = normalized.replace(/"([^"\\]*)"/g, "'$1'");
         return normalized;
       }
       if (Array.isArray(value)) return JSON.stringify(value);

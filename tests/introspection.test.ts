@@ -4,15 +4,15 @@
 
 import { describe, expect, it } from 'vitest';
 import {
-  parseFieldDefinition,
-  parseIndexDefinition,
-  parseEventDefinition,
-  parseFunctionDefinition,
-  parseScopeDefinition,
-  parseAnalyzerDefinition,
-  parseTableInfo,
-  isRelationTable,
   extractRelationInfo,
+  isRelationTable,
+  parseAnalyzerDefinition,
+  parseEventDefinition,
+  parseFieldDefinition,
+  parseFunctionDefinition,
+  parseIndexDefinition,
+  parseScopeDefinition,
+  parseTableInfo,
 } from '../src/migrator/introspection';
 
 describe('Schema Introspection', () => {
@@ -91,7 +91,10 @@ describe('Schema Introspection', () => {
 
   describe('Index Parser', () => {
     it('should parse a basic BTREE index', () => {
-      const idx = parseIndexDefinition('idx_email', 'DEFINE INDEX idx_email ON TABLE user FIELDS email');
+      const idx = parseIndexDefinition(
+        'idx_email',
+        'DEFINE INDEX idx_email ON TABLE user FIELDS email',
+      );
       expect(idx.name).toBe('idx_email');
       expect(idx.columns).toEqual(['email']);
       expect(idx.type).toBe('BTREE');
@@ -314,7 +317,8 @@ describe('Schema Introspection', () => {
           idx_email: 'DEFINE INDEX idx_email ON TABLE user FIELDS email UNIQUE',
         },
         events: {
-          on_create: 'DEFINE EVENT on_create ON TABLE user WHEN $event = "CREATE" THEN { CREATE log SET action = "user_created" }',
+          on_create:
+            'DEFINE EVENT on_create ON TABLE user WHEN $event = "CREATE" THEN { CREATE log SET action = "user_created" }',
         },
       };
 
@@ -416,4 +420,3 @@ describe('Checksum Utilities', () => {
     expect(parsed.hash).toHaveLength(64); // SHA256 hex
   });
 });
-

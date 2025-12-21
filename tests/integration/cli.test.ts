@@ -14,7 +14,7 @@ describe('CLI Integration Tests', () => {
   beforeEach(() => {
     // Clean up any existing test files
     cleanupTestFiles([
-      'tests/integration/fixtures/test-*.js',
+      'tests/integration/fixtures/test-*.ts',
       'smig-debug-*.txt',
       'smig.config.js',
     ]);
@@ -23,7 +23,7 @@ describe('CLI Integration Tests', () => {
   afterEach(() => {
     // Clean up test files after each test
     cleanupTestFiles([
-      'tests/integration/fixtures/test-*.js',
+      'tests/integration/fixtures/test-*.ts',
       'smig-debug-*.txt',
       'smig.config.js',
     ]);

@@ -4,19 +4,19 @@
 
 import { describe, expect, it } from 'vitest';
 import {
-  normalizePermissions,
+  compareAnalyzers,
+  compareFields,
+  compareFunctions,
+  compareIndexes,
+  compareScopes,
+  detectEntityRename,
+  detectFieldRename,
+  detectIndexRename,
   normalizeDefault,
   normalizeExpression,
+  normalizePermissions,
   normalizeType,
   serializeDefaultValue,
-  compareFields,
-  detectFieldRename,
-  compareIndexes,
-  detectIndexRename,
-  compareFunctions,
-  compareScopes,
-  compareAnalyzers,
-  detectEntityRename,
 } from '../src/migrator/comparison';
 
 describe('Schema Comparison', () => {
@@ -330,4 +330,3 @@ describe('Schema Comparison', () => {
     });
   });
 });
-

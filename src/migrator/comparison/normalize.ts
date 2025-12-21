@@ -37,6 +37,7 @@ export function normalizePermissions(perm: unknown): string {
 /**
  * Normalizes default values for comparison.
  * Handles database string representation vs schema objects/arrays.
+ * Also normalizes quote styles (SurrealDB uses single quotes internally).
  */
 export function normalizeDefault(value: unknown): string {
   if (value === null || value === undefined) return '';
@@ -50,6 +51,9 @@ export function normalizeDefault(value: unknown): string {
     ) {
       normalized = normalized.slice(1, -1);
     }
+    // Normalize internal quotes to single quotes for comparison
+    // e.g., sequence::nextval("order_number") -> sequence::nextval('order_number')
+    normalized = normalized.replace(/"([^"\\]*)"/g, "'$1'");
     return normalized;
   }
 

@@ -1,6 +1,6 @@
 /**
  * Integration tests for TypeScript schema files
- * 
+ *
  * Tests that smig can load and process .ts, .mts, .cts schema files
  * using jiti for zero-config TypeScript support.
  */
@@ -72,7 +72,9 @@ export default {
   it('should load and process .ts schema files', async () => {
     const dbName = `test_ts_schema_${Date.now()}`;
 
-    const schemaPath = createTsSchema('basic', `
+    const schemaPath = createTsSchema(
+      'basic',
+      `
 import { defineSchema, composeSchema, string, int, datetime } from '../../../dist/schema/concise-schema.js';
 
 // TypeScript interfaces for type safety
@@ -95,13 +97,15 @@ export default composeSchema({
   models: { ts_user: user },
   relations: {}
 });
-`, 'ts');
+`,
+      'ts',
+    );
 
     createConfig(schemaPath, dbName);
 
     // Generate should work with TypeScript
     const { stdout } = await execAsync(`node ${CLI_PATH} generate --debug`);
-    
+
     expect(stdout).toContain('DEFINE TABLE ts_user');
     expect(stdout).toContain('DEFINE FIELD name');
     expect(stdout).toContain('DEFINE FIELD age');
@@ -110,7 +114,9 @@ export default composeSchema({
   it('should load and process .mts schema files', async () => {
     const dbName = `test_mts_schema_${Date.now()}`;
 
-    const schemaPath = createTsSchema('module', `
+    const schemaPath = createTsSchema(
+      'module',
+      `
 import { defineSchema, composeSchema, string, bool } from '../../../dist/schema/concise-schema.js';
 
 const settings = defineSchema({
@@ -125,12 +131,14 @@ export default composeSchema({
   models: { mts_settings: settings },
   relations: {}
 });
-`, 'mts');
+`,
+      'mts',
+    );
 
     createConfig(schemaPath, dbName);
 
     const { stdout } = await execAsync(`node ${CLI_PATH} generate --debug`);
-    
+
     expect(stdout).toContain('DEFINE TABLE mts_settings');
     expect(stdout).toContain('DEFINE FIELD key');
     expect(stdout).toContain('DEFINE FIELD enabled');
@@ -139,7 +147,9 @@ export default composeSchema({
   it('should apply migrations from TypeScript schemas', async () => {
     const dbName = `test_ts_migrate_${Date.now()}`;
 
-    const schemaPath = createTsSchema('migrate', `
+    const schemaPath = createTsSchema(
+      'migrate',
+      `
 import { defineSchema, composeSchema, string, float } from '../../../dist/schema/concise-schema.js';
 
 const product = defineSchema({
@@ -154,13 +164,15 @@ export default composeSchema({
   models: { ts_product: product },
   relations: {}
 });
-`, 'ts');
+`,
+      'ts',
+    );
 
     createConfig(schemaPath, dbName);
 
     // Apply migration from TypeScript schema
     const { stderr } = await execAsync(`node ${CLI_PATH} migrate`);
-    
+
     expect(stderr).toContain('Migration applied successfully');
 
     // Verify no changes after migration
@@ -171,7 +183,9 @@ export default composeSchema({
   it('should support TypeScript type annotations in schemas', async () => {
     const dbName = `test_ts_types_${Date.now()}`;
 
-    const schemaPath = createTsSchema('typed', `
+    const schemaPath = createTsSchema(
+      'typed',
+      `
 import { 
   defineSchema, 
   composeSchema, 
@@ -206,15 +220,15 @@ const schema: SurrealDBSchema = composeSchema({
 });
 
 export default schema;
-`, 'ts');
+`,
+      'ts',
+    );
 
     createConfig(schemaPath, dbName);
 
     const { stdout } = await execAsync(`node ${CLI_PATH} generate --debug`);
-    
+
     expect(stdout).toContain('DEFINE TABLE ts_typed_item');
     expect(stdout).toContain('DEFINE INDEX statusIdx');
   }, 60000);
 });
-
-

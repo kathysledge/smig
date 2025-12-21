@@ -3,15 +3,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import {
-  access,
-  user,
-  param,
-  sequence,
-  model,
-  config,
-  table,
-} from '../src/schema';
+import { access, config, model, param, sequence, table, user } from '../src/schema';
 
 describe('New Entity Builders (SurrealDB 3.x)', () => {
   describe('access()', () => {
@@ -25,7 +17,10 @@ describe('New Entity Builders (SurrealDB 3.x)', () => {
       });
 
       it('should create JWT access with JWKS URL', () => {
-        const acc = access('oauth').jwt().url('https://auth.example.com/.well-known/jwks.json').build();
+        const acc = access('oauth')
+          .jwt()
+          .url('https://auth.example.com/.well-known/jwks.json')
+          .build();
         expect(acc.type).toBe('JWT');
         expect(acc.url).toBe('https://auth.example.com/.well-known/jwks.json');
       });
@@ -363,4 +358,3 @@ describe('New Entity Builders (SurrealDB 3.x)', () => {
     });
   });
 });
-
