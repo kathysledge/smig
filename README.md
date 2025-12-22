@@ -10,8 +10,8 @@ https://img.shields.io/badge/Productivity-Max-db61ff
 https://img.shields.io/badge/License-ISC-640ec6
 -->
 
-![Pink badge that shows smig enables maximum productivity](./media/badges/max-productivity-badge.svg) 
-[![Purple badge that shows smig is licensed under the ISC license](./media/badges/isc-license-badge.svg)](https://opensource.org/license/isc-license-txt)
+![Pink badge that shows smig enables maximum productivity](https://github.com/kathysledge/smig/raw/main/media/badges/max-productivity-badge.svg) 
+[![Purple badge that shows smig is licensed under the ISC license](https://github.com/kathysledge/smig/raw/main/media/badges/isc-license-badge.svg)](https://opensource.org/license/isc-license-txt)
 
 ---
 
@@ -140,7 +140,9 @@ export default composeSchema({
 
 ## Contributing
 
-Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions welcome! See [CONTRIBUTING.md](https://github.com/kathysledge/smig/blob/main/CONTRIBUTING.md) for guidelines.
+
+Please read and follow our [Code of Conduct](https://github.com/kathysledge/smig/blob/main/CODE_OF_CONDUCT.md).
 
 ```zsh
 git clone git@github.com:kathysledge/smig.git
@@ -155,7 +157,7 @@ For security concerns, email chris@chwd.ca or open a private security advisory o
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for version history.
+See [CHANGELOG.md](https://github.com/kathysledge/smig/blob/main/CHANGELOG.md) for version history.
 
 ## License
 

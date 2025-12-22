@@ -19,6 +19,9 @@ export default withMermaid(
       hostname: "https://smig.build",
     },
 
+    // Clean URLs (no .html extension)
+    cleanUrls: true,
+
     // Last updated timestamps
     lastUpdated: true,
 

@@ -398,7 +398,7 @@ export default composeSchema({ models: {}, relations: {} });
     it('should handle version flag correctly', async () => {
       const { stdout } = await execAsync(`node ${CLI_PATH} --version`);
 
-      // Support semver with optional pre-release suffix (e.g., 1.0.0-alpha.1)
+      // Support semver with optional pre-release suffix (e.g., 1.0.0-beta.1)
       expect(stdout.trim()).toMatch(/^\d+\.\d+\.\d+(-[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*)?$/);
     });
   });

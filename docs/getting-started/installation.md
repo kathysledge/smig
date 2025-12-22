@@ -7,24 +7,17 @@ This guide covers installing **smig** and setting up your project.
 Before installing **smig**, you need:
 
 - **Bun 1.0+** (recommended) or **Node.js 18+**
-- **SurrealDB 3.0+**
+- **SurrealDB 3.x** (beta)
 
 ### Installing SurrealDB
 
-If you don’t have SurrealDB:
+**smig** requires SurrealDB 3.x, which is currently in beta. The default install commands may install version 2.x instead.
 
-```zsh
-# macOS
-brew install surrealdb/tap/surreal
+Follow the official installation instructions at **[surrealdb.com/install](https://surrealdb.com/install)** and make sure to install the **3.x beta version**.
 
-# Linux (curl)
-curl -sSf https://install.surrealdb.com | sh
-
-# Windows (PowerShell)
-iwr https://install.surrealdb.com -useb | iex
-```
-
-See [surrealdb.com/install](https://surrealdb.com/install) for more options.
+::: info Version compatibility
+**smig** is built for SurrealDB 3.x and uses syntax that isn't available in 2.x. Check your version with `surreal version` before getting started.
+:::
 
 ## Installing smig
 

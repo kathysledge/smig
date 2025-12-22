@@ -44,8 +44,6 @@ features:
 <div class="two-column-layout">
 <div class="main-column">
 
-# Automatic SurrealDB migrations tool
-
 ## What is smig?
 
 **smig** is a schema migration tool for [SurrealDB](https://surrealdb.com). You define your database structure in TypeScript, and **smig** figures out what SurrealQL (SQL) to run to make your database match.
