@@ -3,7 +3,7 @@
  * @module schema/fields/primitives
  */
 
-import { SurrealQLFieldBase } from './base';
+import { SurrealQLFieldBase } from "./base";
 
 /**
  * String field type builder for SurrealDB.
@@ -31,7 +31,7 @@ import { SurrealQLFieldBase } from './base';
 export class SurrealQLString extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = 'string';
+    this.field.type = "string";
   }
 }
 
@@ -55,7 +55,7 @@ export class SurrealQLString extends SurrealQLFieldBase {
 export class SurrealQLInt extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = 'int';
+    this.field.type = "int";
   }
 }
 
@@ -80,7 +80,7 @@ export class SurrealQLInt extends SurrealQLFieldBase {
 export class SurrealQLFloat extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = 'float';
+    this.field.type = "float";
   }
 }
 
@@ -95,7 +95,7 @@ export class SurrealQLFloat extends SurrealQLFieldBase {
 export class SurrealQLBool extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = 'bool';
+    this.field.type = "bool";
   }
 }
 
@@ -110,7 +110,7 @@ export class SurrealQLBool extends SurrealQLFieldBase {
 export class SurrealQLDatetime extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = 'datetime';
+    this.field.type = "datetime";
   }
 }
 
@@ -135,7 +135,7 @@ export class SurrealQLDatetime extends SurrealQLFieldBase {
 export class SurrealQLDecimal extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = 'decimal';
+    this.field.type = "decimal";
   }
 }
 
@@ -149,7 +149,7 @@ export class SurrealQLDecimal extends SurrealQLFieldBase {
 export class SurrealQLUuid extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = 'uuid';
+    this.field.type = "uuid";
   }
 }
 
@@ -157,7 +157,7 @@ export class SurrealQLUuid extends SurrealQLFieldBase {
  * Duration field type builder for SurrealDB.
  *
  * Creates duration fields for time intervals and time-based calculations.
- * Supports SurrealDB's duration format (e.g., '1h', '30m', '45s').
+ * Supports SurrealDB’s duration format (e.g., '1h', '30m', '45s').
  *
  * @example
  * ```typescript
@@ -174,7 +174,7 @@ export class SurrealQLUuid extends SurrealQLFieldBase {
 export class SurrealQLDuration extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = 'duration';
+    this.field.type = "duration";
   }
 }
 
@@ -199,7 +199,7 @@ export class SurrealQLDuration extends SurrealQLFieldBase {
 export class SurrealQLObject extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = 'object';
+    this.field.type = "object";
   }
 }
 
@@ -224,7 +224,7 @@ export class SurrealQLObject extends SurrealQLFieldBase {
 export class SurrealQLGeometry extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = 'geometry';
+    this.field.type = "geometry";
   }
 }
 
@@ -242,7 +242,7 @@ export class SurrealQLGeometry extends SurrealQLFieldBase {
 export class SurrealQLBytes extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = 'bytes';
+    this.field.type = "bytes";
   }
 }
 
@@ -259,7 +259,7 @@ export class SurrealQLBytes extends SurrealQLFieldBase {
 export class SurrealQLNumber extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = 'number';
+    this.field.type = "number";
   }
 }
 
@@ -271,7 +271,7 @@ export class SurrealQLNumber extends SurrealQLFieldBase {
 export class SurrealQLNull extends SurrealQLFieldBase {
   constructor() {
     super();
-    this.field.type = 'null';
+    this.field.type = "null";
   }
 }
 
@@ -290,8 +290,8 @@ export class SurrealQLNull extends SurrealQLFieldBase {
 export class SurrealQLLiteral extends SurrealQLFieldBase {
   constructor(...values: (string | number | boolean)[]) {
     super();
-    const formatted = values.map((v) => (typeof v === 'string' ? `"${v}"` : String(v)));
-    this.field.type = formatted.join(' | ');
+    const formatted = values.map((v) => (typeof v === "string" ? `"${v}"` : String(v)));
+    this.field.type = formatted.join(" | ");
   }
 }
 
@@ -309,6 +309,6 @@ export class SurrealQLLiteral extends SurrealQLFieldBase {
 export class SurrealQLRange extends SurrealQLFieldBase {
   constructor(elementType?: string) {
     super();
-    this.field.type = elementType ? `range<${elementType}>` : 'range';
+    this.field.type = elementType ? `range<${elementType}>` : "range";
   }
 }

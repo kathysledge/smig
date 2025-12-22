@@ -4,7 +4,7 @@ A social platform with follows, posts, and likes using graph relations.
 
 ## Schema
 
-A social platform with users, posts, follows, and likes using SurrealDB's graph relations:
+A social platform with users, posts, follows, and likes using SurrealDB’s graph relations:
 
 ```typescript
 import {

@@ -82,7 +82,7 @@ Update `smig.config.ts`:
 export default {
   url: 'wss://your-surrealdb-server.com',
   namespace: 'production',
-  database: 'myapp',
+  database: 'citadel',
   username: process.env.DB_USER,
   password: process.env.DB_PASS,
   schema: './schema.ts',
@@ -92,5 +92,5 @@ export default {
 Or use command-line flags:
 
 ```zsh
-bun smig migrate --url wss://server.com --namespace prod --database myapp
+bun smig migrate --url wss://server.com --namespace prod --database citadel
 ```

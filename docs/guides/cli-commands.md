@@ -21,7 +21,7 @@ These options work with any command:
 Example:
 
 ```zsh
-bun smig migrate --url ws://localhost:8000 --namespace test --database myapp
+bun smig migrate --url ws://localhost:8000 --namespace test --database citadel
 ```
 
 ## Commands
@@ -240,7 +240,7 @@ bun smig test --env production
 ✅ Database connection successful
 📊 Connected to: ws://localhost:8000
 📁 Namespace: test
-🗄️  Database: myapp
+🗄️  Database: citadel
 ```
 
 ### config
@@ -270,7 +270,7 @@ bun smig config --env production
   Schema:    ./schema.ts
   URL:       ws://localhost:8000
   Namespace: test
-  Database:  myapp
+  Database:  citadel
   Username:  root
   Password:  ***
 
@@ -319,7 +319,7 @@ export default {
   schema: './schema.ts',
   url: 'ws://localhost:8000',
   namespace: 'test',
-  database: 'myapp',
+  database: 'citadel',
   username: 'root',
   password: 'root',
   
@@ -328,19 +328,19 @@ export default {
     development: {
       url: 'ws://localhost:8000',
       namespace: 'dev',
-      database: 'myapp_dev',
+      database: 'citadel_dev',
     },
     staging: {
       url: process.env.STAGING_DB_URL,
       namespace: 'staging',
-      database: 'myapp_staging',
+      database: 'citadel_staging',
       username: process.env.STAGING_DB_USER,
       password: process.env.STAGING_DB_PASS,
     },
     production: {
       url: process.env.PROD_DB_URL,
       namespace: 'prod',
-      database: 'myapp',
+      database: 'citadel',
       username: process.env.PROD_DB_USER,
       password: process.env.PROD_DB_PASS,
     },
@@ -362,7 +362,7 @@ bun smig migrate --env production
 # .env
 SMIG_URL=ws://localhost:8000
 SMIG_NAMESPACE=test
-SMIG_DATABASE=myapp
+SMIG_DATABASE=citadel
 SMIG_USERNAME=root
 SMIG_PASSWORD=root
 SMIG_SCHEMA=./schema.ts

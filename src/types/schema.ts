@@ -28,7 +28,7 @@
  * ```
  */
 
-import { z } from 'zod';
+import { z } from "zod";
 
 // ============================================================================
 // SURREALDB FIELD TYPES
@@ -41,31 +41,31 @@ import { z } from 'zod';
  * in SurrealDB field definitions, including their common aliases.
  */
 export type SurrealFieldType =
-  | 'string'
-  | 'int'
-  | 'float'
-  | 'number'
-  | 'bool'
-  | 'boolean'
-  | 'datetime'
-  | 'duration'
-  | 'decimal'
-  | 'uuid'
-  | 'array'
-  | 'object'
-  | 'record'
-  | 'geometry'
-  | 'option'
-  | 'any';
+  | "string"
+  | "int"
+  | "float"
+  | "number"
+  | "bool"
+  | "boolean"
+  | "datetime"
+  | "duration"
+  | "decimal"
+  | "uuid"
+  | "array"
+  | "object"
+  | "record"
+  | "geometry"
+  | "option"
+  | "any";
 
 /** Supported SurrealDB index types for different use cases */
-export type IndexType = 'BTREE' | 'HASH' | 'SEARCH' | 'MTREE';
+export type IndexType = "BTREE" | "HASH" | "SEARCH" | "MTREE";
 
 /** Database event types for triggers and hooks */
-export type EventType = 'CREATE' | 'UPDATE' | 'DELETE';
+export type EventType = "CREATE" | "UPDATE" | "DELETE";
 
 /** Table schema enforcement types */
-export type SchemaType = 'SCHEMAFULL' | 'SCHEMALESS';
+export type SchemaType = "SCHEMAFULL" | "SCHEMALESS";
 
 // ============================================================================
 // FIELD DEFINITIONS
@@ -192,7 +192,7 @@ export interface SurrealTable {
  * Definition for a SurrealDB relation (graph edge).
  *
  * Relations represent connections between records and are a key feature of
- * SurrealDB's graph database capabilities. They define how tables are related
+ * SurrealDB’s graph database capabilities. They define how tables are related
  * and can store additional metadata about the relationship.
  */
 export interface SurrealRelation {
@@ -613,7 +613,7 @@ export const SurrealDBSchemaSchema = z.object({
           name: z.string(),
           columns: z.array(z.string()),
           unique: z.boolean(),
-          type: z.enum(['BTREE', 'HASH', 'SEARCH', 'MTREE']),
+          type: z.enum(["BTREE", "HASH", "SEARCH", "MTREE"]),
           analyzer: z.string().nullable(),
           highlights: z.boolean(),
           comments: z.array(z.string()),
@@ -622,7 +622,7 @@ export const SurrealDBSchemaSchema = z.object({
       events: z.array(
         z.object({
           name: z.string(),
-          type: z.enum(['CREATE', 'UPDATE', 'DELETE']),
+          type: z.enum(["CREATE", "UPDATE", "DELETE"]),
           when: z.string().nullable(),
           thenStatement: z.string().nullable(),
           comments: z.array(z.string()),
@@ -653,7 +653,7 @@ export const SurrealDBSchemaSchema = z.object({
           name: z.string(),
           columns: z.array(z.string()),
           unique: z.boolean(),
-          type: z.enum(['BTREE', 'HASH', 'SEARCH', 'MTREE']),
+          type: z.enum(["BTREE", "HASH", "SEARCH", "MTREE"]),
           analyzer: z.string().nullable(),
           highlights: z.boolean(),
           comments: z.array(z.string()),
@@ -662,7 +662,7 @@ export const SurrealDBSchemaSchema = z.object({
       events: z.array(
         z.object({
           name: z.string(),
-          type: z.enum(['CREATE', 'UPDATE', 'DELETE']),
+          type: z.enum(["CREATE", "UPDATE", "DELETE"]),
           when: z.string().nullable(),
           thenStatement: z.string().nullable(),
           comments: z.array(z.string()),

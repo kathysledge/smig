@@ -3,15 +3,15 @@
  * @module schema/entities/table
  */
 
-import { processSurrealQL, validateIdentifier } from '../common/utils';
-import { SurrealQLRecord } from '../fields/complex';
-import type { SurrealQLIndex } from '../indexes';
-import type { SurrealQLEvent } from './event';
+import { processSurrealQL, validateIdentifier } from "../common/utils";
+import { SurrealQLRecord } from "../fields/complex";
+import type { SurrealQLIndex } from "../indexes";
+import type { SurrealQLEvent } from "./event";
 
 /**
  * Table type enumeration.
  */
-export type TableType = 'NORMAL' | 'RELATION' | 'ANY';
+export type TableType = "NORMAL" | "RELATION" | "ANY";
 
 /**
  * Table configuration for tracking and options.
@@ -74,8 +74,8 @@ export interface TableConfig {
  */
 export class SurrealQLTable {
   private table: Record<string, unknown> = {
-    name: '',
-    type: 'NORMAL',
+    name: "",
+    type: "NORMAL",
     schemafull: true,
     drop: false,
     // Relation options
@@ -98,7 +98,7 @@ export class SurrealQLTable {
   };
 
   constructor(name: string) {
-    validateIdentifier(name, 'Table');
+    validateIdentifier(name, "Table");
     this.table.name = name.trim();
   }
 
@@ -132,7 +132,7 @@ export class SurrealQLTable {
    * @returns The table instance for method chaining
    */
   normal() {
-    this.table.type = 'NORMAL';
+    this.table.type = "NORMAL";
     return this;
   }
 
@@ -147,7 +147,7 @@ export class SurrealQLTable {
    * @returns The table instance for method chaining
    */
   relation(from?: string, to?: string) {
-    this.table.type = 'RELATION';
+    this.table.type = "RELATION";
     if (from) this.table.from = from;
     if (to) this.table.to = to;
     return this;
@@ -159,7 +159,7 @@ export class SurrealQLTable {
    * @returns The table instance for method chaining
    */
   any() {
-    this.table.type = 'ANY';
+    this.table.type = "ANY";
     return this;
   }
 
@@ -240,7 +240,7 @@ export class SurrealQLTable {
           for?: string;
         },
   ) {
-    if (typeof perms === 'string') {
+    if (typeof perms === "string") {
       this.table.permissions = perms;
     } else {
       this.table.permissions = perms;
@@ -250,7 +250,7 @@ export class SurrealQLTable {
 
   /** Adds a documentation comment for the table */
   comment(text: string) {
-    if (text && text.trim() !== '') {
+    if (text && text.trim() !== "") {
       this.table.comment = text.trim();
     }
     return this;
@@ -402,7 +402,7 @@ export function defineSchema(config: {
  * Defines a SurrealDB relation (graph edge) between two tables.
  *
  * Relations represent connections between records and are a core feature of
- * SurrealDB's graph database capabilities. They automatically include the
+ * SurrealDB’s graph database capabilities. They automatically include the
  * required 'in' and 'out' fields that reference the source and target tables.
  */
 export function defineRelation(config: {
@@ -428,8 +428,8 @@ export function defineRelation(config: {
 
   // Build the mandatory fields first
   const mandatoryFields = [
-    { name: 'in', ...inField.build() },
-    { name: 'out', ...outField.build() },
+    { name: "in", ...inField.build() },
+    { name: "out", ...outField.build() },
   ];
 
   // Add user-defined fields
@@ -443,7 +443,7 @@ export function defineRelation(config: {
 
   return {
     name: config.name,
-    type: 'RELATION' as TableType,
+    type: "RELATION" as TableType,
     schemafull: true,
     from: config.from,
     to: config.to,

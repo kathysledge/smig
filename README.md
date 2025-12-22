@@ -5,11 +5,13 @@
 
 ### SurrealDB schema management with automatic migrations
 
-[![npm version](https://badge.fury.io/js/smig.svg)](https://badge.fury.io/js/smig)
-[![License: ISC](https://img.shields.io/badge/License-ISC-violet.svg)](https://opensource.org/license/isc-license-txt)
+<!--
+https://img.shields.io/badge/Productivity-Max-db61ff
+https://img.shields.io/badge/License-ISC-640ec6
+-->
 
-> [!NOTE]
-> This is the `1.x` version of **smig** for SurrealDB 3. For SurrealDB 2, use version `0.x` ([view README](https://github.com/kathysledge/smig/blob/v0.x/README.md)).
+![Pink badge that shows smig enables maximum productivity](./media/badges/max-productivity-badge.svg) 
+[![Purple badge that shows smig is licensed under the ISC license](./media/badges/isc-license-badge.svg)](https://opensource.org/license/isc-license-txt)
 
 ---
 

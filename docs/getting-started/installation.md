@@ -81,7 +81,7 @@ export default {
   // Database connection
   url: 'ws://localhost:8000',
   namespace: 'test',
-  database: 'myapp',
+  database: 'citadel',
   username: 'root',
   password: 'root',
 };
@@ -148,7 +148,7 @@ export default {
   schema: './schema.ts',
   url: 'ws://localhost:8000',
   namespace: 'test',
-  database: 'myapp',
+  database: 'citadel',
   username: 'root',
   password: 'root',
 };
@@ -163,7 +163,7 @@ export default {
   schema: './schema.ts',
   url: 'ws://localhost:8000',
   namespace: 'dev',
-  database: 'myapp',
+  database: 'citadel',
   username: 'root',
   password: 'root',
   
@@ -171,14 +171,14 @@ export default {
     staging: {
       url: process.env.STAGING_DB_URL,
       namespace: 'staging',
-      database: 'myapp',
+      database: 'citadel',
       username: process.env.STAGING_DB_USER,
       password: process.env.STAGING_DB_PASS,
     },
     production: {
       url: process.env.PROD_DB_URL,
       namespace: 'prod',
-      database: 'myapp',
+      database: 'citadel',
       username: process.env.PROD_DB_USER,
       password: process.env.PROD_DB_PASS,
     },
@@ -200,7 +200,7 @@ bun smig migrate --env production
 # .env
 SMIG_URL=ws://localhost:8000
 SMIG_NAMESPACE=test
-SMIG_DATABASE=myapp
+SMIG_DATABASE=citadel
 SMIG_USERNAME=root
 SMIG_PASSWORD=root
 ```
@@ -259,7 +259,7 @@ export default {
 A typical project structure:
 
 ```
-myapp/
+citadel/
 ├── schema.ts           # Your schema definition
 ├── smig.config.ts      # Connection settings
 ├── package.json
@@ -270,7 +270,7 @@ myapp/
 For larger projects:
 
 ```
-myapp/
+citadel/
 ├── db/
 │   ├── schema/
 │   │   ├── index.ts    # Main schema (composeSchema)

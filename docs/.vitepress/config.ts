@@ -1,210 +1,190 @@
-import { defineConfig } from 'vitepress';
-import { withMermaid } from 'vitepress-plugin-mermaid';
-import surqlGrammar from './languages/surql.tmLanguage.json';
+import { defineConfig } from "vitepress";
+import { withMermaid } from "vitepress-plugin-mermaid";
+import surqlGrammar from "./languages/surql.tmLanguage.json";
 
 export default withMermaid(
   defineConfig({
-    title: 'smig',
-    description: 'Automatic schema migrations for SurrealDB',
-    
+    title: "smig",
+    description: "Automatic schema migrations for SurrealDB",
+
     // Force dark mode only (no toggle)
-    appearance: 'force-dark',
-    
+    appearance: "force-dark",
+
     markdown: {
       languages: [
         {
           ...surqlGrammar,
-          aliases: ['surql', 'surrealql', 'surrealdb'],
+          aliases: ["surql", "surrealql", "surrealdb"],
         },
       ],
     },
-    
-    head: [
-      ['link', { rel: 'icon', href: '/smig-logo-dark.svg' }],
-    ],
+
+    head: [["link", { rel: "icon", href: "/assets/smig-favicon.svg" }]],
 
     themeConfig: {
-      logo: '/smig-logo-dark.svg',
+      logo: { src: "/assets/smig-logo-dark.svg", alt: "smig ‘S’ logo" },
       siteTitle: false,
 
       nav: [
-        { text: 'Guide', link: '/getting-started/' },
-        { text: 'Schema', link: '/schema-reference/' },
-        { text: 'Examples', link: '/examples/' },
+        { text: "Guide", link: "/getting-started/" },
+        { text: "Schema", link: "/schema-reference/" },
+        { text: "Examples", link: "/examples/" },
         {
-          text: 'Links',
+          text: "Links",
           items: [
-            { text: 'GitHub', link: 'https://github.com/kathysledge/smig' },
-            { text: 'npm', link: 'https://www.npmjs.com/package/smig' },
-            { text: 'Changelog', link: 'https://github.com/kathysledge/smig/blob/main/CHANGELOG.md' },
+            { text: "GitHub", link: "https://github.com/kathysledge/smig" },
+            { text: "npm", link: "https://www.npmjs.com/package/smig" },
+            { text: "Changelog", link: "https://github.com/kathysledge/smig/blob/main/CHANGELOG.md" },
           ],
         },
       ],
 
       sidebar: {
-        '/getting-started/': [
+        "/getting-started/": [
           {
-            text: 'Getting started',
+            text: "Getting started",
             items: [
-              { text: 'Overview', link: '/getting-started/' },
-              { text: 'Installation', link: '/getting-started/installation' },
-              { text: 'Your first migration', link: '/getting-started/first-migration' },
+              { text: "Overview", link: "/getting-started/" },
+              { text: "Installation", link: "/getting-started/installation" },
+              { text: "Your first migration", link: "/getting-started/first-migration" },
             ],
           },
           {
-            text: 'Next steps',
+            text: "Next steps",
             items: [
-              { text: 'Schema design →', link: '/guides/schema-design' },
-              { text: 'CLI commands →', link: '/guides/cli-commands' },
-            ],
-          },
-        ],
-        
-        '/guides/': [
-          {
-            text: 'Guides',
-            items: [
-              { text: 'Overview', link: '/guides/' },
-            ],
-          },
-          {
-            text: 'Core concepts',
-            items: [
-              { text: 'Schema design', link: '/guides/schema-design' },
-              { text: 'Understanding migrations', link: '/guides/migrations' },
-            ],
-          },
-          {
-            text: 'Working with smig',
-            items: [
-              { text: 'CLI commands', link: '/guides/cli-commands' },
-              { text: 'Multi-environment', link: '/guides/multi-environment' },
-            ],
-          },
-          {
-            text: 'Going deeper',
-            items: [
-              { text: 'Best practices', link: '/guides/best-practices' },
+              { text: "Schema design →", link: "/guides/schema-design" },
+              { text: "CLI commands →", link: "/guides/cli-commands" },
             ],
           },
         ],
-        
-        '/schema-reference/': [
+
+        "/guides/": [
           {
-            text: 'Schema reference',
+            text: "Guides",
+            items: [{ text: "Overview", link: "/guides/" }],
+          },
+          {
+            text: "Core concepts",
             items: [
-              { text: 'Overview', link: '/schema-reference/' },
+              { text: "Schema design", link: "/guides/schema-design" },
+              { text: "Understanding migrations", link: "/guides/migrations" },
             ],
           },
           {
-            text: 'Tables and fields',
-            collapsed: false,
+            text: "Working with smig",
             items: [
-              { text: 'Tables', link: '/schema-reference/tables' },
-              { text: 'Fields', link: '/schema-reference/fields' },
-              { text: 'Indexes', link: '/schema-reference/indexes' },
-              { text: 'Events', link: '/schema-reference/events' },
+              { text: "CLI commands", link: "/guides/cli-commands" },
+              { text: "Multi-environment", link: "/guides/multi-environment" },
             ],
           },
           {
-            text: 'Relationships',
+            text: "Going deeper",
+            items: [{ text: "Best practices", link: "/guides/best-practices" }],
+          },
+        ],
+
+        "/schema-reference/": [
+          {
+            text: "Schema reference",
+            items: [{ text: "Overview", link: "/schema-reference/" }],
+          },
+          {
+            text: "Tables and fields",
             collapsed: false,
             items: [
-              { text: 'Relations', link: '/schema-reference/relations' },
+              { text: "Tables", link: "/schema-reference/tables" },
+              { text: "Fields", link: "/schema-reference/fields" },
+              { text: "Indexes", link: "/schema-reference/indexes" },
+              { text: "Events", link: "/schema-reference/events" },
             ],
           },
           {
-            text: 'Database logic',
+            text: "Relationships",
+            collapsed: false,
+            items: [{ text: "Relations", link: "/schema-reference/relations" }],
+          },
+          {
+            text: "Database logic",
             collapsed: false,
             items: [
-              { text: 'Functions', link: '/schema-reference/functions' },
-              { text: 'Analyzers', link: '/schema-reference/analyzers' },
+              { text: "Functions", link: "/schema-reference/functions" },
+              { text: "Analyzers", link: "/schema-reference/analyzers" },
             ],
           },
           {
-            text: 'Security',
+            text: "Security",
             collapsed: false,
-            items: [
-              { text: 'Access (auth)', link: '/schema-reference/access' },
-            ],
+            items: [{ text: "Access (auth)", link: "/schema-reference/access" }],
           },
           {
-            text: 'System',
+            text: "System",
             collapsed: false,
             items: [
-              { text: 'Params', link: '/schema-reference/params' },
-              { text: 'Sequences', link: '/schema-reference/sequences' },
-              { text: 'Config', link: '/schema-reference/config' },
+              { text: "Params", link: "/schema-reference/params" },
+              { text: "Sequences", link: "/schema-reference/sequences" },
+              { text: "Config", link: "/schema-reference/config" },
             ],
           },
         ],
-        
-        '/api-reference/': [
+
+        "/api-reference/": [
           {
-            text: 'API reference',
+            text: "API reference",
             items: [
-              { text: 'Overview', link: '/api-reference/' },
-              { text: 'Concise schema', link: '/api-reference/concise-schema' },
-              { text: 'Migration manager', link: '/api-reference/migration-manager' },
-              { text: 'Surreal client', link: '/api-reference/surreal-client' },
+              { text: "Overview", link: "/api-reference/" },
+              { text: "Concise schema", link: "/api-reference/concise-schema" },
+              { text: "Migration manager", link: "/api-reference/migration-manager" },
+              { text: "Surreal client", link: "/api-reference/surreal-client" },
             ],
           },
         ],
-        
-        '/examples/': [
+
+        "/examples/": [
           {
-            text: 'Examples',
+            text: "Examples",
+            items: [{ text: "Overview", link: "/examples/" }],
+          },
+          {
+            text: "Applications",
             items: [
-              { text: 'Overview', link: '/examples/' },
+              { text: "Simple blog", link: "/examples/blog" },
+              { text: "Social network", link: "/examples/social-network" },
+              { text: "E-commerce", link: "/examples/ecommerce" },
             ],
           },
           {
-            text: 'Applications',
-            items: [
-              { text: 'Simple blog', link: '/examples/blog' },
-              { text: 'Social network', link: '/examples/social-network' },
-              { text: 'E-commerce', link: '/examples/ecommerce' },
-            ],
-          },
-          {
-            text: 'Advanced',
-            items: [
-              { text: 'AI embeddings', link: '/examples/ai-embeddings' },
-            ],
+            text: "Advanced",
+            items: [{ text: "AI embeddings", link: "/examples/ai-embeddings" }],
           },
         ],
-        
-        '/resources/': [
+
+        "/resources/": [
           {
-            text: 'Resources',
-            items: [
-              { text: 'Overview', link: '/resources/' },
-            ],
+            text: "Resources",
+            items: [{ text: "Overview", link: "/resources/" }],
           },
         ],
       },
 
-      socialLinks: [
-        { icon: 'github', link: 'https://github.com/kathysledge/smig' },
-      ],
+      socialLinks: [{ icon: "github", link: "https://github.com/kathysledge/smig" }],
 
       footer: {
-        message: 'Released under the ISC License.',
-        copyright: 'Copyright © Chris Harris',
+        message: "Released under the ISC License.",
+        copyright: "Copyright © Chris Harris",
       },
 
       search: {
-        provider: 'local',
+        provider: "local",
       },
 
       editLink: {
-        pattern: 'https://github.com/kathysledge/smig/edit/main/docs/:path',
-        text: 'Edit this page on GitHub',
+        pattern: "https://github.com/kathysledge/smig/edit/main/docs/:path",
+        text: "Edit this page on GitHub",
       },
-      
+
       outline: {
         level: [2, 3],
-        label: 'On this page',
+        label: "On this page",
       },
     },
 
@@ -213,7 +193,7 @@ export default withMermaid(
     },
 
     mermaidPlugin: {
-      class: 'mermaid',
+      class: "mermaid",
     },
-  })
+  }),
 );

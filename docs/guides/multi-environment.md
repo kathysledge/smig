@@ -23,7 +23,7 @@ Local development with sensible defaults:
 export default {
   url: 'ws://localhost:8000',
   namespace: 'dev',
-  database: 'myapp',
+  database: 'citadel',
   username: 'root',
   password: 'root',
   schema: './schema.ts',
@@ -39,7 +39,7 @@ A copy of production for testing:
 export default {
   url: 'wss://staging.surrealdb.example.com',
   namespace: 'staging',
-  database: 'myapp',
+  database: 'citadel',
   username: process.env.SURREAL_USER,
   password: process.env.SURREAL_PASS,
   schema: './schema.ts',
@@ -55,7 +55,7 @@ Your live environment with environment variables:
 export default {
   url: 'wss://prod.surrealdb.example.com',
   namespace: 'production',
-  database: 'myapp',
+  database: 'citadel',
   username: process.env.SURREAL_USER,
   password: process.env.SURREAL_PASS,
   schema: './schema.ts',
@@ -86,7 +86,7 @@ For CI/CD pipelines, use environment variables:
 # Set via environment
 export SMIG_URL="wss://prod.surrealdb.example.com"
 export SMIG_NAMESPACE="production"
-export SMIG_DATABASE="myapp"
+export SMIG_DATABASE="citadel"
 export SMIG_USERNAME="deploy"
 export SMIG_PASSWORD="$DEPLOY_PASSWORD"
 
@@ -147,7 +147,7 @@ jobs:
         env:
           SMIG_URL: ${{ secrets.SURREAL_URL }}
           SMIG_NAMESPACE: production
-          SMIG_DATABASE: myapp
+          SMIG_DATABASE: citadel
           SMIG_USERNAME: ${{ secrets.SURREAL_USER }}
           SMIG_PASSWORD: ${{ secrets.SURREAL_PASS }}
         run: |
@@ -169,7 +169,7 @@ migrate:
   variables:
     SMIG_URL: $SURREAL_URL
     SMIG_NAMESPACE: production
-    SMIG_DATABASE: myapp
+    SMIG_DATABASE: citadel
     SMIG_USERNAME: $SURREAL_USER
     SMIG_PASSWORD: $SURREAL_PASS
   only:
