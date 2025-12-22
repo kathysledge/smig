@@ -1,5 +1,16 @@
 ---
 layout: home
+title: smig — Automatic SurrealDB Migrations
+titleTemplate: false
+description: Automatic schema migrations for SurrealDB 3.x. Define your database schema in TypeScript with full autocomplete, and let smig handle the SQL.
+
+head:
+  - - meta
+    - property: og:title
+      content: smig — Automatic SurrealDB Migrations
+  - - meta
+    - property: og:description
+      content: Automatic schema migrations for SurrealDB 3.x. Define your database schema in TypeScript with full autocomplete, and let smig handle the SQL.
 
 hero:
   name: smig
@@ -34,8 +45,6 @@ features:
 <div class="main-column">
 
 # Automatic SurrealDB migrations tool
-
-Writing SurrealQL migrations by hand means wrestling with raw query strings. **smig** gives you a type-safe DSL with full autocomplete and helpful error messages that catch mistakes before they reach your database. Spend less time on migrations, more time on what matters.
 
 ## What is smig?
 

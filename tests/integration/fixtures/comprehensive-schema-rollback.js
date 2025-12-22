@@ -1,12 +1,7 @@
-
 import {
   analyzer,
-  any,
   array,
   bool,
-  cf,
-  ci,
-  ce,
   composeSchema,
   datetime,
   decimal,
@@ -16,10 +11,8 @@ import {
   event,
   float,
   fn,
-  geometry,
   index,
   int,
-  object,
   option,
   record,
   scope,
@@ -143,13 +136,17 @@ const comprehensiveUser = defineSchema({
     // onCreate event
     welcomeEmail: event('send_welcome')
       .onCreate()
-      .thenDo('CREATE notification SET recipient = $after.id, message = "Welcome!", type = "welcome"'),
+      .thenDo(
+        'CREATE notification SET recipient = $after.id, message = "Welcome!", type = "welcome"',
+      ),
 
     // onUpdate event with condition
     profileUpdate: event('track_profile_update')
       .onUpdate()
       .when('$before.displayName != $after.displayName')
-      .thenDo('CREATE audit_log SET user = $after.id, action = "profile_update", time = time::now()'),
+      .thenDo(
+        'CREATE audit_log SET user = $after.id, action = "profile_update", time = time::now()',
+      ),
 
     // onDelete event
     cleanup: event('cleanup_user_data')

@@ -5,10 +5,22 @@ import surqlGrammar from "./languages/surql.tmLanguage.json";
 export default withMermaid(
   defineConfig({
     title: "smig",
-    description: "Automatic schema migrations for SurrealDB",
+    titleTemplate: ":title | smig",
+    description: "Automatic schema migrations for SurrealDB 3.x with a type-safe TypeScript DSL",
 
     // Force dark mode only (no toggle)
     appearance: "force-dark",
+
+    // Canonical URL for SEO
+    base: "/",
+
+    // Sitemap generation
+    sitemap: {
+      hostname: "https://smig.build",
+    },
+
+    // Last updated timestamps
+    lastUpdated: true,
 
     markdown: {
       languages: [
@@ -19,7 +31,41 @@ export default withMermaid(
       ],
     },
 
-    head: [["link", { rel: "icon", href: "/assets/smig-favicon.svg" }]],
+    head: [
+      // Favicon
+      ["link", { rel: "icon", href: "/assets/smig-favicon.svg", type: "image/svg+xml" }],
+      ["link", { rel: "icon", href: "/favicon.ico", sizes: "32x32" }],
+      
+      // Open Graph / Facebook
+      ["meta", { property: "og:type", content: "website" }],
+      ["meta", { property: "og:site_name", content: "smig" }],
+      ["meta", { property: "og:title", content: "smig — Automatic SurrealDB Migrations" }],
+      ["meta", { property: "og:description", content: "Automatic schema migrations for SurrealDB 3.x with a type-safe TypeScript DSL. Define schemas with full autocomplete and let smig handle the SQL." }],
+      ["meta", { property: "og:image", content: "https://smig.build/assets/smig-og-image.jpg" }],
+      ["meta", { property: "og:image:width", content: "1200" }],
+      ["meta", { property: "og:image:height", content: "630" }],
+      ["meta", { property: "og:image:alt", content: "smig — Automatic SurrealDB Migrations" }],
+      ["meta", { property: "og:locale", content: "en_US" }],
+      
+      // Twitter Card
+      ["meta", { name: "twitter:card", content: "summary_large_image" }],
+      ["meta", { name: "twitter:title", content: "smig — Automatic SurrealDB Migrations" }],
+      ["meta", { name: "twitter:description", content: "Automatic schema migrations for SurrealDB 3.x with a type-safe TypeScript DSL." }],
+      ["meta", { name: "twitter:image", content: "https://smig.build/assets/smig-og-image.jpg" }],
+      ["meta", { name: "twitter:image:alt", content: "smig — Automatic SurrealDB Migrations" }],
+      
+      // Additional SEO
+      ["meta", { name: "author", content: "Chris Harris" }],
+      ["meta", { name: "keywords", content: "SurrealDB, database migrations, schema management, TypeScript, ORM, database schema, SurrealQL, graph database, vector database" }],
+      ["meta", { name: "robots", content: "index, follow" }],
+      ["meta", { name: "googlebot", content: "index, follow" }],
+      
+      // Theme color for mobile browsers
+      ["meta", { name: "theme-color", content: "#1a1a1a" }],
+      
+      // Apple touch icon
+      ["link", { rel: "apple-touch-icon", href: "/assets/smig-favicon.svg" }],
+    ],
 
     themeConfig: {
       logo: { src: "/assets/smig-logo-dark.svg", alt: "smig ‘S’ logo" },
@@ -191,6 +237,25 @@ export default withMermaid(
         level: [2, 3],
         label: "On this page",
       },
+    },
+
+    // Dynamic page-level SEO
+    transformPageData(pageData) {
+      const canonicalUrl = `https://smig.build/${pageData.relativePath}`
+        .replace(/index\.md$/, "")
+        .replace(/\.md$/, "");
+      
+      pageData.frontmatter.head ??= [];
+      pageData.frontmatter.head.push([
+        "link",
+        { rel: "canonical", href: canonicalUrl },
+      ]);
+      
+      // Dynamic Open Graph URL per page
+      pageData.frontmatter.head.push([
+        "meta",
+        { property: "og:url", content: canonicalUrl },
+      ]);
     },
 
     mermaid: {

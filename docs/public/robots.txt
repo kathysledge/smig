@@ -1,0 +1,12 @@
+# smig documentation - https://smig.build
+# Allow all crawlers to index all content
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://smig.build/sitemap.xml
+
+# Disallow API/internal paths if any
+Disallow: /.vitepress/
+
