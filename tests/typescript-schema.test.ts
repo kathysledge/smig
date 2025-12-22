@@ -8,7 +8,7 @@ import { loadSchemaFromFile } from '../src/migrator/migration-manager';
 
 describe('TypeScript Schema Loading', () => {
   it('should load a TypeScript schema file', async () => {
-    const schemaPath = path.resolve(__dirname, '../examples/simple-blog-schema.ts');
+    const schemaPath = path.resolve(__dirname, '../examples/blog-example.ts');
     const schema = await loadSchemaFromFile(schemaPath);
 
     expect(schema).toBeDefined();
@@ -22,7 +22,7 @@ describe('TypeScript Schema Loading', () => {
   });
 
   it('should load a JavaScript schema file', async () => {
-    const schemaPath = path.resolve(__dirname, '../examples/simple-blog-schema.ts');
+    const schemaPath = path.resolve(__dirname, '../examples/blog-example.ts');
     const schema = await loadSchemaFromFile(schemaPath);
 
     expect(schema).toBeDefined();

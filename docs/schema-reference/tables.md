@@ -4,7 +4,9 @@ Tables are the foundation of your database schema. Every piece of data lives in 
 
 ## What is a table?
 
-A table is a collection of records with a shared structure. In a blog application, you might have:
+If you're coming from SQL databases, a table in SurrealDB works similarly—it's a collection of records with a shared structure. The difference is that SurrealDB tables can also participate in graph relationships and have flexible schema options.
+
+In a blog application, you might have:
 
 - A `user` table (people who can log in)
 - A `post` table (blog posts)
@@ -14,7 +16,7 @@ Each table has fields (columns), and can have indexes, events, and permissions.
 
 ## Creating a table
 
-Use `defineSchema` to create a table with fields, indexes, and events:
+The `defineSchema` function is how you define a table in **smig**. It takes an object describing the table's name, fields, indexes, events, and permissions:
 
 ```typescript
 import { defineSchema, string, datetime } from 'smig';
@@ -40,9 +42,11 @@ DEFINE FIELD createdAt ON TABLE user TYPE datetime DEFAULT time::now();
 
 ## Table options
 
+These optional settings control how your table behaves. Most tables only need fields and indexes, but these options unlock advanced features.
+
 ### Schema modes
 
-By default, tables are **schemafull** — only defined fields are allowed.
+SurrealDB supports two schema modes. Schemafull (the default) rejects fields that aren't defined in your schema. Schemaless allows any fields:
 
 ```typescript
 // Schemafull (default) — strict typing
@@ -71,7 +75,7 @@ Use schemafull (default) for:
 
 ### Table types
 
-SurrealDB supports different table types for different use cases:
+Most tables are "NORMAL" and hold standard records. Relation tables (for graph edges) are defined differently—see the Relations reference:
 
 ```typescript
 // Normal table (default)
@@ -99,7 +103,7 @@ defineSchema({
 
 ### Drop (auto-delete)
 
-Records are automatically deleted after their TTL:
+For temporary data like sessions or verification tokens, you can have SurrealDB automatically delete expired records:
 
 ```typescript
 defineSchema({
@@ -115,7 +119,7 @@ With drop enabled, records without an expiry are deleted immediately.
 
 ### Changefeed
 
-Enable change data capture for real-time sync:
+Changefeeds capture every change to a table, enabling real-time subscriptions and audit trails:
 
 ```typescript
 defineSchema({
@@ -133,7 +137,7 @@ Use changefeeds for:
 
 ### Views
 
-Define a table as a query result:
+A view is a virtual table defined by a query. The data isn't stored—it's computed each time you query the view:
 
 ```typescript
 defineSchema({
@@ -147,7 +151,7 @@ Views are read-only and computed on query.
 
 ### Comments
 
-Document your table:
+Add documentation that appears in database introspection tools:
 
 ```typescript
 defineSchema({
@@ -159,7 +163,7 @@ defineSchema({
 
 ## Permissions
 
-Control who can do what:
+Permissions define who can select, create, update, and delete records. They're evaluated for every query and provide row-level security:
 
 ```typescript
 defineSchema({
@@ -176,6 +180,8 @@ defineSchema({
 
 ### Permission levels
 
+There are three permission levels:
+
 | Level | Meaning |
 |-------|---------|
 | `FULL` | Anyone can do this operation |
@@ -184,7 +190,7 @@ defineSchema({
 
 ### Common patterns
 
-Here are frequently used permission patterns:
+These patterns cover most permission scenarios you'll encounter:
 
 ```typescript
 // Public read, authenticated write
@@ -211,7 +217,7 @@ permissions: 'NONE'
 
 ## Table with everything
 
-A complete post table demonstrating all table features:
+Here's a comprehensive example showing fields, indexes, events, permissions, and comments working together:
 
 ```typescript
 import { defineSchema, string, int, datetime, bool, uuid, record, index, event } from 'smig';
@@ -270,7 +276,7 @@ const posts = defineSchema({
 
 ## Renaming tables
 
-When you rename a table, use `was` so **smig** generates a rename instead of dropping data:
+When you rename a table, tell **smig** about the old name so it generates a rename statement instead of dropping and recreating the table (which would lose data):
 
 ```typescript
 const customers = defineSchema({
@@ -294,7 +300,7 @@ was: ['clients', 'users']  // Was 'clients', then 'users'
 
 ## Composing tables
 
-Individual table schemas are combined with `composeSchema`:
+After defining individual tables, combine them into a complete schema with `composeSchema`. This is what you export from your schema file:
 
 ```typescript
 import { composeSchema } from 'smig';

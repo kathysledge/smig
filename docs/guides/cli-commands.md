@@ -4,7 +4,7 @@
 
 ## Global options
 
-These options work with any command:
+You can override any configuration setting directly from the command line. These options work with any command and take precedence over your config file:
 
 | Option | Short | Description |
 |--------|-------|-------------|
@@ -26,9 +26,11 @@ bun smig migrate --url ws://localhost:8000 --namespace test --database citadel
 
 ## Commands
 
+Each command serves a specific purpose in your migration workflow. The most common flow is `diff` → `migrate` → `status`, with `rollback` when you need to undo changes.
+
 ### migrate
 
-Apply pending schema changes to the database.
+The primary command for applying schema changes. It compares your schema to the database and executes the necessary SurrealQL:
 
 ```zsh
 bun smig migrate [options]
@@ -63,7 +65,7 @@ bun smig migrate --env production
 
 ### diff
 
-Preview what SQL would be generated, without applying it.
+Before applying changes, use `diff` to see exactly what SurrealQL will run. This is the same output you'd get from `migrate --dry-run`, but more explicitly named for the preview workflow:
 
 ```zsh
 bun smig diff [options]
@@ -101,7 +103,7 @@ REMOVE FIELD avatar ON TABLE user;
 
 ### status
 
-Show the current migration status.
+Check whether your database is up to date with your schema. This command lists all applied migrations and tells you if there are pending changes:
 
 ```zsh
 bun smig status [options]
@@ -130,7 +132,7 @@ Applied migrations:
 
 ### rollback
 
-Undo applied migrations.
+Undo one or more migrations by executing their stored rollback scripts. By default, this rolls back only the most recent migration, but you can target specific migrations or roll back to a specific point in history:
 
 ```zsh
 bun smig rollback [options]
@@ -163,7 +165,7 @@ bun smig rollback --to def456
 
 ### validate
 
-Check your schema file for errors without connecting to the database.
+Quickly check your schema for syntax errors and structural issues without connecting to the database. Useful in CI pipelines or when you want to verify changes before committing:
 
 ```zsh
 bun smig validate [options]
@@ -194,7 +196,7 @@ bun smig validate --schema ./schemas/main.ts
 
 ### init
 
-Create starter files for a new project.
+Bootstrap a new project with example schema and configuration files. This is the fastest way to get started—the generated files include common patterns you can modify for your needs:
 
 ```zsh
 bun smig init [options]
@@ -221,7 +223,7 @@ bun smig init --output ./src/db/schema.ts
 
 ### test
 
-Verify database connection.
+Verify that **smig** can connect to your database with the current configuration. Use this to troubleshoot connection issues or verify credentials:
 
 ```zsh
 bun smig test [options]
@@ -245,7 +247,7 @@ bun smig test --env production
 
 ### config
 
-Show current configuration.
+Display the active configuration, including which environment is selected and what values will be used. Helpful for debugging when commands aren't connecting as expected:
 
 ```zsh
 bun smig config [options]
@@ -284,7 +286,7 @@ Use --env <name> to select an environment
 
 ### mermaid
 
-Generate an ER diagram from your schema.
+Generate an entity-relationship diagram from your schema in Mermaid format. The output can be rendered in GitHub, GitLab, Notion, and many documentation tools:
 
 ```zsh
 bun smig mermaid [options]
@@ -310,6 +312,8 @@ bun smig mermaid --output docs/schema.mmd
 ```
 
 ## Configuration file
+
+The configuration file defines your database connection and schema location. It supports multiple environments, making it easy to switch between development, staging, and production databases.
 
 Create `smig.config.ts` in your project root:
 
@@ -356,6 +360,8 @@ bun smig migrate --env production
 
 ## Environment variables
 
+For CI/CD pipelines and containerised deployments, you can configure **smig** entirely through environment variables. This avoids storing credentials in config files.
+
 **smig** reads from `.env` files:
 
 ```zsh
@@ -376,6 +382,8 @@ Priority (highest to lowest):
 4. Default values
 
 ## Exit codes
+
+For scripting and CI integration, **smig** uses standard exit codes:
 
 | Code | Meaning |
 |------|---------|

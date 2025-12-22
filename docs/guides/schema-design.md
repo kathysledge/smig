@@ -2,7 +2,9 @@
 
 Best practices for designing effective SurrealDB schemas with **smig**.
 
-## Schema organization
+## Schema organisation
+
+How you structure your schema files affects maintainability as your project grows. **smig** is flexible—you can start simple and reorganise later without affecting your database.
 
 ### Single file vs. multiple files
 
@@ -42,6 +44,8 @@ export default composeSchema({
 
 ## Naming conventions
 
+Consistent naming makes your schema easier to read and maintain. These conventions align with SurrealDB's own style and help avoid common pitfalls.
+
 ### Tables
 
 Use **singular, lowercase** names:
@@ -58,7 +62,7 @@ defineSchema({ table: 'BlogPosts' });
 
 ### Fields
 
-Use **camelCase** for multi-word fields:
+Field names appear frequently in your application code, so choose names that are clear and consistent. Use **camelCase** for multi-word fields:
 
 ```typescript
 fields: {
@@ -71,7 +75,7 @@ fields: {
 
 ### Indexes
 
-Name indexes by their purpose:
+Good index names describe what the index is for, not just which columns it covers. This makes it easier to understand query plans and debug performance issues:
 
 ```typescript
 indexes: {
@@ -83,9 +87,11 @@ indexes: {
 
 ## Field patterns
 
+These patterns cover the most common field design decisions you'll face. Understanding when to use each option helps you build schemas that are both flexible and safe.
+
 ### Required vs. optional
 
-Choose whether a field can be null:
+Every field in your schema can either require a value or allow `NONE` (null). Choose whether a field can be null:
 
 ```typescript
 fields: {
@@ -102,7 +108,7 @@ fields: {
 
 ### Defaults and computed values
 
-Provide values automatically:
+Defaults reduce the amount of data your application needs to provide when creating records. Computed values take this further by calculating values from other fields or SurrealDB functions:
 
 ```typescript
 fields: {
@@ -124,7 +130,7 @@ fields: {
 
 ### Validation with assertions
 
-Enforce data integrity rules:
+Assertions enforce data integrity at the database level, ensuring invalid data is rejected regardless of which application or query creates it. Think of them as your last line of defence:
 
 ```typescript
 fields: {
@@ -148,9 +154,11 @@ fields: {
 
 ## Relationships
 
+SurrealDB offers multiple ways to connect records. Choosing the right approach depends on whether you need simple foreign keys, optional links, or rich graph-style relationships with their own data.
+
 ### Record references
 
-Link to other tables:
+The simplest way to connect tables is with record references. These are like foreign keys in traditional databases:
 
 ```typescript
 fields: {
@@ -170,7 +178,7 @@ fields: {
 
 ### Foreign key constraints
 
-Control what happens when referenced records are deleted:
+SurrealDB 3.x supports referential integrity, which means you can control what happens when a referenced record is deleted. This prevents orphaned data and enforces relationship rules at the database level:
 
 ```typescript
 fields: {
@@ -192,7 +200,7 @@ fields: {
 
 ### Graph relations
 
-For many-to-many or attributed relationships, use relations:
+When a relationship needs its own data (like "when did this user follow that user?") or you need many-to-many connections, use graph relations. These create edge tables that SurrealDB can traverse efficiently:
 
 ```typescript
 import { defineRelation } from 'smig';
@@ -223,9 +231,11 @@ const likesRelation = defineRelation({
 
 ## Index strategies
 
+Indexes speed up queries but come with storage and write-time costs. Creating the right indexes—and avoiding unnecessary ones—is key to good performance.
+
 ### When to create indexes
 
-Create indexes for these common scenarios:
+Not every field needs an index. Focus on fields that appear in `WHERE` clauses, `ORDER BY`, or need uniqueness constraints:
 
 ```typescript
 indexes: {
@@ -245,7 +255,7 @@ indexes: {
 
 ### Index types
 
-Choose the right index type for your use case:
+SurrealDB supports several specialised index types beyond the standard B-tree. Choosing the right type for your data and query patterns can dramatically improve performance:
 
 ```typescript
 indexes: {
@@ -271,9 +281,11 @@ indexes: {
 
 ## Events and triggers
 
+Events let you run SurrealQL automatically when records are created, updated, or deleted. They're useful for maintaining derived data, enforcing complex rules, and creating audit trails.
+
 ### Common patterns
 
-Frequently used event triggers:
+Here are the most frequently used event patterns. Each combines a trigger condition with an action:
 
 ```typescript
 events: {

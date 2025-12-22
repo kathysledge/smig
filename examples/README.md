@@ -39,16 +39,18 @@ bun smig migrate --schema examples/minimal-example.ts
 
 **File:** `blog-example.ts`
 
-A realistic blogging platform with users, posts, and nested comments.
+A realistic blogging platform with users, posts, nested comments, and social interactions.
 
 **Features:**
-- Multiple table definitions
-- Email and length validation
+- Multiple table definitions with common field patterns (`cf`, `ci`)
+- Email and length validation with stacked assertions
 - Optional fields with `option()`
-- Full-text search on content
+- Full-text search on post content
 - Events for automation (`publishedAt` timestamp)
+- Graph relations for likes and follows
 
 **Tables:** `user`, `post`, `comment`
+**Relations:** `like`, `follow`
 
 **Run it:**
 ```zsh
@@ -150,21 +152,6 @@ A comprehensive social platform demonstrating advanced **smig** capabilities.
 bun smig generate --schema examples/social-platform-schema.ts
 bun smig migrate --schema examples/social-platform-schema.ts
 ```
-
----
-
-## Additional Examples
-
-### Simple Blog (Original)
-
-**File:** `simple-blog-schema.ts`
-
-The original blog example with full-text search and like relations.
-
-**Features:**
-- Full-text search with `ci.createdAt()` pattern
-- Like relations between users and posts
-- Events for publish timestamp automation
 
 ---
 

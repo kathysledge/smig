@@ -111,12 +111,12 @@
 // ============================================================================
 
 /** Low-level database client for direct SurrealDB operations */
-export { SurrealClient } from "./database/surreal-client";
-export type { DiagramLevel, MermaidGeneratorOptions } from "./migrator/mermaid-generator";
+export { SurrealClient } from './database/surreal-client';
+export type { DiagramLevel, MermaidGeneratorOptions } from './migrator/mermaid-generator';
 /** Mermaid diagram generation functionality */
-export { generateMermaidDiagram, MermaidGenerator } from "./migrator/mermaid-generator";
+export { generateMermaidDiagram, MermaidGenerator } from './migrator/mermaid-generator';
 /** Main migration management and schema loading functionality */
-export { loadSchemaFromFile, MigrationManager } from "./migrator/migration-manager";
+export { loadSchemaFromFile, MigrationManager } from './migrator/migration-manager';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -133,7 +133,7 @@ export type {
   SurrealIndex,
   SurrealRelation,
   SurrealTable,
-} from "./types/schema";
+} from './types/schema';
 
 // ============================================================================
 // SCHEMA DEFINITION API
@@ -185,4 +185,4 @@ export {
   // Field type builders
   string,
   uuid,
-} from "./schema/concise-schema";
+} from './schema/concise-schema';

@@ -4,7 +4,9 @@ Relations are how you connect records in SurrealDB. Unlike traditional foreign k
 
 ## What is a relation?
 
-In a social network, users follow other users. In a traditional database, you’d create a junction table:
+If you're familiar with SQL databases, you know that many-to-many relationships require a junction table. SurrealDB elevates this concept with first-class relations that can be traversed in both directions using graph queries.
+
+In a social network, users follow other users. In a traditional database, you'd create a junction table:
 
 ```surql
 CREATE TABLE follows (
@@ -41,9 +43,11 @@ SELECT <-follows<-user FROM user WHERE name = 'Alice';
 
 ## Creating relations
 
+Use `defineRelation()` instead of `defineSchema()` when you want graph-style connections between records.
+
 ### Basic relation
 
-A simple relation connecting two table types:
+At minimum, a relation needs a name and the table types it connects:
 
 ```typescript
 import { defineRelation } from 'smig';
@@ -65,7 +69,7 @@ DEFINE FIELD out ON TABLE likes TYPE record<post> ASSERT $value != NONE;
 
 ### Relation with fields
 
-Relations can have their own data:
+Unlike simple foreign keys, relations can carry their own data—like when the relationship was created, or attributes of the connection:
 
 ```typescript
 const reviewed = defineRelation({
@@ -82,7 +86,7 @@ const reviewed = defineRelation({
 
 ### Self-referential relations
 
-Connect records of the same type:
+Relations can connect records of the same table type—useful for follows, friendships, or hierarchies:
 
 ```typescript
 const follows = defineRelation({
@@ -98,7 +102,7 @@ const follows = defineRelation({
 
 ### Multiple target types
 
-Relations can connect to different table types:
+A relation's "to" side can accept multiple table types, useful for polymorphic relationships:
 
 ```typescript
 const mentions = defineRelation({
@@ -110,7 +114,7 @@ const mentions = defineRelation({
 
 ## Creating relation records
 
-Use the arrow syntax:
+Create relation records using the RELATE statement with arrow syntax. This is more expressive than CREATE for graph data:
 
 ```surql
 -- Alice follows Bob
@@ -128,9 +132,11 @@ CREATE follows SET in = user:alice, out = user:bob, since = time::now();
 
 ## Querying relations
 
+The real power of relations is graph traversal. SurrealDB's arrow syntax lets you navigate relationships in queries without joins.
+
 ### Outbound traversal
 
-Follow relations forward with the `->` arrow:
+Follow relations forward (from the starting record outward) with the `->` arrow:
 
 ```surql
 -- Posts that Alice likes
@@ -142,7 +148,7 @@ SELECT ->follows->user.name FROM user:alice;
 
 ### Inbound traversal
 
-Follow relations backward with the `<-` arrow:
+Follow relations backward (from the target back to the source) with the `<-` arrow:
 
 ```surql
 -- Users who like this post
@@ -154,7 +160,7 @@ SELECT <-follows<-user.name FROM user:alice;
 
 ### Get the relation itself
 
-Access the relation record (edge) with its fields:
+Sometimes you need data from the relation record itself, not just the connected records:
 
 ```surql
 -- All follow relationships for Alice
@@ -166,7 +172,7 @@ SELECT ->reviewed.rating, ->reviewed.comment, ->reviewed->product.name FROM user
 
 ### Filter by relation fields
 
-Add WHERE clauses to filter by relation attributes:
+You can filter traversals based on relation field values:
 
 ```surql
 -- 5-star reviews from Alice
@@ -175,9 +181,11 @@ SELECT ->reviewed WHERE rating = 5 ->product FROM user:alice;
 
 ## Relation options
 
+These options control relation behaviour and security.
+
 ### Enforced referential integrity
 
-Prevent orphaned relations:
+With `enforced: true`, SurrealDB automatically deletes relations when either connected record is deleted:
 
 ```typescript
 const follows = defineRelation({
@@ -190,7 +198,7 @@ const follows = defineRelation({
 
 ### Permissions
 
-Control who can create relations:
+Relation permissions work like table permissions. A common pattern is allowing users to only create relations from themselves:
 
 ```typescript
 const follows = defineRelation({
@@ -210,7 +218,7 @@ This allows:
 
 ### Indexes on relations
 
-Speed up relation queries with indexes:
+If you query relations by their fields, add indexes for performance:
 
 ```typescript
 const follows = defineRelation({
@@ -228,7 +236,7 @@ const follows = defineRelation({
 
 ### Events on relations
 
-Trigger actions when relations are created or deleted:
+Relations support events just like regular tables—useful for notifications or syncing counts:
 
 ```typescript
 const follows = defineRelation({
@@ -245,9 +253,11 @@ const follows = defineRelation({
 
 ## Common patterns
 
+These patterns cover typical relation use cases. Copy and adapt them for your schema.
+
 ### Social follow
 
-A complete follow system with permissions and metadata:
+A complete follow system with timestamps, mute options, and proper permissions:
 
 ```typescript
 const follows = defineRelation({
@@ -272,7 +282,7 @@ const follows = defineRelation({
 
 ### Purchase history
 
-Track what users have bought with order details:
+Track purchases with rich metadata about each transaction:
 
 ```typescript
 const purchased = defineRelation({
@@ -290,7 +300,7 @@ const purchased = defineRelation({
 
 ### Hierarchical data
 
-Model parent-child relationships (e.g., categories):
+Self-referential relations can model trees and hierarchies:
 
 ```typescript
 const parentOf = defineRelation({
@@ -305,7 +315,7 @@ const parentOf = defineRelation({
 
 ### Weighted edges
 
-Relations with scores for recommendations or analytics:
+For recommendation systems, track interaction strength on relation edges:
 
 ```typescript
 const interacted = defineRelation({
@@ -322,7 +332,7 @@ const interacted = defineRelation({
 
 ## Relations vs. record fields
 
-When should you use a relation vs. a `record()` field?
+Choosing between a relation and a simple record reference depends on your query patterns and data model.
 
 ### Use a relation when:
 
@@ -353,7 +363,7 @@ const likes = defineRelation({
 
 ## Renaming relations
 
-Use `was` to track previous relation names:
+Like tables and fields, relations support rename tracking to preserve data during migrations:
 
 ```typescript
 const connections = defineRelation({
@@ -366,7 +376,7 @@ const connections = defineRelation({
 
 ## Complete example
 
-A social network with multiple relation types:
+Here's a social network schema demonstrating tables, relations, and how they work together:
 
 ```typescript
 import { defineSchema, defineRelation, string, datetime, int, bool, index, event, composeSchema } from 'smig';

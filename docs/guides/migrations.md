@@ -4,6 +4,8 @@ How **smig** generates and manages database migrations.
 
 ## How migrations work
 
+Unlike traditional migration tools that create numbered files, **smig** generates migrations on the fly by comparing your schema definition to the current database state. This means no migration files to manage—your schema is the single source of truth.
+
 The migration lifecycle is a simple three-step process:
 
 ```mermaid
@@ -36,9 +38,11 @@ flowchart TB
 
 ## The diffing algorithm
 
-**smig** compares your schema definition against the current database state and generates the minimal set of changes:
+The core of **smig** is its diffing engine. It introspects your database, parses your schema file, and computes the exact changes needed to bring the database in line with your definition.
 
 ### What it detects
+
+**smig** recognises a comprehensive set of schema changes. For each change type, it generates both a forward migration (to apply the change) and a rollback migration (to undo it):
 
 | Change type | Forward (up) | Rollback (down) |
 |-------------|--------------|-----------------|
@@ -57,7 +61,7 @@ flowchart TB
 
 ### Smart ALTER statements
 
-**smig** uses granular `ALTER` statements when possible, which is more efficient than redefining entire fields:
+Rather than always using `DEFINE OVERWRITE`, **smig** generates targeted `ALTER` statements for small changes. This produces cleaner, more readable migrations and reduces the risk of unintended side effects:
 
 ```surql
 -- For single property changes, use ALTER
@@ -73,7 +77,7 @@ DEFINE FIELD OVERWRITE profile ON TABLE user
 
 ### Field modification detection
 
-**smig** detects changes to:
+When you modify a field in your schema, **smig** compares every property to detect exactly what changed. This allows it to generate the most efficient migration possible:
 
 - Field type (`string` → `int`)
 - Default value
@@ -82,6 +86,8 @@ DEFINE FIELD OVERWRITE profile ON TABLE user
 - Permissions
 
 ## Migration history
+
+Every migration you apply is recorded in your database, creating an audit trail of schema changes. This history enables rollbacks and helps you understand how your schema evolved over time.
 
 Migrations are tracked in a `_migrations` table:
 
@@ -97,7 +103,7 @@ DEFINE FIELD downChecksum ON _migrations TYPE string;
 
 ### Checksum verification
 
-Each migration includes SHA-256 checksums of both the up and down scripts. This ensures:
+To protect against corruption or accidental modification, each migration record includes SHA-256 checksums. This ensures:
 
 - Migrations haven’t been modified after application
 - Migration files match what was applied
@@ -105,9 +111,11 @@ Each migration includes SHA-256 checksums of both the up and down scripts. This 
 
 ## Migration lifecycle
 
+A typical workflow involves previewing changes, applying them, and occasionally rolling back. Each step has safeguards to prevent accidents.
+
 ### 1. Preview changes (`bun smig generate`)
 
-Compare your schema definition with the database and preview the migration:
+Always preview before applying. This shows you exactly what SurrealQL will run, without touching the database:
 
 ```zsh
 bun smig generate
@@ -120,7 +128,7 @@ bun smig generate
 
 ### 2. Apply changes (`bun smig migrate`)
 
-Apply schema changes to your database:
+Once you're happy with the preview, apply the migration. **smig** executes the SurrealQL and records the change in the migration history:
 
 ```zsh
 # Preview changes without applying
@@ -140,7 +148,7 @@ What happens during `migrate`:
 
 ### 3. Rollback (`bun smig rollback`)
 
-Undo the most recent migration:
+Made a mistake? Rollback undoes the most recent migration by executing the stored down script:
 
 ```zsh
 bun smig rollback
@@ -152,9 +160,11 @@ bun smig rollback
 
 ## Handling failures
 
+Migrations can fail for many reasons: invalid SurrealQL, constraint violations, or connection issues. **smig** provides tools to diagnose and recover from problems.
+
 ### Partial failures
 
-If a migration fails partway through:
+If a migration fails partway through, your database may be in an inconsistent state:
 
 1. **smig** detects the partial state
 2. Shows which statements succeeded/failed
@@ -162,7 +172,7 @@ If a migration fails partway through:
 
 ### Recovery options
 
-Commands to diagnose and recover from issues:
+Depending on the failure, you have several paths forward:
 
 ```zsh
 # Retry the failed migration
@@ -178,9 +188,11 @@ bun smig generate  # See current differences
 
 ## Safe migration practices
 
+Following these practices reduces the risk of data loss and makes it easier to recover when things go wrong.
+
 ### Always review before applying
 
-Look at what will change before applying:
+Never run `migrate` without first checking what will change. The `--dry-run` flag shows you the exact SQL without executing it:
 
 ```zsh
 # Preview changes
@@ -192,11 +204,11 @@ bun smig migrate
 
 ### Use transactions
 
-**smig** wraps migrations in transactions by default. If any statement fails, the entire migration is rolled back.
+**smig** wraps migrations in transactions by default. If any statement fails, the entire migration is rolled back automatically, leaving your database in its previous state.
 
 ### Backup before major changes
 
-Protect your data before significant schema updates:
+For production databases or complex migrations, create a backup first. SurrealDB's export command captures both schema and data:
 
 ```zsh
 # Export current state
@@ -211,7 +223,7 @@ surreal import --conn ws://localhost:8000 backup.surql
 
 ### Test in staging first
 
-Verify migrations work before production:
+Always test migrations in a staging environment before applying to production. This catches issues with real data that you might not see in development:
 
 ```zsh
 # Apply to staging

@@ -1,133 +1,33 @@
 # Social network
 
-A social platform with follows, posts, and likes using graph relations.
+A social platform with follows, posts, likes, and notifications using SurrealDB's graph relations. This example demonstrates how to model social interactions between users.
 
-## Schema
+## What you'll learn
 
-A social platform with users, posts, follows, and likes using SurrealDB’s graph relations:
+This example demonstrates several key **smig** concepts:
 
-```typescript
-import {
-  defineSchema,
-  defineRelation,
-  composeSchema,
-  string,
-  int,
-  bool,
-  datetime,
-  array,
-  record,
-  option,
-  index,
-  event,
-} from 'smig';
+- Graph relations for user-to-user and user-to-content connections
+- Counter fields for follower/following/like counts
+- Composite indexes for efficient timeline queries
+- Common field patterns with `cf` helpers
+- Notification systems
 
-// Users
-const userSchema = defineSchema({
-  table: 'user',
-  fields: {
-    username: string()
-      .required()
-      .assert('string::len($value) >= 3')
-      .assert('string::len($value) <= 30'),
-    email: string().required().assert('string::is_email($value)'),
-    displayName: string().required(),
-    bio: option('string'),
-    avatar: option('string'),
-    isVerified: bool().default(false),
-    followerCount: int().default(0),
-    followingCount: int().default(0),
-    postCount: int().default(0),
-    createdAt: datetime().default('time::now()'),
-    updatedAt: datetime().value('time::now()'),
-  },
-  indexes: {
-    username: index(['username']).unique(),
-    email: index(['email']).unique(),
-  },
-});
+## Complete schema
 
-// Posts
-const postSchema = defineSchema({
-  table: 'post',
-  fields: {
-    author: record('user').required(),
-    content: string()
-      .required()
-      .assert('string::len($value) >= 1')
-      .assert('string::len($value) <= 280'),
-    media: array('string').default([]),
-    replyTo: option('record<post>'),
-    repostOf: option('record<post>'),
-    likeCount: int().default(0),
-    repostCount: int().default(0),
-    replyCount: int().default(0),
-    createdAt: datetime().default('time::now()'),
-  },
-  indexes: {
-    author: index(['author', 'createdAt']),
-    replyTo: index(['replyTo']),
-    timeline: index(['createdAt']),
-  },
-  events: {
-    incrementPostCount: event('increment_post_count')
-      .onCreate()
-      .when('$event = "CREATE" AND $after.replyTo = NONE AND $after.repostOf = NONE')
-      .thenDo('UPDATE $after.author SET postCount += 1'),
+The social network schema includes four tables (users, posts, comments, notifications) and two graph relations (follows, likes). Each user has counters for followers, following, and posts.
 
-    incrementReplyCount: event('increment_reply_count')
-      .onCreate()
-      .when('$event = "CREATE" AND $after.replyTo != NONE')
-      .thenDo('UPDATE $after.replyTo SET replyCount += 1'),
-
-    incrementRepostCount: event('increment_repost_count')
-      .onCreate()
-      .when('$event = "CREATE" AND $after.repostOf != NONE')
-      .thenDo('UPDATE $after.repostOf SET repostCount += 1'),
-  },
-});
-
-// Follow relation
-const followsRelation = defineRelation({
-  name: 'follows',
-  from: 'user',
-  to: 'user',
-  fields: {
-    followedAt: datetime().default('time::now()'),
-    notifications: bool().default(true),
-  },
-});
-
-// Like relation
-const likesRelation = defineRelation({
-  name: 'likes',
-  from: 'user',
-  to: 'post',
-  fields: {
-    likedAt: datetime().default('time::now()'),
-  },
-});
-
-export default composeSchema({
-  models: {
-    user: userSchema,
-    post: postSchema,
-  },
-  relations: {
-    follows: followsRelation,
-    likes: likesRelation,
-  },
-});
-```
+<<< @/../examples/social-network-schema.ts
 
 ## Graph queries
+
+Graph relations enable powerful traversal queries in SurrealQL. Here are common patterns for social features.
 
 ### Follow a user
 
 Create a follow relationship between two users:
 
 ```surql
-RELATE user:alice -> follows -> user:bob;
+RELATE user:alice -> follow -> user:bob;
 ```
 
 ### Unfollow
@@ -135,7 +35,7 @@ RELATE user:alice -> follows -> user:bob;
 Remove a follow relationship:
 
 ```surql
-DELETE follows WHERE in = user:alice AND out = user:bob;
+DELETE follow WHERE in = user:alice AND out = user:bob;
 ```
 
 ### Get followers
@@ -143,7 +43,7 @@ DELETE follows WHERE in = user:alice AND out = user:bob;
 Get all users who follow a specific user:
 
 ```surql
-SELECT * FROM user:bob <- follows <- user;
+SELECT * FROM user:bob <- follow <- user;
 ```
 
 ### Get following
@@ -151,7 +51,7 @@ SELECT * FROM user:bob <- follows <- user;
 Get all users that a user follows:
 
 ```surql
-SELECT * FROM user:alice -> follows -> user;
+SELECT * FROM user:alice -> follow -> user;
 ```
 
 ### Check if following
@@ -159,7 +59,7 @@ SELECT * FROM user:alice -> follows -> user;
 Check if one user follows another:
 
 ```surql
-SELECT * FROM follows
+SELECT * FROM follow
 WHERE in = user:alice AND out = user:bob;
 ```
 
@@ -168,7 +68,7 @@ WHERE in = user:alice AND out = user:bob;
 Create a like relationship:
 
 ```surql
-RELATE user:alice -> likes -> post:123;
+RELATE user:alice -> like -> post:123;
 ```
 
 ### Unlike
@@ -176,7 +76,7 @@ RELATE user:alice -> likes -> post:123;
 Remove a like:
 
 ```surql
-DELETE likes WHERE in = user:alice AND out = post:123;
+DELETE like WHERE in = user:alice AND out = post:123;
 ```
 
 ### Get user's liked posts
@@ -184,8 +84,8 @@ DELETE likes WHERE in = user:alice AND out = post:123;
 Get all posts a user has liked:
 
 ```surql
-SELECT * FROM user:alice -> likes -> post
-ORDER BY likedAt DESC
+SELECT * FROM user:alice -> like -> post
+ORDER BY createdAt DESC
 LIMIT 20;
 ```
 
@@ -195,7 +95,7 @@ Build a chronological feed of posts from people a user follows:
 
 ```surql
 SELECT * FROM post
-WHERE author IN (SELECT VALUE out FROM follows WHERE in = user:alice)
+WHERE author IN (SELECT VALUE out FROM follow WHERE in = user:alice)
 ORDER BY createdAt DESC
 LIMIT 50;
 ```
@@ -205,8 +105,8 @@ LIMIT 50;
 Find users who both follow each other:
 
 ```surql
-LET $following = (SELECT VALUE out FROM follows WHERE in = user:alice);
-LET $followers = (SELECT VALUE in FROM follows WHERE out = user:alice);
+LET $following = (SELECT VALUE out FROM follow WHERE in = user:alice);
+LET $followers = (SELECT VALUE in FROM follow WHERE out = user:alice);
 RETURN array::intersect($following, $followers);
 ```
 
@@ -215,13 +115,13 @@ RETURN array::intersect($following, $followers);
 Discover new people through your network:
 
 ```surql
-SELECT DISTINCT out FROM user:alice -> follows -> user -> follows -> user
+SELECT DISTINCT out FROM user:alice -> follow -> user -> follow -> user
 WHERE out != user:alice
-AND out NOT IN (SELECT VALUE out FROM follows WHERE in = user:alice);
+AND out NOT IN (SELECT VALUE out FROM follow WHERE in = user:alice);
 ```
 
 ## See also
 
-- [Relations reference](../schema-reference/relations.md) - Relation options
-- [Events reference](../schema-reference/events.md) - Event triggers
-- [AI embeddings](ai-embeddings.md) - Recommendation feeds
+- [Relations reference](../schema-reference/relations.md) — Relation options
+- [Events reference](../schema-reference/events.md) — Event triggers
+- [AI embeddings](ai-embeddings.md) — Recommendation feeds

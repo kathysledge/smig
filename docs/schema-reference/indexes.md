@@ -4,7 +4,7 @@ Indexes make queries faster. They also let you enforce uniqueness, perform full-
 
 ## Why use indexes?
 
-Without an index, finding a user by email requires scanning every record in the table. With an index, the database can jump directly to the right record.
+Indexes are data structures that help SurrealDB find records quickly. Without an index, the database must scan every record in a table to find matches. With an index, it can jump directly to the right records.
 
 Common reasons to add an index:
 
@@ -15,7 +15,7 @@ Common reasons to add an index:
 
 ## Basic usage
 
-Create an index with the `index()` function and add it to your schema:
+The `index()` function creates an index builder. Pass it an array of field names to index, then add it to your schema's `indexes` object:
 
 ```typescript
 import { defineSchema, string, index } from 'smig';
@@ -40,9 +40,11 @@ DEFINE INDEX email ON TABLE user FIELDS email UNIQUE;
 
 ## Index types
 
+SurrealDB supports several index types, each optimised for different query patterns.
+
 ### BTREE (default)
 
-The standard index type. Good for exact matches and range queries.
+The B-tree is the workhorse of database indexing. It's good for exact matches, range queries, and sorting:
 
 ```typescript
 // Speeds up: WHERE email = 'x'
@@ -54,7 +56,7 @@ authorDate: index(['author', 'createdAt'])
 
 ### UNIQUE
 
-Ensures no two records have the same value:
+A unique index prevents duplicate values. Attempting to insert a duplicate will fail:
 
 ```typescript
 email: index(['email']).unique()
@@ -66,7 +68,7 @@ userRole: index(['userId', 'roleId']).unique()
 
 ### HASH
 
-Fast for exact matches, but can’t do range queries:
+Hash indexes are faster than B-trees for exact equality lookups, but they can't handle range queries or sorting:
 
 ```typescript
 apiKey: index(['apiKey']).hash()
@@ -76,7 +78,7 @@ Use when you only ever query with `=`, never `<`, `>`, or `BETWEEN`.
 
 ## Full-text search
 
-The SEARCH index type enables full-text searching:
+Full-text search indexes let you search for words and phrases within text content. They support stemming (matching "running" to "run"), stopword removal, and relevance scoring:
 
 ```typescript
 // Basic full-text search
@@ -91,7 +93,7 @@ content: index(['title', 'body']).search('english').highlights()
 
 ### BM25 scoring
 
-Fine-tune relevance ranking:
+BM25 is the algorithm that ranks search results by relevance. You can tune its parameters to adjust how much weight is given to term frequency and document length:
 
 ```typescript
 content: index(['title', 'body'])
@@ -101,7 +103,7 @@ content: index(['title', 'body'])
 
 ### Caching options
 
-For large datasets, configure caching:
+For better search performance on large datasets, configure how much index data to keep in memory:
 
 ```typescript
 content: index(['title', 'body'])
@@ -114,11 +116,13 @@ content: index(['title', 'body'])
 
 ## Vector indexes (AI/ML)
 
-SurrealDB 3 supports vector similarity search with two algorithms:
+Vector indexes enable similarity search on embeddings—numerical representations of text, images, or other data. This is the foundation of semantic search and recommendation systems.
+
+SurrealDB supports two vector index algorithms:
 
 ### HNSW (recommended for most cases)
 
-HNSW (Hierarchical Navigable Small World) is efficient for high-dimensional vectors:
+HNSW (Hierarchical Navigable Small World) is the go-to algorithm for high-dimensional embeddings like those from OpenAI or Cohere:
 
 ```typescript
 // OpenAI ada-002 embeddings (1536 dimensions)
@@ -136,7 +140,7 @@ embedding: index(['embedding'])
 
 ### MTREE
 
-M-Tree is better for lower-dimensional data or when you need exact results:
+M-Tree works better for lower-dimensional vectors (under 100 dimensions) and can provide exact results rather than approximate ones:
 
 ```typescript
 // 3D coordinates
@@ -147,6 +151,8 @@ location: index(['coordinates'])
 ```
 
 ### Distance metrics
+
+The distance metric determines how similarity is calculated. Choose based on your embedding type:
 
 | Metric | Use case |
 |--------|----------|
@@ -161,7 +167,7 @@ location: index(['coordinates'])
 
 ### Complete vector search example
 
-Here’s a document table with both vector and full-text search:
+A common pattern is combining vector search (for semantic similarity) with full-text search (for keyword matching). Here's how:
 
 ```typescript
 import { defineSchema, string, array, index } from 'smig';
@@ -200,7 +206,7 @@ ORDER BY embedding <|10,100|> $query_embedding;
 
 ## Composite indexes
 
-Index multiple fields together:
+A composite index covers multiple fields and can speed up queries that filter or sort by those fields in combination:
 
 ```typescript
 // For queries: WHERE author = x AND createdAt > y
@@ -214,9 +220,11 @@ The field order matters. Put the most selective field first.
 
 ## Index modifiers
 
+These options control how indexes are created and documented.
+
 ### Concurrent creation
 
-Build the index without blocking writes:
+By default, creating an index locks the table. For large tables, use concurrent creation to avoid blocking writes:
 
 ```typescript
 email: index(['email']).unique().concurrently()
@@ -224,7 +232,7 @@ email: index(['email']).unique().concurrently()
 
 ### If not exists
 
-Only create if the index doesn’t already exist:
+Avoid errors when re-running migrations on an existing database:
 
 ```typescript
 email: index(['email']).ifNotExists()
@@ -232,7 +240,7 @@ email: index(['email']).ifNotExists()
 
 ### Comments
 
-Document the index purpose:
+Explain why an index exists—this helps future developers understand its purpose:
 
 ```typescript
 email: index(['email'])
@@ -242,7 +250,7 @@ email: index(['email'])
 
 ## Rename tracking
 
-When renaming an index, use `.was()`:
+Tell **smig** about previous index names so it generates a rename instead of drop-and-create:
 
 ```typescript
 // Previously named 'emailIndex'
@@ -256,6 +264,8 @@ ALTER INDEX emailIndex ON TABLE user RENAME TO userEmail;
 ```
 
 ## What to index
+
+Indexing is about trade-offs. Here's a quick guide to help you decide.
 
 ### Do index
 
@@ -273,11 +283,11 @@ ALTER INDEX emailIndex ON TABLE user RENAME TO userEmail;
 
 ### Trade-offs
 
-Indexes speed up reads but slow down writes (the index must be updated). Don’t add indexes you don’t need.
+Every index you create has costs: more storage, slower writes, and maintenance overhead. Only add indexes that directly support your query patterns.
 
 ## Complete example
 
-A post table with unique constraints, query optimization, and search indexes:
+Here's a post table demonstrating multiple index types working together—unique constraints, query optimisation, full-text search, and vector similarity:
 
 ```typescript
 import { defineSchema, string, int, bool, datetime, array, index } from 'smig';

@@ -4,18 +4,20 @@ Production-ready patterns for using **smig** effectively.
 
 ## Schema management
 
+Good schema hygiene prevents problems before they happen. These practices help you maintain a healthy codebase and avoid surprises in production.
+
 ### Keep schema in version control
 
-Your `schema.ts` is the source of truth. Always commit it:
+Your `schema.ts` is the source of truth for your database structure. Treat it like any other critical code—commit every change:
 
 ```zsh
 git add schema.ts
 git commit -m "Add user authentication fields"
 ```
 
-### Use meaningful migration messages
+### Use meaningful commit messages
 
-Descriptive messages help you understand history:
+When committing schema changes, describe what changed and why. This helps when reviewing history:
 
 ```zsh
 # ✓ Good
@@ -27,9 +29,9 @@ bun smig diff
 bun smig diff
 ```
 
-### Review before pushing
+### Review before applying
 
-Always review generated SurrealQL (SQL) before applying:
+Never apply migrations blindly. The `--dry-run` flag shows you exactly what will change:
 
 ```zsh
 bun smig diff --dry-run
@@ -39,9 +41,11 @@ bun smig migrate
 
 ## Field design
 
+The types and constraints you choose affect data integrity, query performance, and application code. Get these right from the start to avoid painful migrations later.
+
 ### Use appropriate types
 
-Choose the most precise type for each field:
+Be specific. The database can optimise storage and queries when it knows the exact type:
 
 ```typescript
 // ✓ Use specific types
@@ -63,7 +67,7 @@ fields: {
 
 ### Validate at the database level
 
-Let the database enforce your rules:
+Application-level validation can be bypassed. Database constraints cannot. Use assertions for rules that must always hold:
 
 ```typescript
 fields: {
@@ -81,7 +85,7 @@ fields: {
 
 ### Use computed fields wisely
 
-Computed fields are powerful but have tradeoffs:
+Computed fields simplify your application code but add database overhead. Use them when the computation is simple and frequently needed:
 
 ```typescript
 fields: {
@@ -96,11 +100,13 @@ fields: {
 }
 ```
 
-## Index optimization
+## Index optimisation
+
+Indexes are a trade-off: they speed up reads but slow down writes. Understanding when and how to index is essential for good performance.
 
 ### Index what you query
 
-Match your indexes to your query patterns:
+Design indexes based on your actual query patterns, not just which fields exist:
 
 ```typescript
 // If you query: SELECT * FROM post WHERE author = $user AND published = true ORDER BY createdAt DESC
@@ -109,12 +115,9 @@ indexes: {
 }
 ```
 
-### Don’t over-index
+### Don't over-index
 
-Each index:
-- Increases write latency
-- Uses storage space
-- Must be maintained
+Every index you create has costs. Before adding one, ask: "What query does this speed up?"
 
 ```typescript
 // ✗ Too many indexes
@@ -134,9 +137,11 @@ indexes: {
 
 ## Relation design
 
+SurrealDB's graph capabilities let you model relationships that would be awkward in traditional databases. Use them wisely.
+
 ### Use relations for many-to-many
 
-Relations scale better than embedded arrays:
+Embedded arrays work for small, bounded collections. For unbounded or queryable relationships, use graph relations:
 
 ```typescript
 // ✗ Array of references (can grow unbounded)
@@ -160,7 +165,7 @@ const followsRelation = defineRelation({
 
 ### Use relations for attributed edges
 
-When the relationship itself has data:
+When you need to store data about the relationship itself (not just that it exists), relations are the right choice:
 
 ```typescript
 // When you need metadata on relationships
@@ -177,9 +182,11 @@ const likesRelation = defineRelation({
 
 ## Migration safety
 
+Migrations change your production database. A mistake here can cause downtime or data loss. These practices minimise risk.
+
 ### Test in lower environments first
 
-Don’t push directly to production:
+Every migration should pass through development and staging before reaching production:
 
 ```zsh
 # 1. Apply to dev
@@ -198,7 +205,7 @@ bun smig migrate --config smig.production.config.ts
 
 ### Backup before major changes
 
-Protect your data before significant schema updates:
+For migrations that modify or remove data (not just structure), create a backup first:
 
 ```zsh
 # Before risky migrations
@@ -213,13 +220,15 @@ surreal import --conn ws://localhost:8000 backup-20240115.surql
 
 ### Use transactions
 
-**smig** uses transactions by default. If any statement fails, the entire migration is rolled back.
+**smig** wraps migrations in transactions automatically. If any statement fails, the entire migration is rolled back, leaving your database unchanged.
 
 ## Team workflows
 
+When multiple developers modify the schema, coordination prevents conflicts and ensures everyone stays in sync.
+
 ### One schema, multiple developers
 
-Coordinate schema changes in teams:
+The key is to pull before making changes and push promptly after:
 
 ```zsh
 # Developer A
@@ -240,7 +249,7 @@ git push
 
 ### Resolve schema conflicts
 
-If two developers modify the schema simultaneously:
+Git handles schema.ts like any other code file. When conflicts occur:
 
 1. Git merge as normal
 2. Review the merged `schema.ts`
@@ -249,9 +258,11 @@ If two developers modify the schema simultaneously:
 
 ## Error handling
 
+Things go wrong. Good error handling helps you recover quickly and minimises impact.
+
 ### Check status before operations
 
-Verify the connection and state before pushing:
+In deployment scripts, verify the connection works before attempting migrations:
 
 ```typescript
 // In deployment scripts
@@ -271,7 +282,7 @@ try {
 
 ### Handle rollback failures
 
-If a rollback fails:
+Rollbacks can fail if the down script is invalid or the database state has changed. When this happens:
 
 1. Check `bun smig status` for current state
 2. Manually fix any partial changes
@@ -280,9 +291,11 @@ If a rollback fails:
 
 ## Performance considerations
 
+Schema changes on large databases require extra care. Some operations lock tables or rebuild indexes, which can cause downtime.
+
 ### Large tables
 
-For tables with millions of rows:
+When adding indexes to tables with millions of rows, use concurrent creation to avoid blocking writes:
 
 ```typescript
 // Use concurrent index creation
@@ -293,7 +306,7 @@ indexes: {
 
 ### Vector indexes
 
-For HNSW indexes, tune parameters based on your data:
+HNSW indexes have tuneable parameters that affect build time, query speed, and memory usage. Start with defaults and adjust based on your workload:
 
 ```typescript
 indexes: {

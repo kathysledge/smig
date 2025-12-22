@@ -4,7 +4,7 @@ Events are triggers that run when data changes. They let you automate business l
 
 ## What are events for?
 
-Instead of handling every side effect in your application code, events let you:
+Events move business logic into the database layer, ensuring it runs consistently regardless of which application or query modifies the data. Instead of handling every side effect in your application code, events let you:
 
 - **Audit changes** — Log who changed what and when
 - **Sync data** — Update related records automatically
@@ -13,7 +13,7 @@ Instead of handling every side effect in your application code, events let you:
 
 ## Creating an event
 
-Define an event with a trigger type, optional condition, and action:
+An event has three parts: when it triggers (create, update, delete), an optional condition, and the action to perform. Use the `event()` builder function:
 
 ```typescript
 import { defineSchema, event } from 'smig';
@@ -40,9 +40,11 @@ DEFINE EVENT on_publish ON TABLE post
 
 ## Event triggers
 
+You can trigger events on creates, updates, deletes, or any combination. Choose based on what change you need to react to.
+
 ### On create
 
-Runs when a new record is created:
+Runs when a new record is inserted:
 
 ```typescript
 onCreate: event('audit_create')
@@ -52,7 +54,7 @@ onCreate: event('audit_create')
 
 ### On update
 
-Runs when a record is modified:
+Runs when an existing record is changed:
 
 ```typescript
 onUpdate: event('audit_update')
@@ -62,7 +64,7 @@ onUpdate: event('audit_update')
 
 ### On delete
 
-Runs when a record is deleted:
+Runs when a record is removed:
 
 ```typescript
 onDelete: event('audit_delete')
@@ -72,7 +74,7 @@ onDelete: event('audit_delete')
 
 ### Multiple triggers
 
-React to multiple operations:
+A single event can respond to multiple operation types:
 
 ```typescript
 onChange: event('on_change')
@@ -82,7 +84,7 @@ onChange: event('on_change')
 
 ## The WHEN clause
 
-Events can have conditions:
+The WHEN clause adds a condition that must be true for the event to fire. This lets you trigger on specific changes rather than all changes:
 
 ```typescript
 // Only trigger when status changes to 'completed'
@@ -106,7 +108,7 @@ onLargeOrder: event('on_large_order')
 
 ## Available variables
 
-Inside event handlers, you have access to:
+SurrealDB provides special variables inside event handlers so you can access the data being changed:
 
 | Variable | Available on | Contains |
 |----------|--------------|----------|
@@ -117,9 +119,11 @@ Inside event handlers, you have access to:
 
 ## The THEN clause
 
+The THEN clause contains the SurrealQL to execute when the event fires. This can be a single statement or a complex block of code.
+
 ### Single statement
 
-For simple actions, use a single statement:
+For simple actions, pass a single SurrealQL statement:
 
 ```typescript
 .then('UPDATE $after SET updatedAt = time::now()')
@@ -127,7 +131,7 @@ For simple actions, use a single statement:
 
 ### Multiple statements
 
-Use curly braces:
+For multiple statements, wrap them in curly braces:
 
 ```typescript
 .then(`{
@@ -138,7 +142,7 @@ Use curly braces:
 
 ### Complex logic
 
-For multi-step actions with conditions:
+You can use variables, conditionals, and loops in event handlers:
 
 ```typescript
 .then(`{
@@ -156,9 +160,11 @@ For multi-step actions with conditions:
 
 ## Common patterns
 
+These patterns cover the most common use cases for events. Copy and adapt them for your schema.
+
 ### Audit trail
 
-Track all changes:
+Create an audit log that records every change to a table:
 
 ```typescript
 const auditableTable = defineSchema({
@@ -204,7 +210,7 @@ const auditableTable = defineSchema({
 
 ### Timestamps
 
-Auto-update `updatedAt`:
+Automatically set an `updatedAt` field whenever a record changes:
 
 ```typescript
 updateTimestamp: event('update_timestamp')
@@ -214,7 +220,7 @@ updateTimestamp: event('update_timestamp')
 
 ### Counter cache
 
-Keep a count in sync:
+Maintain a denormalised count field that updates automatically:
 
 ```typescript
 // On comment table
@@ -229,7 +235,7 @@ decrementCount: event('decrement_count')
 
 ### Notifications
 
-Alert users:
+Create notification records when something happens that a user should know about:
 
 ```typescript
 notifyMention: event('notify_mention')
@@ -250,7 +256,7 @@ notifyMention: event('notify_mention')
 
 ### Cascade updates
 
-Sync related data:
+Propagate changes to related records:
 
 ```typescript
 syncPrices: event('sync_prices')
@@ -261,7 +267,7 @@ syncPrices: event('sync_prices')
 
 ### Webhook trigger
 
-Create a queue record for external processing:
+Queue changes for external processing (since events can't make HTTP calls directly):
 
 ```typescript
 webhook: event('webhook')
@@ -276,7 +282,7 @@ webhook: event('webhook')
 
 ## Event comments
 
-Document what the event does:
+Add documentation to explain the event's purpose:
 
 ```typescript
 onPublish: event('on_publish')
@@ -288,7 +294,7 @@ onPublish: event('on_publish')
 
 ## Order of execution
 
-Events run in the order they’re defined. For predictable behavior:
+When multiple events trigger on the same operation, they run in definition order. Structure your events accordingly:
 
 1. Validation events first
 2. Data modification events second
@@ -296,13 +302,15 @@ Events run in the order they’re defined. For predictable behavior:
 
 ## Limitations
 
+Events are powerful but have constraints. Understanding these helps you design better schemas.
+
 ### Events are synchronous
 
-They run as part of the transaction. Long-running operations can slow down writes.
+Events execute within the same transaction as the triggering operation. Keep event logic fast to avoid slowing down writes.
 
 ### No external calls
 
-Events can’t make HTTP requests directly. Create a queue record and process externally:
+SurrealDB events cannot make HTTP requests or call external services. Instead, queue the work and process it from your application:
 
 ```typescript
 // In database
@@ -318,7 +326,7 @@ for (const item of queue) {
 
 ### Can cause infinite loops
 
-Be careful with events that trigger other events:
+Events that update records can trigger other events. Be careful not to create cycles:
 
 ```typescript
 // DANGEROUS: This creates an infinite loop
@@ -329,7 +337,7 @@ updateA: event('update_a')
 
 ## Complete example
 
-An order table with comprehensive event handling for status changes:
+Here's an order table demonstrating multiple events working together—tracking updates, handling status changes, sending notifications, and maintaining an audit trail:
 
 ```typescript
 import { defineSchema, string, int, bool, datetime, record, event } from 'smig';

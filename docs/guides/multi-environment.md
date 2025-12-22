@@ -4,6 +4,8 @@ Configure **smig** for development, staging, and production environments.
 
 ## Configuration files
 
+Most projects need at least two environments: development (your local machine) and production. Larger teams often add staging for QA testing. Here's how to structure your configuration:
+
 Create separate config files for each environment:
 
 ```
@@ -16,7 +18,7 @@ project/
 
 ### Development config
 
-Local development with sensible defaults:
+Your local environment should use predictable values and an in-memory or local SurrealDB instance:
 
 ```typescript
 // smig.config.ts
@@ -32,7 +34,7 @@ export default {
 
 ### Staging config
 
-A copy of production for testing:
+Staging should mirror production as closely as possible—same database version, similar data volume, and identical schema:
 
 ```typescript
 // smig.staging.config.ts
@@ -48,7 +50,7 @@ export default {
 
 ### Production config
 
-Your live environment with environment variables:
+Never hardcode production credentials. Always use environment variables for sensitive values:
 
 ```typescript
 // smig.production.config.ts
@@ -64,7 +66,7 @@ export default {
 
 ## Using environment-specific configs
 
-Specify the config file when running commands:
+The `--config` flag tells **smig** which configuration to use. Without it, **smig** looks for `smig.config.ts` in your project root:
 
 ```zsh
 # Development (default)
@@ -80,7 +82,7 @@ bun smig migrate --config smig.production.config.ts
 
 ## Environment variables
 
-For CI/CD pipelines, use environment variables:
+In automated pipelines, you often can't use config files because credentials come from secrets management. Environment variables solve this:
 
 ```zsh
 # Set via environment
@@ -96,6 +98,8 @@ bun smig migrate
 
 ### Variable precedence
 
+When the same setting is defined in multiple places, **smig** uses this priority order:
+
 1. Command-line arguments (highest)
 2. Environment variables
 3. Config file
@@ -103,7 +107,7 @@ bun smig migrate
 
 ## Package.json scripts
 
-Create shortcuts for common operations:
+Define npm/bun scripts to avoid typing long config paths repeatedly. This also documents which environments your team uses:
 
 ```typescript
 {
@@ -121,9 +125,11 @@ Create shortcuts for common operations:
 
 ## CI/CD integration
 
+Automating migrations in your deployment pipeline ensures schema changes are applied consistently. Here are examples for popular CI platforms.
+
 ### GitHub Actions
 
-Automated migrations on merge to main:
+This workflow applies migrations automatically when code is merged to main:
 
 ```yaml
 # .github/workflows/deploy.yml
@@ -157,7 +163,7 @@ jobs:
 
 ### GitLab CI
 
-Equivalent configuration for GitLab:
+The same workflow for GitLab's CI system:
 
 ```yaml
 # .gitlab-ci.yml
@@ -178,9 +184,11 @@ migrate:
 
 ## Workflow patterns
 
+These patterns help teams coordinate schema changes safely. Choose the one that matches your deployment style.
+
 ### Development → Staging → Production
 
-The standard workflow for schema changes:
+The classic promotion pipeline. Changes flow through each environment before reaching production:
 
 ```mermaid
 flowchart LR
@@ -196,7 +204,7 @@ flowchart LR
 
 ### Feature branch workflow
 
-Isolate schema changes per feature:
+For teams using feature branches, test schema changes locally before merging:
 
 ```zsh
 # On feature branch

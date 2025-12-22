@@ -131,14 +131,6 @@ export default {
     }, 60000);
   });
 
-  describe('Simple Blog Schema', () => {
-    it('should migrate and have no remaining changes', async () => {
-      const schemaRelPath = `${EXAMPLES_REL_DIR}/simple-blog-schema.ts`;
-      expect(fs.existsSync(path.join(process.cwd(), schemaRelPath))).toBe(true);
-      await runMigrationCycleTest(schemaRelPath, 'blog');
-    }, 60000);
-  });
-
   describe('Social Network Schema', () => {
     it('should migrate and have no remaining changes', async () => {
       const schemaRelPath = `${EXAMPLES_REL_DIR}/social-network-schema.ts`;

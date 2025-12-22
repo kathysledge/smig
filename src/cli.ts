@@ -610,7 +610,7 @@ program
 /**
  * smig Schema File (SurrealDB 3.x)
  *
- * This template showcases smig's full capabilities:
+ * This template showcases smig’s full capabilities:
  * - Type-safe schema definitions
  * - Vector indexes for AI/ML (HNSW, MTREE)
  * - ACCESS authentication (JWT, RECORD)

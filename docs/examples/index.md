@@ -2,6 +2,12 @@
 
 Complete, working schemas for common applications. Each example is ready to copy and adapt for your own projects.
 
+## Getting started
+
+### [Minimal example](/examples/minimal)
+
+The simplest possible schema—a basic task list with just one table. Start here if you're new to **smig** and want to understand the core concepts before diving into more complex patterns.
+
 ## Application examples
 
 ### [Simple blog](/examples/blog)
@@ -32,6 +38,16 @@ An online store with:
 - Order status tracking
 
 Good for understanding business logic and sequences.
+
+### [Social platform](/examples/social-platform)
+
+A forum-style discussion platform with:
+- Schemaless tables for flexible content
+- Topics, posts, and threaded discussions
+- Hierarchical replies (self-referential)
+- Notification system
+
+Good for understanding schemaless tables and complex relationships.
 
 ## Advanced examples
 

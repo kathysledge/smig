@@ -145,11 +145,16 @@ export default withMermaid(
             items: [{ text: "Overview", link: "/examples/" }],
           },
           {
+            text: "Getting started",
+            items: [{ text: "Minimal example", link: "/examples/minimal" }],
+          },
+          {
             text: "Applications",
             items: [
               { text: "Simple blog", link: "/examples/blog" },
               { text: "Social network", link: "/examples/social-network" },
               { text: "E-commerce", link: "/examples/ecommerce" },
+              { text: "Social platform", link: "/examples/social-platform" },
             ],
           },
           {
