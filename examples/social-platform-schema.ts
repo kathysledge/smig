@@ -9,7 +9,7 @@ import {
   option,
   record,
   string,
-} from '../dist/schema/concise-schema.js';
+} from 'smig';
 
 /**
  * Social Platform Schema Example
@@ -33,7 +33,7 @@ const user = defineSchema({
     description: option('string'),
     dateJoined: datetime().default('time::now()'),
     tokens: int().default(0).assert('$value >= 0'),
-    roles: array(string()).default([]),
+    roles: array('string').default([]),
   },
   indexes: {
     email: index(['email']).unique(),
@@ -45,8 +45,8 @@ const topic = defineSchema({
   table: 'topic',
   schemaless: true,
   fields: {
-    posts: array(record('post')).default([]),
-    threads: array(record('thread')).default([]),
+    posts: array('record<post>').default([]),
+    threads: array('record<thread>').default([]),
   },
 });
 
@@ -59,7 +59,7 @@ const post = defineSchema({
     content: string(),
     time: datetime().default('time::now()'),
     replyTo: option('record<post>'),
-    topics: array(record('topic')).default([]),
+    topics: array('record<topic>').default([]),
     archived: bool().default(false),
     edited: bool().default(false),
     visits: int().default(0),
@@ -74,7 +74,7 @@ const thread = defineSchema({
     content: string().assert('$value != NONE'),
     time: datetime().default('time::now()'),
     replyTo: option('record<thread>'),
-    topics: array(record('topic')).default([]),
+    topics: array('record<topic>').default([]),
     edited: bool().default(false),
     visits: int().default(0),
   },

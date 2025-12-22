@@ -35,7 +35,7 @@ features:
 
 # Automatic SurrealDB migrations tool
 
-Enjoy schema design so you can get on with your value add.
+Writing SurrealQL migrations by hand means wrestling with raw query strings. **smig** gives you a type-safe DSL with full autocomplete and helpful error messages that catch mistakes before they reach your database. Spend less time on migrations, more time on what matters.
 
 ## What is smig?
 

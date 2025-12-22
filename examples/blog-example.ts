@@ -28,7 +28,7 @@ import {
   option,
   record,
   string,
-} from '../dist/schema/concise-schema.js';
+} from 'smig';
 
 // #region user
 // User model - represents blog authors and commenters

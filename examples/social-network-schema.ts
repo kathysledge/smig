@@ -10,7 +10,7 @@ import {
   option,
   string,
   uuid,
-} from '../dist/schema/concise-schema.js';
+} from 'smig';
 
 /**
  * Social Network Schema Example

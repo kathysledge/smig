@@ -14,7 +14,7 @@ import {
   index,
   record,
   string,
-} from '../dist/schema/concise-schema.js';
+} from 'smig';
 
 // Custom analyzer for technical content
 const techAnalyzer = analyzer('tech')

@@ -101,7 +101,7 @@
  * - **CLI Tools**: Command-line interface for development and deployment
  *
  * @module smig
- * @version 1.0.0-alpha.1
+ * @version 1.0.0-beta.1
  * @author Chris Harris
  * @license ISC
  */
@@ -180,6 +180,8 @@ export {
   range,
   record,
   scope,
+  // Sequence builder
+  sequence,
   // Set type (like array but unique elements)
   set,
   // Field type builders

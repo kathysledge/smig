@@ -19,7 +19,7 @@ import {
   record,
   sequence,
   string,
-} from '../dist/schema/concise-schema.js';
+} from 'smig';
 
 // Categories
 const categorySchema = defineSchema({

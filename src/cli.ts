@@ -183,7 +183,7 @@ program
       'Features: Vector indexes (HNSW/MTREE), ALTER/RENAME support, ACCESS/JWT auth,\n' +
       'bidirectional migrations, rename tracking via .was(), and more.',
   )
-  .version('1.0.0-alpha.1')
+  .version('1.0.0-beta.1')
   .configureHelp({
     showGlobalOptions: true,
   });
@@ -275,6 +275,8 @@ program
       if (migrationManager) {
         await migrationManager.close();
       }
+      // Force exit to prevent SDK timer keeping event loop alive
+      process.exit(0);
     }
   });
 
@@ -330,6 +332,7 @@ program
       }
 
       await migrationManager.close();
+      process.exit(0);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       spinner.fail(chalk.red(`Failed to get status: ${errorMessage}`));
@@ -472,6 +475,7 @@ program
       if (migrationManager) {
         await migrationManager.close();
       }
+      process.exit(0);
     }
   });
 
@@ -533,6 +537,7 @@ program
 
       // Close the database connection
       await migrationManager.close();
+      process.exit(0);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       const errorStack = error instanceof Error ? error.stack : '';
@@ -798,6 +803,7 @@ program
       console.log(chalk.blue(`📊 Connected to: ${config.url}`));
       console.log(chalk.blue(`📁 Namespace: ${config.namespace}`));
       console.log(chalk.blue(`🗄️  Database: ${config.database}`));
+      process.exit(0);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       spinner.fail(chalk.red(`Database connection failed: ${errorMessage}`));
@@ -1040,6 +1046,7 @@ program
       }
 
       await migrationManager.close();
+      process.exit(0);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       spinner.fail(chalk.red(`Diff generation failed: ${errorMessage}`));

@@ -1,4 +1,4 @@
-import { bool, cf, composeSchema, defineSchema, string } from '../dist/schema/concise-schema.js';
+import { bool, cf, composeSchema, defineSchema, string } from 'smig';
 
 /**
  * Minimal Example Schema
