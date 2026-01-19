@@ -174,10 +174,19 @@ function loadEnvConfig(): Partial<SmigConfig> {
 async function loadConfigFileWithEnvironments(
   environment?: string,
 ): Promise<{ config: Partial<SmigConfig>; availableEnvironments: string[] }> {
-  const configPath = join(process.cwd(), 'smig.config.js');
+  const extensions = ['.ts', '.mts', '.cts', '.js', '.mjs', '.cjs'];
+  let configPath: string | null = null;
 
-  if (!existsSync(configPath)) {
-    debugLog('No smig.config.js found');
+  for (const ext of extensions) {
+    const p = join(process.cwd(), `smig.config${ext}`);
+    if (existsSync(p)) {
+      configPath = p;
+      break;
+    }
+  }
+
+  if (!configPath) {
+    debugLog('No smig.config.* found');
     return { config: {}, availableEnvironments: [] };
   }
 
@@ -188,22 +197,15 @@ async function loadConfigFileWithEnvironments(
     // so that process.env references in the config file work correctly
     ensureEnvLoaded();
 
-    // Dynamic import to support both CommonJS and ES modules
-    let configModule: unknown;
-    try {
-      // Try ES module import first (using pathToFileURL for proper URL formatting)
-      const { pathToFileURL } = await import('node:url');
-      // Add cache-busting timestamp to ensure fresh imports in tests
-      const configUrl = `${pathToFileURL(configPath).href}?t=${Date.now()}`;
-      configModule = await import(configUrl);
-    } catch (_esError) {
-      // Fallback to require for CommonJS
-      delete require.cache[configPath];
-      configModule = require(configPath);
-    }
+    // Use jiti to load the config file (supports TS/JS/ESM/CJS)
+    const { createJiti } = await import('jiti');
+    const jiti = createJiti(import.meta.url, {
+      interopDefault: true,
+    });
 
     // biome-ignore lint/suspicious/noExplicitAny: Dynamic config module loading requires flexible typing
-    const config: SmigConfigFile = (configModule as any).default || configModule;
+    const configModule = (await jiti.import(configPath)) as any;
+    const config: SmigConfigFile = configModule.default || configModule;
 
     debugLog('Raw config file content:', config);
 
@@ -238,7 +240,7 @@ async function loadConfigFileWithEnvironments(
     }
 
     // For other errors (file loading issues), log warning and continue with defaults
-    console.warn(`Warning: Could not load smig.config.js: ${error}`);
+    console.warn(`Warning: Could not load ${configPath}: ${error}`);
     debugLog(`Error loading config file: ${error}`);
     return { config: {}, availableEnvironments: [] };
   }
