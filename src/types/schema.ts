@@ -204,6 +204,8 @@ export interface SurrealRelation {
   to: string;
   /** Whether the relation uses SCHEMAFULL (true) or SCHEMALESS (false) mode */
   schemafull?: boolean;
+  /** Whether the relation is ENFORCED (SurrealDB validates in/out records exist) */
+  enforced?: boolean;
   /** Array of field definitions for this relation */
   fields: SurrealField[];
   /** Array of index definitions for this relation */

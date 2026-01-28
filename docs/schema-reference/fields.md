@@ -72,7 +72,14 @@ fields: {
 
 | Builder | SurrealDB type | When to use it |
 |---------|----------------|----------------|
-| `geometry()` | `geometry` | Points, lines, polygons |
+| `geometry()` | `geometry` | Any geometry type |
+| `geometry('point')` | `geometry<point>` | GPS coordinates, locations |
+| `geometry('line')` | `geometry<line>` | Routes, paths |
+| `geometry('polygon')` | `geometry<polygon>` | Areas, boundaries |
+| `geometry('multipoint')` | `geometry<multipoint>` | Multiple locations |
+| `geometry('multiline')` | `geometry<multiline>` | Multiple routes |
+| `geometry('multipolygon')` | `geometry<multipolygon>` | Complex areas |
+| `geometry('collection')` | `geometry<collection>` | Mixed geometry types |
 
 ### Special
 

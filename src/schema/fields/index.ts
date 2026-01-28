@@ -15,6 +15,7 @@ export {
 } from './complex';
 // Primitive types
 export {
+  type GeometryType,
   SurrealQLBool,
   SurrealQLBytes,
   SurrealQLDatetime,

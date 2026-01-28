@@ -761,10 +761,14 @@ export class MigrationManager {
         // New relation
         upChanges.push(`-- New relation: ${newRelation.name}`);
         const schemaMode = newRelation.schemafull === false ? 'SCHEMALESS' : 'SCHEMAFULL';
-        upChanges.push(`DEFINE TABLE ${newRelation.name} ${schemaMode};`);
+        const enforced = newRelation.enforced ? ' ENFORCED' : '';
+        upChanges.push(
+          `DEFINE TABLE ${newRelation.name} TYPE RELATION IN ${newRelation.from} OUT ${newRelation.to}${enforced} ${schemaMode};`,
+        );
 
-        // Add fields
+        // Add fields (skip 'in' and 'out' as they are auto-created by TYPE RELATION)
         for (const field of newRelation.fields) {
+          if (field.name === 'in' || field.name === 'out') continue;
           upChanges.push(this.generateFieldDefinition(newRelation.name, field));
         }
 
@@ -804,10 +808,14 @@ export class MigrationManager {
           upChanges.push(`-- Recreating relation: ${newRelation.name} (from/to changed)`);
           upChanges.push(`REMOVE TABLE ${newRelation.name};`);
           const schemaMode = newRelation.schemafull === false ? 'SCHEMALESS' : 'SCHEMAFULL';
-          upChanges.push(`DEFINE TABLE ${newRelation.name} ${schemaMode};`);
+          const enforced = newRelation.enforced ? ' ENFORCED' : '';
+          upChanges.push(
+            `DEFINE TABLE ${newRelation.name} TYPE RELATION IN ${newRelation.from} OUT ${newRelation.to}${enforced} ${schemaMode};`,
+          );
 
-          // Add all fields
+          // Add all fields (skip 'in' and 'out' as they are auto-created by TYPE RELATION)
           for (const field of newRelation.fields) {
+            if (field.name === 'in' || field.name === 'out') continue;
             upChanges.push(this.generateFieldDefinition(newRelation.name, field));
           }
 

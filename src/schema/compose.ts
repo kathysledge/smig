@@ -51,6 +51,8 @@ export interface SurrealDBRelation {
   name: string;
   from: string;
   to: string;
+  schemafull?: boolean;
+  enforced?: boolean;
   fields: unknown[];
   indexes: unknown[];
   events: unknown[];

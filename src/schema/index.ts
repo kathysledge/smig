@@ -87,6 +87,7 @@ export {
 // Field types
 export {
   type FieldTrackingConfig,
+  type GeometryType,
   SurrealQLAny,
   SurrealQLArray,
   SurrealQLBool,

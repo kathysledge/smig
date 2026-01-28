@@ -257,8 +257,10 @@ describe('MigrationManager', () => {
       // The current implementation treats this as a new relation rather than recreation
       // This test validates that the diff generation works and includes the correct new definition
       expect(diff.up).toContain('-- New relation: like');
-      expect(diff.up).toContain('DEFINE TABLE like SCHEMAFULL');
-      expect(diff.up).toContain('DEFINE FIELD out ON TABLE like TYPE record<post2>');
+      expect(diff.up).toContain('DEFINE TABLE like TYPE RELATION IN user OUT post2 SCHEMAFULL');
+      // Note: 'in' and 'out' fields are not explicitly defined as they are auto-created by TYPE RELATION
+      expect(diff.up).not.toContain('DEFINE FIELD in ON TABLE like');
+      expect(diff.up).not.toContain('DEFINE FIELD out ON TABLE like');
       expect(diff.up).toContain('DEFINE FIELD rating ON TABLE like TYPE int DEFAULT 5');
     });
 

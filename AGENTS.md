@@ -197,7 +197,7 @@ Integration tests start SurrealDB instances per-test. They're in `tests/integrat
 - Always `bun smig` not just `smig` in command examples
 - Schema files are `.ts` (TypeScript-first)
 
-## Current state (v1.0.0-beta.1)
+## Current state (v1.0.0-beta.2)
 
 ### What's implemented
 

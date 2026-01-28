@@ -106,10 +106,11 @@ export default composeSchema({
 
       const { stdout } = await execAsync(`node ${CLI_PATH} generate --debug`);
 
-      // Relations are defined as tables with in/out record fields
-      expect(stdout).toContain('DEFINE TABLE authored');
-      expect(stdout).toContain('DEFINE FIELD in ON TABLE authored');
-      expect(stdout).toContain('DEFINE FIELD out ON TABLE authored');
+      // Relations are defined with TYPE RELATION which auto-creates in/out fields
+      expect(stdout).toContain('DEFINE TABLE authored TYPE RELATION IN rel_user OUT rel_post');
+      // in/out fields are not explicitly defined when using TYPE RELATION
+      expect(stdout).not.toContain('DEFINE FIELD in ON TABLE authored');
+      expect(stdout).not.toContain('DEFINE FIELD out ON TABLE authored');
 
       // Apply
       const { stderr } = await execAsync(`node ${CLI_PATH} migrate`);
@@ -155,10 +156,11 @@ export default composeSchema({
 
       const { stdout } = await execAsync(`node ${CLI_PATH} generate --debug`);
 
-      // Self-referencing relations have in/out fields pointing to same table
-      expect(stdout).toContain('DEFINE TABLE follows');
-      expect(stdout).toContain('DEFINE FIELD in ON TABLE follows');
-      expect(stdout).toContain('DEFINE FIELD out ON TABLE follows');
+      // Self-referencing relations use TYPE RELATION with same table for in/out
+      expect(stdout).toContain('DEFINE TABLE follows TYPE RELATION IN person OUT person');
+      // in/out fields are not explicitly defined when using TYPE RELATION
+      expect(stdout).not.toContain('DEFINE FIELD in ON TABLE follows');
+      expect(stdout).not.toContain('DEFINE FIELD out ON TABLE follows');
       expect(stdout).toContain('DEFINE FIELD muted');
 
       // Apply and verify
@@ -214,10 +216,12 @@ export default composeSchema({
 
       const { stdout } = await execAsync(`node ${CLI_PATH} generate --debug`);
 
-      // Relations with custom fields show the fields in the definition
-      expect(stdout).toContain('DEFINE TABLE purchased');
-      expect(stdout).toContain('DEFINE FIELD in ON TABLE purchased');
-      expect(stdout).toContain('DEFINE FIELD out ON TABLE purchased');
+      // Relations with custom fields use TYPE RELATION
+      expect(stdout).toContain('DEFINE TABLE purchased TYPE RELATION IN customer OUT product');
+      // in/out fields are not explicitly defined when using TYPE RELATION
+      expect(stdout).not.toContain('DEFINE FIELD in ON TABLE purchased');
+      expect(stdout).not.toContain('DEFINE FIELD out ON TABLE purchased');
+      // Custom fields are still defined
       expect(stdout).toContain('DEFINE FIELD quantity');
       expect(stdout).toContain('DEFINE FIELD unitPrice');
       expect(stdout).toContain('DEFINE FIELD totalPrice');

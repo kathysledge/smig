@@ -183,7 +183,7 @@ program
       'Features: Vector indexes (HNSW/MTREE), ALTER/RENAME support, ACCESS/JWT auth,\n' +
       'bidirectional migrations, rename tracking via .was(), and more.',
   )
-  .version('1.0.0-beta.1')
+  .version('1.0.0-beta.2')
   .configureHelp({
     showGlobalOptions: true,
   });
@@ -552,8 +552,10 @@ program
 // Init command
 program
   .command('init')
-  .description('Initialize a new schema file')
-  .option('-o, --output <path>', 'Output file path', './schema.ts')
+  .description('Initialize a new schema and config file')
+  .option('-o, --output <path>', 'Schema file path', './schema.ts')
+  .option('-c, --config <path>', 'Config file path', './smig.config.ts')
+  .option('--no-config', 'Skip creating config file')
   .option('--debug', 'Enable debug logging to file')
   .action(async (options) => {
     // Initialize debug logger if debug flag is set
@@ -562,18 +564,21 @@ program
       setDebugLogger(debugLogger);
     }
 
-    const spinner = ora('Creating schema file...').start();
+    const spinner = ora('Creating project files...').start();
 
     try {
       const fs = await import('fs-extra');
-      const outputPath = path.resolve(options.output);
+      const schemaPath = path.resolve(options.output);
+      // options.config is false when --no-config is used, otherwise it's the path string
+      const createConfig = options.config !== false;
+      const configPath = createConfig ? path.resolve(options.config) : null;
 
-      // Check if file already exists
-      if (await fs.pathExists(outputPath)) {
+      // Check if schema file already exists
+      if (await fs.pathExists(schemaPath)) {
         spinner.stop();
 
         const overwrite = await clack.confirm({
-          message: `File '${outputPath}' already exists. Do you want to overwrite it?`,
+          message: `File '${schemaPath}' already exists. Do you want to overwrite it?`,
           initialValue: false,
         });
 
@@ -582,7 +587,28 @@ program
           process.exit(0);
         }
 
-        spinner.start('Creating schema file...');
+        spinner.start('Creating project files...');
+      }
+
+      // Track whether to create config (may change based on user response)
+      let shouldCreateConfig = createConfig;
+
+      // Check if config file already exists (only if we're creating one)
+      if (createConfig && configPath && (await fs.pathExists(configPath))) {
+        spinner.stop();
+
+        const overwriteConfig = await clack.confirm({
+          message: `File '${configPath}' already exists. Do you want to overwrite it?`,
+          initialValue: false,
+        });
+
+        if (clack.isCancel(overwriteConfig) || !overwriteConfig) {
+          // Just skip config creation, continue with schema
+          spinner.start('Creating schema file...');
+          shouldCreateConfig = false;
+        } else {
+          spinner.start('Creating project files...');
+        }
       }
 
       const template = `import {
@@ -761,16 +787,69 @@ const fullSchema = composeSchema({
 export default fullSchema;
 `;
 
-      await writeFile(outputPath, template, 'utf-8');
+      await writeFile(schemaPath, template, 'utf-8');
 
-      spinner.succeed(chalk.green(`Schema file created: ${outputPath}`));
+      // Create config file if not disabled
+      if (shouldCreateConfig && configPath) {
+        const configTemplate = `/**
+ * smig Configuration File
+ *
+ * This file configures your database connection and schema location.
+ * Environment variables can override these values.
+ *
+ * Environment variables:
+ * - SURREAL_URL, SURREAL_NAMESPACE, SURREAL_DATABASE
+ * - SURREAL_USERNAME, SURREAL_PASSWORD
+ */
+export default {
+  // Path to your schema file
+  schema: './schema.ts',
+
+  // SurrealDB connection settings
+  url: 'ws://localhost:8000',
+  namespace: 'test',
+  database: 'test',
+  username: 'root',
+  password: 'root',
+
+  // Environment-specific overrides (optional)
+  // Use with: bun smig migrate --env production
+  // environments: {
+  //   production: {
+  //     url: 'wss://your-server.com',
+  //     namespace: 'production',
+  //     database: 'myapp',
+  //     username: process.env.SURREAL_USERNAME,
+  //     password: process.env.SURREAL_PASSWORD,
+  //   },
+  // },
+};
+`;
+
+        await writeFile(configPath, configTemplate, 'utf-8');
+      }
+
+      if (shouldCreateConfig && configPath) {
+        spinner.succeed(chalk.green('Project files created'));
+        console.log(chalk.blue(`\n📄 Schema: ${schemaPath}`));
+        console.log(chalk.blue(`⚙️  Config: ${configPath}`));
+      } else {
+        spinner.succeed(chalk.green(`Schema file created: ${schemaPath}`));
+      }
+
       console.log(chalk.blue('\n📝 Next steps:'));
       console.log('1. Edit the schema file to define your models');
-      console.log('2. Run "bun smig migrate" to apply to database');
-      console.log('3. Run "bun smig status" to check migration status');
+      if (shouldCreateConfig) {
+        console.log('2. Update smig.config.ts with your database credentials');
+        console.log('3. Run "bun smig migrate" to apply to database');
+        console.log('4. Run "bun smig status" to check migration status');
+      } else {
+        console.log('2. Run "bun smig migrate" to apply to database');
+        console.log('3. Run "bun smig status" to check migration status');
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      spinner.fail(chalk.red(`Failed to create schema file: ${errorMessage}`));
+      spinner.fail(chalk.red(`Failed to create project files: ${errorMessage}`));
       process.exit(1);
     }
   });

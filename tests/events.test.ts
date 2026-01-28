@@ -42,9 +42,7 @@ describe('Events System', () => {
       const complexEvent = event('email_verification')
         .onUpdate()
         .when('$value.email != $before.email AND $value.emailVerified = true')
-        .then(
-          'SET emailVerifiedAt = time::now(), emailChangeCount = $before.emailChangeCount + 1',
-        );
+        .then('SET emailVerifiedAt = time::now(), emailChangeCount = $before.emailChangeCount + 1');
 
       const built = complexEvent.build();
 
@@ -91,9 +89,7 @@ describe('Events System', () => {
 
   describe('Event Generation', () => {
     it('should generate correct SurrealQL for basic events', () => {
-      const createEvent = event('set_creation_time')
-        .onCreate()
-        .then('SET createdAt = time::now()');
+      const createEvent = event('set_creation_time').onCreate().then('SET createdAt = time::now()');
 
       const built = createEvent.build();
 
@@ -205,9 +201,7 @@ describe('Events System', () => {
       const eventBuilder = event('test_event').onCreate();
 
       expect(() => eventBuilder.then('')).toThrow('THEN clause is required and cannot be empty');
-      expect(() => eventBuilder.then('   ')).toThrow(
-        'THEN clause is required and cannot be empty',
-      );
+      expect(() => eventBuilder.then('   ')).toThrow('THEN clause is required and cannot be empty');
     });
 
     it('should filter out empty comments', () => {

@@ -6,7 +6,7 @@ import { cleanupTestFiles, TEST_DATABASES } from './setup';
 
 describe('Configuration Integration Tests', () => {
   const TEST_CONFIG_PATH_TS = path.join(process.cwd(), 'smig.config.ts');
-  const TEST_CONFIG_PATH_JS = path.join(process.cwd(), 'smig.config.js');
+  const _TEST_CONFIG_PATH_JS = path.join(process.cwd(), 'smig.config.js');
   const TEST_ENV_PATH = path.join(process.cwd(), '.env.test.integration');
   const TEST_SCHEMA_PATH = path.join(process.cwd(), 'schema.ts');
 

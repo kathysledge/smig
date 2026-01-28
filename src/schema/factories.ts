@@ -20,6 +20,7 @@ import {
 } from './entities';
 // Field factories
 import {
+  type GeometryType,
   SurrealQLAny,
   SurrealQLArray,
   SurrealQLBool,
@@ -95,8 +96,10 @@ export const object = () => new SurrealQLObject();
 
 /**
  * Creates a geometry field.
+ *
+ * @param geometryType - Optional specific geometry type (point, line, polygon, etc.)
  */
-export const geometry = () => new SurrealQLGeometry();
+export const geometry = (geometryType?: GeometryType) => new SurrealQLGeometry(geometryType);
 
 /**
  * Creates a bytes field for binary data.

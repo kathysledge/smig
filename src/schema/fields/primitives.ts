@@ -204,27 +204,46 @@ export class SurrealQLObject extends SurrealQLFieldBase {
 }
 
 /**
+ * Valid geometry subtypes supported by SurrealDB.
+ */
+export type GeometryType =
+  | 'point'
+  | 'line'
+  | 'polygon'
+  | 'multipoint'
+  | 'multiline'
+  | 'multipolygon'
+  | 'collection';
+
+/**
  * Geometry field type builder for SurrealDB.
  *
  * Creates geometry fields for storing spatial data, coordinates, and geographic
- * information. Supports GeoJSON format and spatial operations.
+ * information. Supports GeoJSON format and spatial operations. Can specify
+ * a specific geometry subtype for type safety.
  *
  * @example
  * ```typescript
- * // Location coordinates
- * const location = option('geometry');
+ * // Generic geometry field (any geometry type)
+ * const location = geometry();
  *
- * // Required geographic point
- * const coordinates = geometry().required();
+ * // Specific point geometry
+ * const coordinates = geometry('point').required();
  *
- * // Area boundaries
- * const boundary = geometry().comment('Geographic boundary');
+ * // Polygon for boundaries
+ * const boundary = geometry('polygon').comment('Geographic boundary');
+ *
+ * // Line for routes/paths
+ * const route = geometry('line');
+ *
+ * // Multi-point for multiple locations
+ * const waypoints = geometry('multipoint');
  * ```
  */
 export class SurrealQLGeometry extends SurrealQLFieldBase {
-  constructor() {
+  constructor(geometryType?: GeometryType) {
     super();
-    this.field.type = 'geometry';
+    this.field.type = geometryType ? `geometry<${geometryType}>` : 'geometry';
   }
 }
 

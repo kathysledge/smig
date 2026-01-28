@@ -156,9 +156,7 @@ describe('Concise Schema System', () => {
           email: index(['email']).unique(),
         },
         events: {
-          updateTimestamp: event('update_timestamp')
-            .onUpdate()
-            .then('SET updatedAt = time::now()'),
+          updateTimestamp: event('update_timestamp').onUpdate().then('SET updatedAt = time::now()'),
         },
       });
 

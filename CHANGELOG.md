@@ -6,6 +6,56 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ---
 
+## [1.0.0-beta.2] - 2026-01-28
+
+### 💥 Breaking changes
+
+- **Event method renamed**: `.thenDo()` is now `.then()` for cleaner syntax
+
+  ```typescript
+  // Before
+  event('on_update').onUpdate().thenDo('SET updatedAt = time::now()')
+
+  // After
+  event('on_update').onUpdate().then('SET updatedAt = time::now()')
+  ```
+
+### ✨ New features
+
+- **Typed geometry fields**: Specify exact geometry types for type safety
+
+  ```typescript
+  location: geometry('point'),      // geometry<point>
+  boundary: geometry('polygon'),    // geometry<polygon>
+  route: geometry('line'),          // geometry<line>
+  ```
+
+- **`init` now creates config file**: Running `bun smig init` creates both `schema.ts` and `smig.config.ts` with default credentials
+
+  ```zsh
+  bun smig init              # Creates schema.ts + smig.config.ts
+  bun smig init --no-config  # Creates schema.ts only
+  ```
+
+### 🐛 Bug fixes
+
+- **Relations now generate `TYPE RELATION`**: Fixed relation tables not including `TYPE RELATION IN ... OUT ...` in generated SQL. Relations now correctly use SurrealDB's native relation syntax with automatic `in`/`out` field creation.
+
+- **SurrealDB v3 beta2 compatibility**: Fixed schema comparison failures caused by backticks around function namespaces in default values (e.g., `` `rand`::uuid::v7() ``)
+
+### 🔧 Improvements
+
+- Config files now default to `.ts` (with `.js` fallback)
+- TypeScript schema/config files load via `jiti` without build step
+- Added `fsCache: false` to prevent stale config imports
+
+### 📖 Documentation
+
+- Added geometry type specifiers table to field reference
+- Updated `init` command documentation
+
+---
+
 ## [1.0.0-beta.1] - 2025-12-20
 
 This release consolidates all alpha features into a production-ready beta. Major highlights include native TypeScript support, intelligent ALTER statement generation, and comprehensive SurrealDB 3.x entity support.
