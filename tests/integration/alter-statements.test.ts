@@ -16,7 +16,7 @@ const execAsync = promisify(exec);
 
 describe('ALTER Statement Integration Tests', () => {
   const CLI_PATH = path.join(process.cwd(), 'dist', 'cli.js');
-  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.js');
+  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.ts');
   const FIXTURES_DIR = path.join(process.cwd(), 'tests', 'integration', 'fixtures');
 
   beforeAll(async () => {
@@ -31,7 +31,7 @@ describe('ALTER Statement Integration Tests', () => {
   beforeEach(async () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
-      'smig.config.js',
+      'smig.config.ts',
       'tests/integration/fixtures/alter-*.ts',
     ]);
   });
@@ -39,7 +39,7 @@ describe('ALTER Statement Integration Tests', () => {
   afterEach(async () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
-      'smig.config.js',
+      'smig.config.ts',
       'tests/integration/fixtures/alter-*.ts',
     ]);
   });
@@ -73,7 +73,7 @@ export default {
       const v1 = createSchema(
         'default-v1',
         `
-import { defineSchema, composeSchema, int } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, int } from 'smig';
 
 export default composeSchema({
   models: {
@@ -98,7 +98,7 @@ export default composeSchema({
       const v2 = createSchema(
         'default-v2',
         `
-import { defineSchema, composeSchema, int } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, int } from 'smig';
 
 export default composeSchema({
   models: {
@@ -128,7 +128,7 @@ export default composeSchema({
       const v1 = createSchema(
         'assert-v1',
         `
-import { defineSchema, composeSchema, int } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, int } from 'smig';
 
 export default composeSchema({
   models: {
@@ -151,7 +151,7 @@ export default composeSchema({
       const v2 = createSchema(
         'assert-v2',
         `
-import { defineSchema, composeSchema, int } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, int } from 'smig';
 
 export default composeSchema({
   models: {
@@ -179,7 +179,7 @@ export default composeSchema({
       const v1 = createSchema(
         'readonly-v1',
         `
-import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string } from 'smig';
 
 export default composeSchema({
   models: {
@@ -202,7 +202,7 @@ export default composeSchema({
       const v2 = createSchema(
         'readonly-v2',
         `
-import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string } from 'smig';
 
 export default composeSchema({
   models: {
@@ -230,7 +230,7 @@ export default composeSchema({
       const v1 = createSchema(
         'multiple-v1',
         `
-import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string } from 'smig';
 
 export default composeSchema({
   models: {
@@ -253,7 +253,7 @@ export default composeSchema({
       const v2 = createSchema(
         'multiple-v2',
         `
-import { defineSchema, composeSchema, int } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, int } from 'smig';
 
 export default composeSchema({
   models: {
@@ -283,7 +283,7 @@ export default composeSchema({
       const v1 = createSchema(
         'param-v1',
         `
-import { composeSchema, param } from '../../../dist/schema/concise-schema.js';
+import { composeSchema, param } from 'smig';
 
 export default composeSchema({
   models: {},
@@ -302,7 +302,7 @@ export default composeSchema({
       const v2 = createSchema(
         'param-v2',
         `
-import { composeSchema, param } from '../../../dist/schema/concise-schema.js';
+import { composeSchema, param } from 'smig';
 
 export default composeSchema({
   models: {},

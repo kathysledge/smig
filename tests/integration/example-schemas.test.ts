@@ -22,7 +22,7 @@ const execAsync = promisify(exec);
 
 describe('Example Schema Integration Tests', () => {
   const CLI_PATH = path.join(process.cwd(), 'dist', 'cli.js');
-  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.js');
+  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.ts');
   // Use relative paths for schema configs since validateConfig joins with cwd
   const EXAMPLES_REL_DIR = './examples';
 
@@ -38,13 +38,13 @@ describe('Example Schema Integration Tests', () => {
 
   beforeEach(async () => {
     // Clean up any existing test files
-    cleanupTestFiles(['smig-debug-*.txt', 'smig.config.js']);
+    cleanupTestFiles(['smig-debug-*.txt', 'smig.config.ts']);
     createdDatabases = [];
   });
 
   afterEach(async () => {
     // Clean up test config and debug files
-    cleanupTestFiles(['smig-debug-*.txt', 'smig.config.js']);
+    cleanupTestFiles(['smig-debug-*.txt', 'smig.config.ts']);
     // Note: Database tables are left in place - each test uses a unique database name
   }, 30000);
 

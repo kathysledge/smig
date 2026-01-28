@@ -85,11 +85,11 @@ const postSchema = defineSchema({
     setPublishedAt: event('set_published_at')
       .onUpdate()
       .when('$before.published = false AND $after.published = true')
-      .thenDo('UPDATE $after.id SET publishedAt = time::now()'),
+      .then('UPDATE $after.id SET publishedAt = time::now()'),
     // Update view count tracking
     updateTimestamp: event('post_updated')
       .onUpdate()
-      .thenDo('UPDATE $after.id SET updatedAt = time::now()'),
+      .then('UPDATE $after.id SET updatedAt = time::now()'),
   },
 });
 // #endregion post

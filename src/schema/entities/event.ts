@@ -37,18 +37,18 @@ interface EventBuilderState {
  * // Update timestamp on record changes
  * const updateTimestamp = event('update_timestamp')
  *   .onUpdate()
- *   .thenDo('SET updatedAt = time::now()');
+ *   .then('SET updatedAt = time::now()');
  *
  * // Cascade delete related records
  * const cascadeDelete = event('cascade_posts')
  *   .onDelete()
- *   .thenDo('DELETE post WHERE authorId = $value.id');
+ *   .then('DELETE post WHERE authorId = $value.id');
  *
  * // Conditional event with when clause
  * const notifyAdmin = event('notify_admin')
  *   .onCreate()
  *   .when('$after.priority = "high"')
- *   .thenDo('http::post("https://api.example.com/notify", $after)');
+ *   .then('http::post("https://api.example.com/notify", $after)');
  * ```
  */
 export class SurrealQLEvent {
@@ -109,7 +109,7 @@ export class SurrealQLEvent {
   }
 
   /** Sets the SurrealQL code to execute when the event triggers */
-  thenDo(action: string) {
+  then(action: string) {
     if (!action || action.trim() === '') {
       throw new Error('THEN clause is required and cannot be empty');
     }
@@ -144,7 +144,7 @@ export class SurrealQLEvent {
     }
 
     if (!this.event.thenStatement) {
-      throw new Error('Event THEN clause is required. Use .thenDo("your SurrealQL here").');
+      throw new Error('Event THEN clause is required. Use .then("your SurrealQL here").');
     }
 
     // biome-ignore lint/suspicious/noExplicitAny: Dynamic event builder requires flexible typing

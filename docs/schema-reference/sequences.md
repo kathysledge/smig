@@ -164,7 +164,7 @@ const accounts = defineSchema({
   events: {
     assignNumber: event('assign_number')
       .onCreate()
-      .thenDo(`{
+      .then(`{
         IF $after.type = 'customer' {
           UPDATE $after SET accountNumber = sequence::nextval('customer_seq');
         } ELSE {

@@ -293,19 +293,19 @@ events: {
   updateTimestamp: event('update_timestamp')
     .onUpdate()
     .when('$event = "UPDATE"')
-    .thenDo('UPDATE $after.id SET updatedAt = time::now()'),
+    .then('UPDATE $after.id SET updatedAt = time::now()'),
   
   // Cascade updates
   updateCounts: event('update_counts')
     .onCreate()
     .when('$event = "CREATE"')
-    .thenDo('UPDATE $after.author SET postCount += 1'),
+    .then('UPDATE $after.author SET postCount += 1'),
   
   // Validation
   validateStatus: event('validate_status')
     .onUpdate()
     .when('$before.status = "published" AND $after.status = "draft"')
-    .thenDo('THROW "Cannot unpublish"'),
+    .then('THROW "Cannot unpublish"'),
 }
 ```
 

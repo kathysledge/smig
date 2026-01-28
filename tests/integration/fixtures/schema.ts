@@ -1,4 +1,4 @@
-import { composeSchema, defineSchema, int, string } from '../../../dist/schema/concise-schema.js';
+import { composeSchema, defineSchema, int, string } from 'smig';
 
 export default composeSchema({
   models: {

@@ -72,7 +72,7 @@ const productSchema = defineSchema({
     lowStockAlert: event('low_stock_alert')
       .onUpdate()
       .when('$before.stock > $after.lowStockThreshold AND $after.stock <= $after.lowStockThreshold')
-      .thenDo(`
+      .then(`
         CREATE notification SET
           type = "low_stock",
           product = $after.id,
@@ -129,7 +129,7 @@ const orderSchema = defineSchema({
     updateInventory: event('update_inventory')
       .onCreate()
       .when('$event = "CREATE"')
-      .thenDo(`{
+      .then(`{
         FOR $item IN $after.items {
           UPDATE product SET stock -= $item.quantity
           WHERE id = $item.product;
@@ -139,7 +139,7 @@ const orderSchema = defineSchema({
     onComplete: event('on_complete')
       .onUpdate()
       .when('$before.status != "completed" AND $after.status = "completed"')
-      .thenDo(`{
+      .then(`{
         UPDATE $after.id SET completedAt = time::now();
         UPDATE $after.customer SET
           orderCount += 1,
@@ -149,7 +149,7 @@ const orderSchema = defineSchema({
     restoreInventory: event('restore_inventory')
       .onUpdate()
       .when('$after.status = "cancelled" AND $before.status != "cancelled"')
-      .thenDo(`{
+      .then(`{
         FOR $item IN $after.items {
           UPDATE product SET stock += $item.quantity
           WHERE id = $item.product;

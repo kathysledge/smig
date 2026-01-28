@@ -72,7 +72,7 @@ export interface SmigEnvironmentConfig extends SmigConfig {
 }
 
 /**
- * Structure of the smig.config.js file.
+ * Structure of the smig.config.ts file (or .js fallback).
  * All fields are optional as they can be provided through other configuration sources.
  */
 export interface SmigConfigFile {
@@ -109,7 +109,7 @@ export interface ConfigOptions {
   namespace?: string;
   /** Database name within the namespace */
   database?: string;
-  /** Environment name from smig.config.js to use for this operation */
+  /** Environment name from smig.config.ts to use for this operation */
   env?: string;
 }
 
@@ -157,7 +157,7 @@ function loadEnvConfig(): Partial<SmigConfig> {
 }
 
 /**
- * Loads configuration from the smig.config.js file and returns both the selected
+ * Loads configuration from the smig.config.ts file (or .js fallback) and returns both the selected
  * configuration and a list of all available environments.
  *
  * This function handles:
@@ -201,10 +201,13 @@ async function loadConfigFileWithEnvironments(
     const { createJiti } = await import('jiti');
     const jiti = createJiti(import.meta.url, {
       interopDefault: true,
+      // Disable filesystem caching to ensure fresh imports in tests
+      fsCache: false,
     });
 
+    // Add cache-busting timestamp to ensure fresh imports
     // biome-ignore lint/suspicious/noExplicitAny: Dynamic config module loading requires flexible typing
-    const configModule = (await jiti.import(configPath)) as any;
+    const configModule = (await jiti.import(`${configPath}?t=${Date.now()}`)) as any;
     const config: SmigConfigFile = configModule.default || configModule;
 
     debugLog('Raw config file content:', config);
@@ -249,11 +252,11 @@ async function loadConfigFileWithEnvironments(
 /**
  * Load complete configuration with proper precedence:
  * 1. CLI options (highest)
- * 2. smig.config.js (can reference .env variables via process.env)
+ * 2. smig.config.ts (can reference .env variables via process.env)
  * 3. .env variables
  * 4. defaults (lowest)
  *
- * Note: .env is loaded before smig.config.js is imported so that
+ * Note: .env is loaded before smig.config.ts is imported so that
  * the config file can access .env variables via process.env
  */
 export async function loadConfig(
@@ -271,7 +274,7 @@ export async function loadConfig(
   const envConfig = loadEnvConfig();
   config = { ...config, ...envConfig };
 
-  // 2. Apply smig.config.js (will have access to .env variables via process.env)
+  // 2. Apply smig.config.ts (will have access to .env variables via process.env)
   const { config: fileConfig, availableEnvironments } = await loadConfigFileWithEnvironments(
     options.env,
   );

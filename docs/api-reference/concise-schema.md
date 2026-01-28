@@ -214,7 +214,7 @@ function event(name: string): EventBuilder;
 | `.onUpdate()` | Trigger on UPDATE |
 | `.onDelete()` | Trigger on DELETE |
 | `.when(condition)` | When condition |
-| `.thenDo(action)` | Action to execute |
+| `.then(action)` | Action to execute |
 
 ## fn()
 

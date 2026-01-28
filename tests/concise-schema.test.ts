@@ -118,7 +118,7 @@ describe('Concise Schema System', () => {
     it('should create basic events', () => {
       const eventObj = event('update_timestamp')
         .onUpdate()
-        .thenDo('SET updatedAt = time::now()')
+        .then('SET updatedAt = time::now()')
         .comment('Update timestamp');
 
       const built = eventObj.build();
@@ -132,7 +132,7 @@ describe('Concise Schema System', () => {
       const eventObj2 = event('mark_edited')
         .onUpdate()
         .when('$value.content != $before.content')
-        .thenDo('SET isEdited = true');
+        .then('SET isEdited = true');
 
       const built = eventObj2.build();
       expect(built.type).toBe('UPDATE');
@@ -158,7 +158,7 @@ describe('Concise Schema System', () => {
         events: {
           updateTimestamp: event('update_timestamp')
             .onUpdate()
-            .thenDo('SET updatedAt = time::now()'),
+            .then('SET updatedAt = time::now()'),
         },
       });
 

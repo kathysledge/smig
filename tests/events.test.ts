@@ -4,7 +4,7 @@ import { commonEvents, event } from '../src/schema/concise-schema';
 describe('Events System', () => {
   describe('Event Builder', () => {
     it('should create basic events', () => {
-      const basicEvent = event('test_event').onCreate().thenDo('SET createdAt = time::now()');
+      const basicEvent = event('test_event').onCreate().then('SET createdAt = time::now()');
 
       const built = basicEvent.build();
 
@@ -16,9 +16,9 @@ describe('Events System', () => {
     });
 
     it('should create events with all trigger types', () => {
-      const createEvent = event('on_create').onCreate().thenDo('SET created = true');
-      const updateEvent = event('on_update').onUpdate().thenDo('SET updated = true');
-      const deleteEvent = event('on_delete').onDelete().thenDo('SET deleted = true');
+      const createEvent = event('on_create').onCreate().then('SET created = true');
+      const updateEvent = event('on_update').onUpdate().then('SET updated = true');
+      const deleteEvent = event('on_delete').onDelete().then('SET deleted = true');
 
       expect(createEvent.build().type).toBe('CREATE');
       expect(updateEvent.build().type).toBe('UPDATE');
@@ -29,7 +29,7 @@ describe('Events System', () => {
       const conditionalEvent = event('status_change')
         .onUpdate()
         .when('$value.status != $before.status')
-        .thenDo('SET statusChangedAt = time::now()');
+        .then('SET statusChangedAt = time::now()');
 
       const built = conditionalEvent.build();
 
@@ -42,7 +42,7 @@ describe('Events System', () => {
       const complexEvent = event('email_verification')
         .onUpdate()
         .when('$value.email != $before.email AND $value.emailVerified = true')
-        .thenDo(
+        .then(
           'SET emailVerifiedAt = time::now(), emailChangeCount = $before.emailChangeCount + 1',
         );
 
@@ -58,7 +58,7 @@ describe('Events System', () => {
       const commentedEvent = event('audit_trail')
         .onUpdate()
         .when('$value.importantField != $before.importantField')
-        .thenDo(
+        .then(
           'CREATE audit:ulid() SET table = "users", recordId = $value.id, oldValue = $before.importantField, newValue = $value.importantField, timestamp = time::now()',
         )
         .comment('Audit trail for important field changes')
@@ -75,7 +75,7 @@ describe('Events System', () => {
       const chainedEvent = event('method_chaining_test')
         .onCreate()
         .when('$value.type = "premium"')
-        .thenDo('SET premiumStartDate = time::now()')
+        .then('SET premiumStartDate = time::now()')
         .comment('Premium user activation')
         .comment('Sets activation timestamp');
 
@@ -93,7 +93,7 @@ describe('Events System', () => {
     it('should generate correct SurrealQL for basic events', () => {
       const createEvent = event('set_creation_time')
         .onCreate()
-        .thenDo('SET createdAt = time::now()');
+        .then('SET createdAt = time::now()');
 
       const built = createEvent.build();
 
@@ -107,7 +107,7 @@ describe('Events System', () => {
       const updateEvent = event('track_email_changes')
         .onUpdate()
         .when('$value.email != $before.email')
-        .thenDo('SET emailChangedAt = time::now(), previousEmail = $before.email');
+        .then('SET emailChangedAt = time::now(), previousEmail = $before.email');
 
       const built = updateEvent.build();
 
@@ -121,7 +121,7 @@ describe('Events System', () => {
     it('should generate correct SurrealQL for delete events', () => {
       const deleteEvent = event('log_deletion')
         .onDelete()
-        .thenDo(
+        .then(
           'CREATE deletion_log:ulid() SET deletedTable = "users", deletedId = $before.id, deletedAt = time::now()',
         );
 
@@ -197,15 +197,15 @@ describe('Events System', () => {
       const eventBuilder = event('incomplete_event').onCreate();
 
       expect(() => eventBuilder.build()).toThrow(
-        'Event THEN clause is required. Use .thenDo("your SurrealQL here").',
+        'Event THEN clause is required. Use .then("your SurrealQL here").',
       );
     });
 
     it('should require non-empty THEN clause', () => {
       const eventBuilder = event('test_event').onCreate();
 
-      expect(() => eventBuilder.thenDo('')).toThrow('THEN clause is required and cannot be empty');
-      expect(() => eventBuilder.thenDo('   ')).toThrow(
+      expect(() => eventBuilder.then('')).toThrow('THEN clause is required and cannot be empty');
+      expect(() => eventBuilder.then('   ')).toThrow(
         'THEN clause is required and cannot be empty',
       );
     });
@@ -213,7 +213,7 @@ describe('Events System', () => {
     it('should filter out empty comments', () => {
       const eventWithComments = event('test_comments')
         .onCreate()
-        .thenDo('SET test = true')
+        .then('SET test = true')
         .comment('')
         .comment('   ')
         .comment('Valid comment')
@@ -227,7 +227,7 @@ describe('Events System', () => {
     it('should trim whitespace from event names and comments', () => {
       const eventWithWhitespace = event('  test_event  ')
         .onCreate()
-        .thenDo('SET test = true')
+        .then('SET test = true')
         .comment('  Comment with spaces  ');
 
       const built = eventWithWhitespace.build();
@@ -239,7 +239,7 @@ describe('Events System', () => {
     it('should return immutable copy from build()', () => {
       const eventBuilder = event('immutable_test')
         .onCreate()
-        .thenDo('SET original = true')
+        .then('SET original = true')
         .comment('Original comment');
 
       const built1 = eventBuilder.build();
@@ -262,7 +262,7 @@ describe('Events System', () => {
       const auditEvent = event('audit_changes')
         .onUpdate()
         .when('$value.sensitiveData != $before.sensitiveData')
-        .thenDo(
+        .then(
           `
           CREATE audit:ulid() SET 
             table = "sensitive_table",
@@ -288,7 +288,7 @@ describe('Events System', () => {
       const notificationEvent = event('send_welcome_email')
         .onCreate()
         .when('$value.emailVerified = true')
-        .thenDo(
+        .then(
           'CREATE notification:ulid() SET type = "welcome_email", userId = $value.id, status = "pending", createdAt = time::now()',
         )
         .comment('Trigger welcome email for verified users');
@@ -305,7 +305,7 @@ describe('Events System', () => {
       const cascadeEvent = event('update_related_records')
         .onUpdate()
         .when('$value.status = "inactive" AND $before.status = "active"')
-        .thenDo('UPDATE user SET accountStatus = "suspended" WHERE company = $value.id')
+        .then('UPDATE user SET accountStatus = "suspended" WHERE company = $value.id')
         .comment('Cascade status changes to related users');
 
       const built = cascadeEvent.build();
@@ -319,7 +319,7 @@ describe('Events System', () => {
     it('should support cleanup events on deletion', () => {
       const cleanupEvent = event('cleanup_user_data')
         .onDelete()
-        .thenDo(
+        .then(
           `
           DELETE user_session WHERE userId = $before.id;
           DELETE user_preferences WHERE userId = $before.id;
@@ -340,7 +340,7 @@ describe('Events System', () => {
       const versioningEvent = event('create_version_history')
         .onUpdate()
         .when('$value.content != $before.content')
-        .thenDo(
+        .then(
           `
           CREATE version_history:ulid() SET 
             documentId = $value.id,
@@ -366,7 +366,7 @@ describe('Events System', () => {
       const userUpdateEvent = event('track_profile_updates')
         .onUpdate()
         .when('$value.profile != $before.profile')
-        .thenDo('SET profileUpdatedAt = time::now()');
+        .then('SET profileUpdatedAt = time::now()');
 
       // Should be able to use this event in a schema definition
       expect(userUpdateEvent.build().name).toBe('track_profile_updates');
@@ -377,7 +377,7 @@ describe('Events System', () => {
       // This tests that events can be used in defineRelation
       const relationEvent = event('track_relationship_changes')
         .onCreate()
-        .thenDo('SET relationshipCreatedAt = time::now()')
+        .then('SET relationshipCreatedAt = time::now()')
         .comment('Track when relationships are established');
 
       expect(relationEvent.build().name).toBe('track_relationship_changes');
@@ -390,7 +390,7 @@ describe('Events System', () => {
       const documentedEvent = event('complex_business_logic')
         .onUpdate()
         .when('$value.status = "approved" AND $before.status = "pending"')
-        .thenDo('SET approvedAt = time::now(), approvedBy = $session.userId')
+        .then('SET approvedAt = time::now(), approvedBy = $session.userId')
         .comment('First comment: Business rule explanation')
         .comment('Second comment: Technical implementation note')
         .comment('Third comment: Compliance requirement');
@@ -406,7 +406,7 @@ describe('Events System', () => {
     it('should handle empty and whitespace comments gracefully', () => {
       const eventWithEmptyComments = event('test_empty_comments')
         .onCreate()
-        .thenDo('SET test = true')
+        .then('SET test = true')
         .comment('')
         .comment('   ')
         .comment('Valid comment')
@@ -426,7 +426,7 @@ describe('Events System', () => {
       const complexEvent = event('complex_sql_operations')
         .onUpdate()
         .when('$value.businessLogic = true')
-        .thenDo(
+        .then(
           `
           LET $calculated = $value.amount * 1.1;
           UPDATE account SET balance = balance + $calculated WHERE id = $value.accountId;
@@ -448,7 +448,7 @@ describe('Events System', () => {
     it('should handle special characters in event names and values', () => {
       const specialCharEvent = event('event_with_special_chars')
         .onCreate()
-        .thenDo(`SET message = "Hello, World! Special chars: @#$%^&*()"`);
+        .then(`SET message = "Hello, World! Special chars: @#$%^&*()"`);
 
       const built = specialCharEvent.build();
 
@@ -466,7 +466,7 @@ describe('Events System', () => {
           $value.field3 != $before.field3
         `.trim(),
         )
-        .thenDo(
+        .then(
           `
           SET changedFields = [
             IF $value.field1 != $before.field1 THEN "field1" END,

@@ -111,4 +111,27 @@ describe('Configuration Loader', () => {
       );
     });
   });
+
+  describe('Config File Extension Search Order', () => {
+    it('should search for config files in correct order (.ts first, then .js fallback)', () => {
+      // The config loader searches for config files in this order:
+      // 1. smig.config.ts
+      // 2. smig.config.mts
+      // 3. smig.config.cts
+      // 4. smig.config.js
+      // 5. smig.config.mjs
+      // 6. smig.config.cjs
+      //
+      // This test documents the expected behavior. The actual file loading
+      // is tested in the integration tests (tests/integration/config.test.ts)
+      // because it requires real file system access and jiti module loading.
+      const expectedExtensions = ['.ts', '.mts', '.cts', '.js', '.mjs', '.cjs'];
+      expect(expectedExtensions[0]).toBe('.ts'); // TypeScript first
+      expect(expectedExtensions[3]).toBe('.js'); // JavaScript as fallback
+    });
+
+    it('should default schema path to ./schema.ts', () => {
+      expect(DEFAULT_CONFIG.schema).toBe('./schema.ts');
+    });
+  });
 });

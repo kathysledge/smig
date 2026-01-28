@@ -9,14 +9,14 @@ const execAsync = promisify(exec);
 
 describe('CLI Integration Tests', () => {
   const CLI_PATH = path.join(process.cwd(), 'dist', 'cli.js');
-  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.js');
+  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.ts');
 
   beforeEach(() => {
     // Clean up any existing test files
     cleanupTestFiles([
       'tests/integration/fixtures/test-*.ts',
       'smig-debug-*.txt',
-      'smig.config.js',
+      'smig.config.ts',
     ]);
   });
 
@@ -25,12 +25,12 @@ describe('CLI Integration Tests', () => {
     cleanupTestFiles([
       'tests/integration/fixtures/test-*.ts',
       'smig-debug-*.txt',
-      'smig.config.js',
+      'smig.config.ts',
     ]);
   });
 
   describe('Configuration System', () => {
-    it('should load configuration from smig.config.js with multiple environments', async () => {
+    it('should load configuration from smig.config.ts with multiple environments', async () => {
       // Create test config file
       const configContent = `
 export default {
@@ -113,7 +113,7 @@ export default {
     it('should generate migration for new table', async () => {
       // Create test schema
       const schemaContent = `
-import { defineSchema, composeSchema, string, int, datetime } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, int, datetime } from 'smig';
 
 export default composeSchema({
   models: {
@@ -156,7 +156,7 @@ export default {
     it('should detect no changes when schema matches database', async () => {
       // Create minimal schema
       const schemaContent = `
-import { composeSchema } from '../../../dist/schema/concise-schema.js';
+import { composeSchema } from 'smig';
 
 export default composeSchema({
   models: {},
@@ -187,7 +187,7 @@ export default {
     it('should apply migration and track it in _migrations table', async () => {
       // Create test schema
       const schemaContent = `
-import { defineSchema, composeSchema, string, datetime } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, datetime } from 'smig';
 
 export default composeSchema({
   models: {
@@ -268,7 +268,7 @@ export default {
       // Create empty schema
       createTestSchema(
         `
-import { composeSchema } from '../../../dist/schema/concise-schema.js';
+import { composeSchema } from 'smig';
 export default composeSchema({ models: {}, relations: {} });
       `,
         'empty-schema.ts',
@@ -298,7 +298,7 @@ export default {
       fs.writeFileSync(TEST_CONFIG_PATH, configContent);
       createTestSchema(
         `
-import { composeSchema } from '../../../dist/schema/concise-schema.js';
+import { composeSchema } from 'smig';
 export default composeSchema({ models: {}, relations: {} });
       `,
         'empty-schema.ts',
@@ -331,7 +331,7 @@ export default composeSchema({ models: {}, relations: {} });
       // Create schema file
       createTestSchema(
         `
-import { composeSchema } from '../../../dist/schema/concise-schema.js';
+import { composeSchema } from 'smig';
 export default composeSchema({ models: {}, relations: {} });
       `,
         'env-schema.ts',
@@ -361,7 +361,7 @@ export default {
 
       createTestSchema(
         `
-import { composeSchema } from '../../../dist/schema/concise-schema.js';
+import { composeSchema } from 'smig';
 export default composeSchema({ models: {}, relations: {} });
       `,
         'debug-schema.ts',

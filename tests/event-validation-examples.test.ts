@@ -20,11 +20,11 @@ describe('Event Validation Examples', () => {
       // Missing THEN clause
       expect(() => {
         event('my_event').onCreate().build();
-      }).toThrow('Event THEN clause is required. Use .thenDo("your SurrealQL here").');
+      }).toThrow('Event THEN clause is required. Use .then("your SurrealQL here").');
 
       // Empty THEN clause
       expect(() => {
-        event('my_event').onCreate().thenDo('');
+        event('my_event').onCreate().then('');
       }).toThrow('THEN clause is required and cannot be empty');
     });
 
@@ -68,7 +68,7 @@ describe('Event Validation Examples', () => {
       ];
 
       validNames.forEach((name) => {
-        expect(() => event(name).onCreate().thenDo('SET test = true')).not.toThrow();
+        expect(() => event(name).onCreate().then('SET test = true')).not.toThrow();
       });
     });
   });
@@ -86,14 +86,14 @@ describe('Event Validation Examples', () => {
         // Invalid event name with special characters
         event('notify-admin@email.com')
           .onCreate()
-          .thenDo('CREATE notification:ulid() SET type = "admin_alert"');
+          .then('CREATE notification:ulid() SET type = "admin_alert"');
       }).toThrow('Must be a valid SurrealDB identifier');
     });
 
     it('should catch empty cleanup action', () => {
       expect(() => {
         // Empty THEN clause in cleanup event
-        event('cleanup_user_data').onDelete().thenDo('   '); // Whitespace-only should fail
+        event('cleanup_user_data').onDelete().then('   '); // Whitespace-only should fail
       }).toThrow('THEN clause is required and cannot be empty');
     });
 
@@ -102,7 +102,7 @@ describe('Event Validation Examples', () => {
       const businessEvent = event('process_payment')
         .onUpdate()
         .when('$value.status = "paid" AND $before.status = "pending"')
-        .thenDo(`
+        .then(`
           UPDATE account SET balance = balance + $value.amount WHERE id = $value.accountId;
           CREATE audit:ulid() SET action = "payment_processed", amount = $value.amount, timestamp = time::now();
           CREATE notification:ulid() SET type = "payment_success", userId = $value.userId, amount = $value.amount
@@ -139,20 +139,20 @@ describe('Event Validation Examples', () => {
 
       // FIXED: Complete event definition
       expect(() => {
-        event('test').onCreate().thenDo('SET created = true').build();
+        event('test').onCreate().then('SET created = true').build();
       }).not.toThrow();
     });
 
     it('should maintain backward compatibility for valid events', () => {
       // Events that were valid before should still work
       const validEvents = [
-        event('user_created').onCreate().thenDo('SET createdAt = time::now()'),
-        event('user_updated').onUpdate().thenDo('SET updatedAt = time::now()'),
-        event('user_deleted').onDelete().thenDo('CREATE audit:ulid() SET deleted = $before'),
+        event('user_created').onCreate().then('SET createdAt = time::now()'),
+        event('user_updated').onUpdate().then('SET updatedAt = time::now()'),
+        event('user_deleted').onDelete().then('CREATE audit:ulid() SET deleted = $before'),
         event('conditional_update')
           .onUpdate()
           .when('$value.status != $before.status')
-          .thenDo('SET statusChangedAt = time::now()'),
+          .then('SET statusChangedAt = time::now()'),
       ];
 
       validEvents.forEach((eventBuilder) => {
@@ -174,7 +174,7 @@ describe('Event Validation Examples', () => {
       try {
         event('incomplete').onCreate().build();
       } catch (error) {
-        expect(error.message).toMatch(/Use \.thenDo\("your SurrealQL here"\)/);
+        expect(error.message).toMatch(/Use \.then\("your SurrealQL here"\)/);
       }
 
       try {
@@ -185,7 +185,7 @@ describe('Event Validation Examples', () => {
       }
 
       try {
-        event('test').onCreate().thenDo('');
+        event('test').onCreate().then('');
       } catch (error) {
         expect(error.message).toMatch(/THEN clause is required and cannot be empty/);
       }

@@ -31,7 +31,7 @@
  *
  * Configuration is loaded with the following precedence (highest to lowest):
  * 1. Command line arguments
- * 2. smig.config.js file
+ * 2. smig.config.ts file (or .js fallback)
  * 3. Environment variables (.env file)
  * 4. Built-in defaults
  *
@@ -196,7 +196,7 @@ program
   .option('-U, --username <username>', 'SurrealDB username (overrides config and env)')
   .option('-p, --password <password>', 'SurrealDB password (overrides config and env)')
   .option('-s, --schema <path>', 'Path to schema file (overrides config and env)')
-  .option('--env <environment>', 'Environment name from smig.config.js');
+  .option('--env <environment>', 'Environment name from smig.config.ts');
 
 // Migrate command
 program
@@ -872,7 +872,7 @@ program
 
       console.log(chalk.bold('\n📋 Configuration Sources (in order of precedence):'));
       console.log('  1. Command line arguments');
-      console.log('  2. smig.config.js');
+      console.log('  2. smig.config.ts (or .js fallback)');
       console.log('  3. .env file');
       console.log('  4. Built-in defaults');
     } catch (error) {
@@ -901,7 +901,7 @@ program
 
     try {
       // Get schema path from options (no database connection needed)
-      const schemaPath = path.resolve(globalOpts.schema || './schema.js');
+      const schemaPath = path.resolve(globalOpts.schema || './schema.ts');
 
       spinner.text = 'Loading schema file...';
       const schema = await loadSchemaFromFile(schemaPath);

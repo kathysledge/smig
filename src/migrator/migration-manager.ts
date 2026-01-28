@@ -2534,6 +2534,10 @@ export class MigrationManager {
         ) {
           normalized = normalized.slice(1, -1);
         }
+        // Remove backticks around function namespaces (SurrealDB v3 beta2+)
+        // e.g., `rand`::uuid::v7() -> rand::uuid::v7()
+        // e.g., `sequence`::nextval('order_number') -> sequence::nextval('order_number')
+        normalized = normalized.replace(/`([a-z_][a-z0-9_]*)`(::)/gi, '$1$2');
         // Normalize internal quotes to single quotes for comparison
         // e.g., sequence::nextval("order_number") -> sequence::nextval('order_number')
         normalized = normalized.replace(/"([^"\\]*)"/g, "'$1'");
