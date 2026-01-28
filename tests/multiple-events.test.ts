@@ -22,7 +22,7 @@ describe('Multiple Statements in Events', () => {
     it('should accept multiple statements wrapped in curly braces', () => {
       const multiStatementEvent = event('multi_action')
         .onCreate()
-        .thenDo(`{
+        .then(`{
           UPDATE $after.author SET postCount += 1;
           CREATE notification SET recipient = $after.author, message = "Post created";
         }`);
@@ -38,7 +38,7 @@ describe('Multiple Statements in Events', () => {
     it('should accept multiple statements with FOR loops', () => {
       const loopEvent = event('notify_followers')
         .onCreate()
-        .thenDo(`{
+        .then(`{
           FOR $follower IN (SELECT VALUE in FROM follow WHERE out = $after.author) {
             CREATE notification SET recipient = $follower, message = "New post!";
           };
@@ -56,7 +56,7 @@ describe('Multiple Statements in Events', () => {
       const conditionalEvent = event('conditional_actions')
         .onUpdate()
         .when('$before.status != $after.status')
-        .thenDo(`{
+        .then(`{
           IF $after.status = "published" {
             UPDATE $after.author SET publishedCount += 1;
           };
@@ -74,7 +74,7 @@ describe('Multiple Statements in Events', () => {
     it('should accept multiple LET statements followed by actions', () => {
       const letEvent = event('complex_calculation')
         .onCreate()
-        .thenDo(`{
+        .then(`{
           LET $score = array::len($after.tags) * 10;
           LET $multiplier = IF $after.isPremium { 2 } ELSE { 1 };
           UPDATE $after.id SET calculatedScore = $score * $multiplier;
@@ -104,12 +104,12 @@ describe('Multiple Statements in Events', () => {
           updateViews: event('increment_views')
             .onUpdate()
             .when('$before.viewCount != $after.viewCount')
-            .thenDo('UPDATE $after.author SET totalViews += 1'),
+            .then('UPDATE $after.author SET totalViews += 1'),
 
           // Multiple statement event
           onCreate: event('post_created_actions')
             .onCreate()
-            .thenDo(`{
+            .then(`{
               UPDATE $after.author SET postCount += 1;
               CREATE notification SET
                 recipient = $after.author,
@@ -138,7 +138,7 @@ describe('Multiple Statements in Events', () => {
     it('should preserve semicolons between statements', () => {
       const eventWithSemicolons = event('semicolon_test')
         .onCreate()
-        .thenDo(`{
+        .then(`{
           UPDATE table1 SET field = value;
           UPDATE table2 SET field = value;
           UPDATE table3 SET field = value;
@@ -155,7 +155,7 @@ describe('Multiple Statements in Events', () => {
   describe('Event Definition - Edge Cases', () => {
     it('should handle empty braces gracefully', () => {
       // This should technically be invalid but let's verify behavior
-      const emptyBraces = event('empty_action').onCreate().thenDo('{ }');
+      const emptyBraces = event('empty_action').onCreate().then('{ }');
 
       const built = emptyBraces.build();
       expect(built.thenStatement).toBe('{ }');
@@ -164,7 +164,7 @@ describe('Multiple Statements in Events', () => {
     it('should handle nested braces in IF statements', () => {
       const nestedBraces = event('nested_braces')
         .onCreate()
-        .thenDo(`{
+        .then(`{
           IF $after.type = "premium" {
             IF $after.verified {
               UPDATE $after.id SET tier = "gold";
@@ -183,7 +183,7 @@ describe('Multiple Statements in Events', () => {
     it('should handle statements with string literals containing semicolons', () => {
       const stringLiteral = event('string_semicolon')
         .onCreate()
-        .thenDo(`{
+        .then(`{
           CREATE log SET message = "Action completed; next step pending";
           UPDATE counter SET value += 1;
         }`);
@@ -195,7 +195,7 @@ describe('Multiple Statements in Events', () => {
     it('should handle onDelete events with multiple cleanup statements', () => {
       const cleanupEvent = event('cleanup_all')
         .onDelete()
-        .thenDo(`{
+        .then(`{
           DELETE notification WHERE recipient = $before.id;
           DELETE follow WHERE in = $before.id OR out = $before.id;
           DELETE like WHERE in = $before.id;
@@ -226,7 +226,7 @@ describe('Multiple Statements in Events', () => {
           onVerify: event('user_verified')
             .onUpdate()
             .when('$before.isVerified = false AND $after.isVerified = true')
-            .thenDo(`{
+            .then(`{
               CREATE notification SET
                 recipient = $after.id,
                 message = "Your account has been verified!",
@@ -246,7 +246,7 @@ describe('Multiple Statements in Events', () => {
         events: {
           onFollow: event('follow_actions')
             .onCreate()
-            .thenDo(`{
+            .then(`{
               UPDATE $after.following SET followerCount += 1;
               CREATE notification SET
                 recipient = $after.following,
@@ -255,7 +255,7 @@ describe('Multiple Statements in Events', () => {
             }`),
           onUnfollow: event('unfollow_actions')
             .onDelete()
-            .thenDo(`{
+            .then(`{
               UPDATE $before.following SET followerCount -= 1;
             }`),
         },

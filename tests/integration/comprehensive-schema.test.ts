@@ -27,7 +27,7 @@ const execAsync = promisify(exec);
 
 describe('Comprehensive Schema Integration Tests', () => {
   const CLI_PATH = path.join(process.cwd(), 'dist', 'cli.js');
-  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.js');
+  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.ts');
   const FIXTURES_DIR = path.join(process.cwd(), 'tests', 'integration', 'fixtures');
 
   beforeAll(async () => {
@@ -45,7 +45,7 @@ describe('Comprehensive Schema Integration Tests', () => {
   beforeEach(async () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
-      'smig.config.js',
+      'smig.config.ts',
       'tests/integration/fixtures/comprehensive-schema-*.ts',
     ]);
   });
@@ -53,7 +53,7 @@ describe('Comprehensive Schema Integration Tests', () => {
   afterEach(async () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
-      'smig.config.js',
+      'smig.config.ts',
       'tests/integration/fixtures/comprehensive-schema-*.ts',
     ]);
   });
@@ -89,7 +89,7 @@ import {
   scope,
   string,
   uuid,
-} from '../../../dist/schema/concise-schema.js';
+} from 'smig';
 
 // ============================================================================
 // COMPREHENSIVE TEST SCHEMA - ${suffix}
@@ -207,18 +207,18 @@ const comprehensiveUser = defineSchema({
     // onCreate event
     welcomeEmail: event('send_welcome')
       .onCreate()
-      .thenDo('CREATE notification SET recipient = $after.id, message = "Welcome!", type = "welcome"'),
+      .then('CREATE notification SET recipient = $after.id, message = "Welcome!", type = "welcome"'),
 
     // onUpdate event with condition
     profileUpdate: event('track_profile_update')
       .onUpdate()
       .when('$before.displayName != $after.displayName')
-      .thenDo('CREATE audit_log SET user = $after.id, action = "profile_update", time = time::now()'),
+      .then('CREATE audit_log SET user = $after.id, action = "profile_update", time = time::now()'),
 
     // onDelete event
     cleanup: event('cleanup_user_data')
       .onDelete()
-      .thenDo('DELETE notification WHERE recipient = $before.id'),
+      .then('DELETE notification WHERE recipient = $before.id'),
   },
 });
 
@@ -269,12 +269,12 @@ const comprehensivePost = defineSchema({
   events: {
     updateTimestamp: event('post_updated')
       .onUpdate()
-      .thenDo('UPDATE $after.id SET updatedAt = time::now()'),
+      .then('UPDATE $after.id SET updatedAt = time::now()'),
 
     // Multiple statements event (tests curly brace handling)
     multiAction: event('multi_action_event')
       .onCreate()
-      .thenDo(\`{
+      .then(\`{
         UPDATE $after.author SET postCount += 1;
         CREATE notification SET recipient = $after.author, message = "Post created", type = "info";
       }\`),
@@ -390,7 +390,7 @@ export default composeSchema({
 });
 `;
 
-    const filename = `comprehensive-schema-${suffix}.js`;
+    const filename = `comprehensive-schema-${suffix}.ts`;
     const schemaPath = path.join(FIXTURES_DIR, filename);
     fs.writeFileSync(schemaPath, schemaContent);
     return `./tests/integration/fixtures/${filename}`;
@@ -427,7 +427,7 @@ import {
   scope,
   string,
   uuid,
-} from '../../../dist/schema/concise-schema.js';
+} from 'smig';
 
 // ============================================================================
 // MODIFIED COMPREHENSIVE TEST SCHEMA - v2
@@ -520,12 +520,12 @@ const comprehensiveUser = defineSchema({
   events: {
     welcomeEmail: event('send_welcome')
       .onCreate()
-      .thenDo('CREATE notification SET recipient = $after.id, message = "Welcome!", type = "welcome"'),
+      .then('CREATE notification SET recipient = $after.id, message = "Welcome!", type = "welcome"'),
 
     profileUpdate: event('track_profile_update')
       .onUpdate()
       .when('$before.displayName != $after.displayName')
-      .thenDo('CREATE audit_log SET user = $after.id, action = "profile_update", time = time::now()'),
+      .then('CREATE audit_log SET user = $after.id, action = "profile_update", time = time::now()'),
 
     // REMOVED: cleanup event
   },
@@ -569,11 +569,11 @@ const comprehensivePost = defineSchema({
   events: {
     updateTimestamp: event('post_updated')
       .onUpdate()
-      .thenDo('UPDATE $after.id SET updatedAt = time::now()'),
+      .then('UPDATE $after.id SET updatedAt = time::now()'),
 
     multiAction: event('multi_action_event')
       .onCreate()
-      .thenDo(\`{
+      .then(\`{
         UPDATE $after.author SET postCount += 1;
         CREATE notification SET recipient = $after.author, message = "Post created", type = "info";
       }\`),
@@ -680,7 +680,7 @@ export default composeSchema({
 });
 `;
 
-    const filename = 'comprehensive-schema-v2.js';
+    const filename = 'comprehensive-schema-v2.ts';
     const schemaPath = path.join(FIXTURES_DIR, filename);
     fs.writeFileSync(schemaPath, schemaContent);
     return `./tests/integration/fixtures/${filename}`;

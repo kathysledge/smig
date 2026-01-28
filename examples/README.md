@@ -201,13 +201,13 @@ events: {
   // Automatic timestamp
   updateTimestamp: event('post_updated')
     .onUpdate()
-    .thenDo('UPDATE $after.id SET updatedAt = time::now()'),
+    .then('UPDATE $after.id SET updatedAt = time::now()'),
 
   // Conditional trigger
   setPublishedAt: event('set_published')
     .onUpdate()
     .when('$before.published = false AND $after.published = true')
-    .thenDo('UPDATE $after.id SET publishedAt = time::now()'),
+    .then('UPDATE $after.id SET publishedAt = time::now()'),
 }
 ```
 

@@ -15,7 +15,7 @@ const execAsync = promisify(exec);
 
 describe('Migration Workflow Integration Tests', () => {
   const CLI_PATH = path.join(process.cwd(), 'dist', 'cli.js');
-  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.js');
+  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.ts');
   const FIXTURES_DIR = path.join(process.cwd(), 'tests', 'integration', 'fixtures');
 
   beforeAll(async () => {
@@ -30,7 +30,7 @@ describe('Migration Workflow Integration Tests', () => {
   beforeEach(async () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
-      'smig.config.js',
+      'smig.config.ts',
       'tests/integration/fixtures/workflow-*.ts',
     ]);
   });
@@ -38,7 +38,7 @@ describe('Migration Workflow Integration Tests', () => {
   afterEach(async () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
-      'smig.config.js',
+      'smig.config.ts',
       'tests/integration/fixtures/workflow-*.ts',
     ]);
   });
@@ -72,7 +72,7 @@ export default {
     const v1 = createSchema(
       'lifecycle-v1',
       `
-import { defineSchema, composeSchema, string, int, datetime, index } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, int, datetime, index } from 'smig';
 
 export default composeSchema({
   models: {
@@ -130,7 +130,7 @@ export default composeSchema({
     const v2 = createSchema(
       'lifecycle-v2',
       `
-import { defineSchema, composeSchema, string, int, bool, datetime, index, record } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, int, bool, datetime, index, record } from 'smig';
 
 export default composeSchema({
   models: {
@@ -206,7 +206,7 @@ export default composeSchema({
     const v3 = createSchema(
       'lifecycle-v3',
       `
-import { defineSchema, composeSchema, string, int, bool, datetime, index, record, float } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, int, bool, datetime, index, record, float } from 'smig';
 
 export default composeSchema({
   models: {
@@ -293,7 +293,7 @@ export default composeSchema({
     const schema = createSchema(
       'rollback',
       `
-import { defineSchema, composeSchema, string, int } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, int } from 'smig';
 
 export default composeSchema({
   models: {
@@ -347,7 +347,7 @@ export default composeSchema({
     const v1 = createSchema(
       'removal-v1',
       `
-import { defineSchema, composeSchema, string, int, bool, index } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, int, bool, index } from 'smig';
 
 export default composeSchema({
   models: {
@@ -377,7 +377,7 @@ export default composeSchema({
     const v2 = createSchema(
       'removal-v2',
       `
-import { defineSchema, composeSchema, string, index } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, index } from 'smig';
 
 export default composeSchema({
   models: {
@@ -418,7 +418,7 @@ export default composeSchema({
     const v1 = createSchema(
       'empty-v1',
       `
-import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string } from 'smig';
 
 export default composeSchema({
   models: {
@@ -441,7 +441,7 @@ export default composeSchema({
     const v2 = createSchema(
       'empty-v2',
       `
-import { composeSchema } from '../../../dist/schema/concise-schema.js';
+import { composeSchema } from 'smig';
 
 export default composeSchema({
   models: {},

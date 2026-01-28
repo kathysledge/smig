@@ -21,7 +21,7 @@ const execAsync = promisify(exec);
 
 describe('Field Normalization Integration Tests', () => {
   const CLI_PATH = path.join(process.cwd(), 'dist', 'cli.js');
-  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.js');
+  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.ts');
   const FIXTURES_DIR = path.join(process.cwd(), 'tests', 'integration', 'fixtures');
 
   beforeAll(async () => {
@@ -36,7 +36,7 @@ describe('Field Normalization Integration Tests', () => {
   beforeEach(async () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
-      'smig.config.js',
+      'smig.config.ts',
       'tests/integration/fixtures/field-norm-*.ts',
     ]);
   });
@@ -44,7 +44,7 @@ describe('Field Normalization Integration Tests', () => {
   afterEach(async () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
-      'smig.config.js',
+      'smig.config.ts',
       'tests/integration/fixtures/field-norm-*.ts',
     ]);
   });
@@ -77,7 +77,7 @@ export default {
       const schema = createSchema(
         'primitives',
         `
-import { defineSchema, composeSchema, string, int, float, bool, datetime, decimal, uuid, duration, object, geometry, bytes, number, literal } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, int, float, bool, datetime, decimal, uuid, duration, object, geometry, bytes, number, literal } from 'smig';
 
 export default composeSchema({
   models: {
@@ -162,7 +162,7 @@ export default composeSchema({
       const schema = createSchema(
         'complex',
         `
-import { defineSchema, composeSchema, string, int, option, array, set, record } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, int, option, array, set, record } from 'smig';
 
 export default composeSchema({
   models: {
@@ -214,7 +214,7 @@ export default composeSchema({
       const schema = createSchema(
         'modifiers',
         `
-import { defineSchema, composeSchema, string, int, datetime } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, int, datetime } from 'smig';
 
 export default composeSchema({
   models: {
@@ -282,7 +282,7 @@ export default composeSchema({
       const schema = createSchema(
         'indexes',
         `
-import { defineSchema, composeSchema, string, int, array, index } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, int, array, index } from 'smig';
 
 export default composeSchema({
   models: {
@@ -336,7 +336,7 @@ export default composeSchema({
       const schema = createSchema(
         'entities',
         `
-import { defineSchema, composeSchema, string, int, analyzer, param } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, int, analyzer, param } from 'smig';
 
 export default composeSchema({
   models: {
@@ -375,7 +375,7 @@ export default composeSchema({
       const schema = createSchema(
         'no-changes',
         `
-import { defineSchema, composeSchema, string, int } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, int } from 'smig';
 
 export default composeSchema({
   models: {
@@ -410,7 +410,7 @@ export default composeSchema({
       const v1 = createSchema(
         'additions-v1',
         `
-import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string } from 'smig';
 
 export default composeSchema({
   models: {
@@ -433,7 +433,7 @@ export default composeSchema({
       const v2 = createSchema(
         'additions-v2',
         `
-import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string } from 'smig';
 
 export default composeSchema({
   models: {
@@ -462,7 +462,7 @@ export default composeSchema({
       const v1 = createSchema(
         'modifications-v1',
         `
-import { defineSchema, composeSchema, int } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, int } from 'smig';
 
 export default composeSchema({
   models: {
@@ -485,7 +485,7 @@ export default composeSchema({
       const v2 = createSchema(
         'modifications-v2',
         `
-import { defineSchema, composeSchema, int } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, int } from 'smig';
 
 export default composeSchema({
   models: {
@@ -513,7 +513,7 @@ export default composeSchema({
       const v1 = createSchema(
         'renames-v1',
         `
-import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string } from 'smig';
 
 export default composeSchema({
   models: {
@@ -536,7 +536,7 @@ export default composeSchema({
       const v2 = createSchema(
         'renames-v2',
         `
-import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string } from 'smig';
 
 export default composeSchema({
   models: {
@@ -565,7 +565,7 @@ export default composeSchema({
       const schema = createSchema(
         'special-chars',
         `
-import { defineSchema, composeSchema, string } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string } from 'smig';
 
 export default composeSchema({
   models: {
@@ -594,7 +594,7 @@ export default composeSchema({
       const schema = createSchema(
         'numeric-defaults',
         `
-import { defineSchema, composeSchema, int, float, decimal } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, int, float, decimal } from 'smig';
 
 export default composeSchema({
   models: {
@@ -626,7 +626,7 @@ export default composeSchema({
       const schema = createSchema(
         'bool-defaults',
         `
-import { defineSchema, composeSchema, bool } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, bool } from 'smig';
 
 export default composeSchema({
   models: {
@@ -655,7 +655,7 @@ export default composeSchema({
       const schema = createSchema(
         'complex-asserts',
         `
-import { defineSchema, composeSchema, string, float } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, float } from 'smig';
 
 export default composeSchema({
   models: {

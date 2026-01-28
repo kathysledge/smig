@@ -15,7 +15,7 @@ const execAsync = promisify(exec);
 
 describe('New Entity Types Integration Tests', () => {
   const CLI_PATH = path.join(process.cwd(), 'dist', 'cli.js');
-  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.js');
+  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.ts');
   const FIXTURES_DIR = path.join(process.cwd(), 'tests', 'integration', 'fixtures');
 
   beforeAll(async () => {
@@ -30,7 +30,7 @@ describe('New Entity Types Integration Tests', () => {
   beforeEach(async () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
-      'smig.config.js',
+      'smig.config.ts',
       'tests/integration/fixtures/entity-*.ts',
     ]);
   });
@@ -38,7 +38,7 @@ describe('New Entity Types Integration Tests', () => {
   afterEach(async () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
-      'smig.config.js',
+      'smig.config.ts',
       'tests/integration/fixtures/entity-*.ts',
     ]);
   });
@@ -71,7 +71,7 @@ export default {
       const schemaPath = createSchema(
         'params',
         `
-import { composeSchema, param } from '../../../dist/schema/concise-schema.js';
+import { composeSchema, param } from 'smig';
 
 export default composeSchema({
   models: {},
@@ -99,7 +99,7 @@ export default composeSchema({
       const schemaPath = createSchema(
         'sequences',
         `
-import { composeSchema, sequence } from '../../../dist/schema/concise-schema.js';
+import { composeSchema, sequence } from 'smig';
 
 export default composeSchema({
   models: {},
@@ -127,7 +127,7 @@ export default composeSchema({
       const schemaPath = createSchema(
         'functions',
         `
-import { composeSchema, fn } from '../../../dist/schema/concise-schema.js';
+import { composeSchema, fn } from 'smig';
 
 const add = fn('fn::add')
   .param('a', 'int')
@@ -164,7 +164,7 @@ export default composeSchema({
       const schemaPath = createSchema(
         'analyzers',
         `
-import { composeSchema, analyzer } from '../../../dist/schema/concise-schema.js';
+import { composeSchema, analyzer } from 'smig';
 
 const simple = analyzer('simple_text')
   .tokenizers(['blank'])
@@ -199,7 +199,7 @@ export default composeSchema({
       const schemaPath = createSchema(
         'events',
         `
-import { defineSchema, composeSchema, string, datetime, event } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, datetime, event } from 'smig';
 
 export default composeSchema({
   models: {
@@ -213,11 +213,11 @@ export default composeSchema({
         onStatusChange: event('status_change')
           .onUpdate()
           .when('$before.status != $after.status')
-          .thenDo('CREATE audit_log SET table = "order", action = "status_change", data = { from: $before.status, to: $after.status }'),
+          .then('CREATE audit_log SET table = "order", action = "status_change", data = { from: $before.status, to: $after.status }'),
         
         onCreate: event('order_created')
           .onCreate()
-          .thenDo('UPDATE stats:orders SET count += 1'),
+          .then('UPDATE stats:orders SET count += 1'),
       }
     }),
     audit_log: defineSchema({

@@ -61,6 +61,27 @@ describe('Schema Comparison', () => {
       it('should serialize objects', () => {
         expect(normalizeDefault({ key: 'value' })).toBe('{"key":"value"}');
       });
+
+      it('should remove backticks around function namespaces (SurrealDB v3 beta2+)', () => {
+        // SurrealDB v3 beta2 returns function calls with backticks around namespace
+        expect(normalizeDefault('`rand`::uuid::v7()')).toBe('rand::uuid::v7()');
+        expect(normalizeDefault("`sequence`::nextval('order_number')")).toBe(
+          "sequence::nextval('order_number')",
+        );
+        expect(normalizeDefault('`time`::now()')).toBe('time::now()');
+        expect(normalizeDefault('`math`::floor(123)')).toBe('math::floor(123)');
+      });
+
+      it('should normalize both backticks and quotes together', () => {
+        // Schema uses: sequence::nextval("order_number")
+        // DB returns: `sequence`::nextval('order_number')
+        expect(normalizeDefault('`sequence`::nextval("order_number")')).toBe(
+          "sequence::nextval('order_number')",
+        );
+        expect(normalizeDefault('sequence::nextval("order_number")')).toBe(
+          "sequence::nextval('order_number')",
+        );
+      });
     });
 
     describe('normalizeExpression', () => {

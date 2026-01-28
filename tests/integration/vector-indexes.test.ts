@@ -15,7 +15,7 @@ const execAsync = promisify(exec);
 
 describe('Vector Index Integration Tests', () => {
   const CLI_PATH = path.join(process.cwd(), 'dist', 'cli.js');
-  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.js');
+  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.ts');
   const FIXTURES_DIR = path.join(process.cwd(), 'tests', 'integration', 'fixtures');
 
   beforeAll(async () => {
@@ -30,7 +30,7 @@ describe('Vector Index Integration Tests', () => {
   beforeEach(async () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
-      'smig.config.js',
+      'smig.config.ts',
       'tests/integration/fixtures/vector-*.ts',
     ]);
   });
@@ -38,7 +38,7 @@ describe('Vector Index Integration Tests', () => {
   afterEach(async () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
-      'smig.config.js',
+      'smig.config.ts',
       'tests/integration/fixtures/vector-*.ts',
     ]);
   });
@@ -71,7 +71,7 @@ export default {
       const schemaPath = createSchema(
         'hnsw-default',
         `
-import { defineSchema, composeSchema, string, array, index } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, array, index } from 'smig';
 
 export default composeSchema({
   models: {
@@ -105,7 +105,7 @@ export default composeSchema({
       const schemaPath = createSchema(
         'hnsw-cosine',
         `
-import { defineSchema, composeSchema, string, array, index } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, array, index } from 'smig';
 
 export default composeSchema({
   models: {
@@ -140,7 +140,7 @@ export default composeSchema({
       const schemaPath = createSchema(
         'hnsw-migrate',
         `
-import { defineSchema, composeSchema, string, array, index } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, array, index } from 'smig';
 
 export default composeSchema({
   models: {
@@ -178,7 +178,7 @@ export default composeSchema({
       const schemaPath = createSchema(
         'mtree-default',
         `
-import { defineSchema, composeSchema, string, array, index } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, array, index } from 'smig';
 
 export default composeSchema({
   models: {
@@ -212,7 +212,7 @@ export default composeSchema({
       const schemaPath = createSchema(
         'mtree-capacity',
         `
-import { defineSchema, composeSchema, string, array, index } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, array, index } from 'smig';
 
 export default composeSchema({
   models: {
@@ -248,7 +248,7 @@ export default composeSchema({
       const schemaPath = createSchema(
         'search',
         `
-import { defineSchema, composeSchema, string, index, analyzer } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, index, analyzer } from 'smig';
 
 const textAnalyzer = analyzer('text_analyzer')
   .tokenizers(['blank', 'class'])

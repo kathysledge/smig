@@ -16,7 +16,7 @@ const execAsync = promisify(exec);
 
 describe('TypeScript Schema Integration Tests', () => {
   const CLI_PATH = path.join(process.cwd(), 'dist', 'cli.js');
-  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.js');
+  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.ts');
   const FIXTURES_DIR = path.join(process.cwd(), 'tests', 'integration', 'fixtures');
 
   beforeAll(async () => {
@@ -31,7 +31,7 @@ describe('TypeScript Schema Integration Tests', () => {
   beforeEach(async () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
-      'smig.config.js',
+      'smig.config.ts',
       'tests/integration/fixtures/ts-*.ts',
       'tests/integration/fixtures/ts-*.mts',
       'tests/integration/fixtures/ts-*.cts',
@@ -41,7 +41,7 @@ describe('TypeScript Schema Integration Tests', () => {
   afterEach(async () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
-      'smig.config.js',
+      'smig.config.ts',
       'tests/integration/fixtures/ts-*.ts',
       'tests/integration/fixtures/ts-*.mts',
       'tests/integration/fixtures/ts-*.cts',
@@ -75,7 +75,7 @@ export default {
     const schemaPath = createTsSchema(
       'basic',
       `
-import { defineSchema, composeSchema, string, int, datetime } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, int, datetime } from 'smig';
 
 // TypeScript interfaces for type safety
 interface UserFields {
@@ -117,7 +117,7 @@ export default composeSchema({
     const schemaPath = createTsSchema(
       'module',
       `
-import { defineSchema, composeSchema, string, bool } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, bool } from 'smig';
 
 const settings = defineSchema({
   table: 'mts_settings',
@@ -150,7 +150,7 @@ export default composeSchema({
     const schemaPath = createTsSchema(
       'migrate',
       `
-import { defineSchema, composeSchema, string, float } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, composeSchema, string, float } from 'smig';
 
 const product = defineSchema({
   table: 'ts_product',
@@ -193,7 +193,7 @@ import {
   int,
   index,
   type SurrealDBSchema 
-} from '../../../dist/schema/concise-schema.js';
+} from 'smig';
 
 // Use TypeScript enums
 enum Status {

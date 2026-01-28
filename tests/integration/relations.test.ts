@@ -15,7 +15,7 @@ const execAsync = promisify(exec);
 
 describe('Relations Integration Tests', () => {
   const CLI_PATH = path.join(process.cwd(), 'dist', 'cli.js');
-  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.js');
+  const TEST_CONFIG_PATH = path.join(process.cwd(), 'smig.config.ts');
   const FIXTURES_DIR = path.join(process.cwd(), 'tests', 'integration', 'fixtures');
 
   beforeAll(async () => {
@@ -30,7 +30,7 @@ describe('Relations Integration Tests', () => {
   beforeEach(async () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
-      'smig.config.js',
+      'smig.config.ts',
       'tests/integration/fixtures/relation-*.ts',
     ]);
   });
@@ -38,7 +38,7 @@ describe('Relations Integration Tests', () => {
   afterEach(async () => {
     cleanupTestFiles([
       'smig-debug-*.txt',
-      'smig.config.js',
+      'smig.config.ts',
       'tests/integration/fixtures/relation-*.ts',
     ]);
   });
@@ -71,7 +71,7 @@ export default {
       const schemaPath = createSchema(
         'simple',
         `
-import { defineSchema, defineRelation, composeSchema, string, datetime } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, defineRelation, composeSchema, string, datetime } from 'smig';
 
 const user = defineSchema({
   table: 'rel_user',
@@ -126,7 +126,7 @@ export default composeSchema({
       const schemaPath = createSchema(
         'self-ref',
         `
-import { defineSchema, defineRelation, composeSchema, string, datetime, bool } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, defineRelation, composeSchema, string, datetime, bool } from 'smig';
 
 const person = defineSchema({
   table: 'person',
@@ -172,7 +172,7 @@ export default composeSchema({
       const schemaPath = createSchema(
         'with-fields',
         `
-import { defineSchema, defineRelation, composeSchema, string, int, float, datetime, bool } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, defineRelation, composeSchema, string, int, float, datetime, bool } from 'smig';
 
 const customer = defineSchema({
   table: 'customer',
@@ -241,7 +241,7 @@ export default composeSchema({
       const v1 = createSchema(
         'add-field-v1',
         `
-import { defineSchema, defineRelation, composeSchema, string, datetime } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, defineRelation, composeSchema, string, datetime } from 'smig';
 
 const user = defineSchema({
   table: 'rel_user2',
@@ -276,7 +276,7 @@ export default composeSchema({
       const v2 = createSchema(
         'add-field-v2',
         `
-import { defineSchema, defineRelation, composeSchema, string, datetime, int } from '../../../dist/schema/concise-schema.js';
+import { defineSchema, defineRelation, composeSchema, string, datetime, int } from 'smig';
 
 const user = defineSchema({
   table: 'rel_user2',

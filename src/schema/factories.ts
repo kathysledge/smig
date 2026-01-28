@@ -313,12 +313,12 @@ export const commonIndexes = {
 export const commonEvents = {
   /** Update timestamp on record modification */
   updateTimestamp: (tableName: string) =>
-    event(`${tableName}_update_timestamp`).onUpdate().thenDo('SET updatedAt = time::now()'),
+    event(`${tableName}_update_timestamp`).onUpdate().then('SET updatedAt = time::now()'),
   /** Cascade delete related records */
   cascadeDelete: (tableName: string, relatedTable: string, foreignKey: string) =>
     event(`${tableName}_cascade_delete`)
       .onDelete()
-      .thenDo(`DELETE ${relatedTable} WHERE ${foreignKey} = $value.id`),
+      .then(`DELETE ${relatedTable} WHERE ${foreignKey} = $value.id`),
 };
 
 // ============================================================================
