@@ -11,6 +11,8 @@ tsconfig.json
 biome.json
 bun.lock
 .github
+.cursorrules
 AGENTS.md
 CHANGELOG.md
-.cursorrules
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md

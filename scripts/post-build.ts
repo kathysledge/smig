@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
 import { existsSync } from 'node:fs';
 import { chmod, readFile, writeFile } from 'node:fs/promises';
@@ -8,7 +8,7 @@ import { chmod, readFile, writeFile } from 'node:fs/promises';
  * 1. Add shebang to CLI file
  * 2. Make CLI file executable
  */
-async function postBuild() {
+async function postBuild(): Promise<void> {
   try {
     const cliPath = './dist/cli.js';
 
@@ -32,7 +32,7 @@ async function postBuild() {
     console.log('Made CLI file executable');
 
     console.log('Post-build completed successfully!');
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Post-build failed:', error);
     process.exit(1);
   }
